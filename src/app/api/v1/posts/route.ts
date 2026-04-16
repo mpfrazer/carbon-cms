@@ -1,0 +1,85 @@
+import { NextRequest } from "next/server";
+import { desc, eq, count, and, like } from "drizzle-orm";
+import { z } from "zod";
+import { db } from "@/lib/db";
+import { posts } from "@/lib/db/schema";
+import {
+  ok,
+  created,
+  badRequest,
+  conflict,
+  serverError,
+  paginated,
+  parsePagination,
+} from "@/lib/api/response";
+import { slugify } from "@/lib/utils";
+import { auth } from "@/lib/auth";
+
+const createPostSchema = z.object({
+  title: z.string().min(1).max(500),
+  slug: z.string().min(1).max(500).optional(),
+  content: z.string().default(""),
+  excerpt: z.string().nullish(),
+  status: z.enum(["draft", "published", "scheduled", "archived"]).default("draft"),
+  featuredImageId: z.string().uuid().nullish(),
+  publishedAt: z.string().datetime().nullish(),
+  scheduledAt: z.string().datetime().nullish(),
+  metaTitle: z.string().nullish(),
+  metaDescription: z.string().nullish(),
+});
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = req.nextUrl;
+    const { page, pageSize, offset } = parsePagination(searchParams);
+    const status = searchParams.get("status");
+    const search = searchParams.get("search");
+
+    const conditions = [];
+    if (status) conditions.push(eq(posts.status, status as "draft" | "published" | "scheduled" | "archived"));
+    if (search) conditions.push(like(posts.title, `%${search}%`));
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [rows, [{ value: total }]] = await Promise.all([
+      db
+        .select()
+        .from(posts)
+        .where(where)
+        .orderBy(desc(posts.createdAt))
+        .limit(pageSize)
+        .offset(offset),
+      db.select({ value: count() }).from(posts).where(where),
+    ]);
+
+    return paginated(rows, total, page, pageSize);
+  } catch {
+    return serverError();
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return badRequest("Authentication required");
+
+    const body = await req.json();
+    const parsed = createPostSchema.safeParse(body);
+    if (!parsed.success) return badRequest("Validation failed", parsed.error.flatten());
+
+    const { title, slug: rawSlug, ...rest } = parsed.data;
+    const slug = rawSlug ?? slugify(title);
+
+    const existing = await db.select({ id: posts.id }).from(posts).where(eq(posts.slug, slug)).limit(1);
+    if (existing.length > 0) return conflict(`Slug "${slug}" is already in use`);
+
+    const [post] = await db
+      .insert(posts)
+      .values({ title, slug, authorId: session.user.id, ...rest })
+      .returning();
+
+    return created(post);
+  } catch {
+    return serverError();
+  }
+}
