@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { RichEditor } from "@/components/admin/rich-editor";
+
+interface Taxonomy { id: string; name: string; }
 
 interface PostFormProps {
   post?: {
@@ -13,10 +16,14 @@ interface PostFormProps {
     status: string;
     metaTitle?: string | null;
     metaDescription?: string | null;
+    categories?: Taxonomy[];
+    tags?: Taxonomy[];
   };
+  allCategories: Taxonomy[];
+  allTags: Taxonomy[];
 }
 
-export function PostForm({ post }: PostFormProps) {
+export function PostForm({ post, allCategories, allTags }: PostFormProps) {
   const router = useRouter();
   const isEditing = !!post;
 
@@ -27,19 +34,28 @@ export function PostForm({ post }: PostFormProps) {
   const [status, setStatus] = useState(post?.status ?? "draft");
   const [metaTitle, setMetaTitle] = useState(post?.metaTitle ?? "");
   const [metaDescription, setMetaDescription] = useState(post?.metaDescription ?? "");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    post?.categories?.map((c) => c.id) ?? []
+  );
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    post?.tags?.map((t) => t.id) ?? []
+  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   function handleTitleChange(val: string) {
     setTitle(val);
     if (!isEditing) {
-      setSlug(
-        val.toLowerCase().trim()
-          .replace(/[^\w\s-]/g, "")
-          .replace(/[\s_-]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-      );
+      setSlug(val.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, ""));
     }
+  }
+
+  function toggleCategory(id: string) {
+    setSelectedCategories((prev) => prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]);
+  }
+
+  function toggleTag(id: string) {
+    setSelectedTags((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -47,7 +63,15 @@ export function PostForm({ post }: PostFormProps) {
     setError(null);
     setSaving(true);
 
-    const body = { title, slug, content, excerpt: excerpt || null, status, metaTitle: metaTitle || null, metaDescription: metaDescription || null };
+    const body = {
+      title, slug, content,
+      excerpt: excerpt || null,
+      status,
+      metaTitle: metaTitle || null,
+      metaDescription: metaDescription || null,
+      categoryIds: selectedCategories,
+      tagIds: selectedTags,
+    };
 
     const res = await fetch(isEditing ? `/api/v1/posts/${post.id}` : "/api/v1/posts", {
       method: isEditing ? "PUT" : "POST",
@@ -56,12 +80,7 @@ export function PostForm({ post }: PostFormProps) {
     });
 
     const json = await res.json();
-
-    if (!res.ok) {
-      setError(json.error ?? "Something went wrong");
-      setSaving(false);
-      return;
-    }
+    if (!res.ok) { setError(json.error ?? "Something went wrong"); setSaving(false); return; }
 
     router.push("/admin/posts");
     router.refresh();
@@ -74,64 +93,74 @@ export function PostForm({ post }: PostFormProps) {
     router.refresh();
   }
 
+  const inputClass = "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500";
+
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-6 max-w-3xl">
-      {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
-      )}
+      {error && <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-neutral-700">Title</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-          placeholder="Post title"
-        />
+        <input type="text" value={title} onChange={(e) => handleTitleChange(e.target.value)} required className={inputClass} placeholder="Post title" />
       </div>
 
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-neutral-700">Slug</label>
-        <input
-          type="text"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-          required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm font-mono focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-        />
+        <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} required className={inputClass + " font-mono"} />
       </div>
 
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-neutral-700">Content</label>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={16}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm font-mono focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-          placeholder="Write your content here…"
-        />
+        <RichEditor value={content} onChange={setContent} />
       </div>
 
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-neutral-700">Excerpt</label>
-        <textarea
-          value={excerpt}
-          onChange={(e) => setExcerpt(e.target.value)}
-          rows={3}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-          placeholder="Optional short summary"
-        />
+        <textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={3} className={inputClass} placeholder="Optional short summary" />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        {/* Categories */}
+        {allCategories.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-neutral-700">Categories</label>
+            <div className="rounded-md border border-neutral-200 divide-y divide-neutral-100 max-h-48 overflow-y-auto">
+              {allCategories.map((cat) => (
+                <label key={cat.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-neutral-50 cursor-pointer">
+                  <input type="checkbox" checked={selectedCategories.includes(cat.id)} onChange={() => toggleCategory(cat.id)}
+                    className="h-4 w-4 rounded border-neutral-300" />
+                  <span className="text-sm text-neutral-700">{cat.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tags */}
+        {allTags.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-neutral-700">Tags</label>
+            <div className="rounded-md border border-neutral-200 max-h-48 overflow-y-auto p-2 flex flex-wrap gap-1.5">
+              {allTags.map((tag) => {
+                const selected = selectedTags.includes(tag.id);
+                return (
+                  <button key={tag.id} type="button" onClick={() => toggleTag(tag.id)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      selected ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                    }`}>
+                    {tag.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-neutral-700">Status</label>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-        >
+        <select value={status} onChange={(e) => setStatus(e.target.value)}
+          className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500">
           <option value="draft">Draft</option>
           <option value="published">Published</option>
           <option value="scheduled">Scheduled</option>
@@ -144,49 +173,24 @@ export function PostForm({ post }: PostFormProps) {
         <div className="mt-4 space-y-4">
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-neutral-700">Meta title</label>
-            <input
-              type="text"
-              value={metaTitle}
-              onChange={(e) => setMetaTitle(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-            />
+            <input type="text" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className={inputClass} />
           </div>
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-neutral-700">Meta description</label>
-            <textarea
-              value={metaDescription}
-              onChange={(e) => setMetaDescription(e.target.value)}
-              rows={2}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-            />
+            <textarea value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} rows={2} className={inputClass} />
           </div>
         </div>
       </details>
 
       <div className="flex items-center justify-between pt-2">
         {isEditing ? (
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="text-sm text-red-600 hover:text-red-800 transition-colors"
-          >
-            Delete post
-          </button>
+          <button type="button" onClick={handleDelete} className="text-sm text-red-600 hover:text-red-800 transition-colors">Delete post</button>
         ) : <span />}
-
         <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors"
-          >
+          <button type="button" onClick={() => router.back()}
+            className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">Cancel</button>
+          <button type="submit" disabled={saving}
+            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
             {saving ? "Saving…" : isEditing ? "Save changes" : "Create post"}
           </button>
         </div>

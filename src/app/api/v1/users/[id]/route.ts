@@ -28,8 +28,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
       .limit(1);
     if (!user) return notFound("User not found");
     return ok(user);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -72,8 +72,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
       .returning({ id: users.id, email: users.email, name: users.name, role: users.role, avatarUrl: users.avatarUrl, bio: users.bio, updatedAt: users.updatedAt });
 
     return ok(updated);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -89,7 +89,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     if (!existing) return notFound("User not found");
     await db.delete(users).where(eq(users.id, id));
     return noContent();
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }

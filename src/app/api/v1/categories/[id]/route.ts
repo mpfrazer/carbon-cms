@@ -21,8 +21,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const [category] = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
     if (!category) return notFound("Category not found");
     return ok(category);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -52,8 +52,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
       .returning();
 
     return ok(updated);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -64,7 +64,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     if (!existing) return notFound("Category not found");
     await db.delete(categories).where(eq(categories.id, id));
     return noContent();
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }

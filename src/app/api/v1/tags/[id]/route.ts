@@ -19,8 +19,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const [tag] = await db.select().from(tags).where(eq(tags.id, id)).limit(1);
     if (!tag) return notFound("Tag not found");
     return ok(tag);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -50,8 +50,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
       .returning();
 
     return ok(updated);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -62,7 +62,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     if (!existing) return notFound("Tag not found");
     await db.delete(tags).where(eq(tags.id, id));
     return noContent();
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }

@@ -1,11 +1,14 @@
 import { NextRequest } from "next/server";
 import { desc, count } from "drizzle-orm";
+import path from "path";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { ok, created, badRequest, serverError, paginated, parsePagination } from "@/lib/api/response";
 import { auth } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { uploadFile } from "@/lib/storage";
+
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "application/pdf"];
+const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,8 +21,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     return paginated(rows, total, page, pageSize);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -30,33 +33,23 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-
     if (!file) return badRequest("No file provided");
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "application/pdf"];
-    if (!allowedTypes.includes(file.type)) {
-      return badRequest(`File type "${file.type}" is not allowed`);
-    }
+    if (!ALLOWED_TYPES.includes(file.type)) return badRequest(`File type "${file.type}" is not allowed`);
+    if (file.size > MAX_SIZE) return badRequest("File exceeds 10 MB limit");
 
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) return badRequest("File exceeds 10MB limit");
-
-    const ext = path.extname(file.name);
-    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-
-    await mkdir(uploadDir, { recursive: true });
+    const ext = path.extname(file.name).toLowerCase();
+    const key = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadDir, filename), buffer);
+    const url = await uploadFile(key, buffer, file.type);
 
-    const url = `/uploads/${filename}`;
     const altText = (formData.get("altText") as string | null) ?? undefined;
     const caption = (formData.get("caption") as string | null) ?? undefined;
 
     const [item] = await db
       .insert(media)
       .values({
-        filename,
+        filename: key,
         originalFilename: file.name,
         mimeType: file.type,
         size: file.size,
@@ -68,7 +61,7 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return created(item);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }

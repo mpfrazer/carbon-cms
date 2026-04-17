@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { settings } from "@/lib/db/schema";
@@ -26,15 +26,15 @@ export async function GET(req: NextRequest) {
       rows.map((r) => {
         try {
           return [r.key, JSON.parse(r.value)];
-        } catch {
+        } catch (e) {
           return [r.key, r.value];
         }
       })
     );
 
     return ok(result);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -61,11 +61,11 @@ export async function PUT(req: NextRequest) {
       .values(upserts)
       .onConflictDoUpdate({
         target: settings.key,
-        set: { value: db.$with("excluded").value, updatedAt: now } as unknown as Partial<typeof settings.$inferInsert>,
+        set: { value: sql`excluded.value`, updatedAt: now },
       });
 
     return ok({ updated: upserts.length });
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }

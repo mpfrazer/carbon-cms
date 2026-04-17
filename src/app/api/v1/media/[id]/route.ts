@@ -4,8 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { ok, badRequest, notFound, noContent, serverError } from "@/lib/api/response";
-import { unlink } from "fs/promises";
-import path from "path";
+import { deleteFile, keyFromUrl } from "@/lib/storage";
 
 const updateMediaSchema = z.object({
   altText: z.string().optional().nullable(),
@@ -20,8 +19,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const [item] = await db.select().from(media).where(eq(media.id, id)).limit(1);
     if (!item) return notFound("Media not found");
     return ok(item);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -37,8 +36,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
     const [updated] = await db.update(media).set(parsed.data).where(eq(media.id, id)).returning();
     return ok(updated);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -48,17 +47,15 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     const [item] = await db.select().from(media).where(eq(media.id, id)).limit(1);
     if (!item) return notFound("Media not found");
 
-    // Delete file from disk
     try {
-      const filePath = path.join(process.cwd(), "public", item.url);
-      await unlink(filePath);
-    } catch {
-      // File may already be gone — continue with DB deletion
+      await deleteFile(keyFromUrl(item.url));
+    } catch (e) {
+      // Object may already be gone — continue with DB deletion
     }
 
     await db.delete(media).where(eq(media.id, id));
     return noContent();
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }

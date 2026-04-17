@@ -15,7 +15,7 @@ interface Comment {
   authorEmail: string;
   content: string;
   status: string;
-  createdAt: string;
+  createdAt: Date;
 }
 
 export function CommentsTable() {

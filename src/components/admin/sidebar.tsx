@@ -13,12 +13,16 @@ import {
   LogOut,
   Pencil,
   UserCircle,
+  Tag,
+  FolderOpen,
 } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/posts", label: "Posts", icon: FileText },
   { href: "/admin/pages", label: "Pages", icon: File },
+  { href: "/admin/categories", label: "Categories", icon: FolderOpen },
+  { href: "/admin/tags", label: "Tags", icon: Tag },
   { href: "/admin/media", label: "Media", icon: Image },
   { href: "/admin/comments", label: "Comments", icon: MessageSquare },
   { href: "/admin/users", label: "Users", icon: Users },
