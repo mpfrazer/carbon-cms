@@ -14,19 +14,42 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     db.select().from(pages).where(and(eq(pages.slug, slug), eq(pages.status, "published"))).limit(1).then(r => r[0]),
     getSiteSettings(),
   ]);
+  const base = settings.siteUrl || process.env.NEXTAUTH_URL || "";
+  const url = `${base}/${slug}`;
+  const title = page?.metaTitle ?? (page ? `${page.title} — ${settings.siteTitle}` : settings.siteTitle);
+  const description = page?.metaDescription ?? settings.siteDescription;
+
   return {
-    title: page?.metaTitle ?? (page ? `${page.title} — ${settings.siteTitle}` : settings.siteTitle),
-    description: page?.metaDescription ?? settings.siteDescription,
+    title: page?.metaTitle ?? page?.title ?? settings.siteTitle,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: "website", url, title, description, siteName: settings.siteTitle },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
 export default async function PageRoute({ params }: Props) {
   const { slug } = await params;
-  const [page] = await db.select().from(pages)
-    .where(and(eq(pages.slug, slug), eq(pages.status, "published")))
-    .limit(1);
-
+  const [settings, page] = await Promise.all([
+    getSiteSettings(),
+    db.select().from(pages).where(and(eq(pages.slug, slug), eq(pages.status, "published"))).limit(1).then(r => r[0]),
+  ]);
   if (!page) notFound();
 
-  return <PageContent title={page.title} content={page.content} updatedAt={page.updatedAt} />;
+  const base = settings.siteUrl || process.env.NEXTAUTH_URL || "";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: page.title,
+    description: page.metaDescription ?? settings.siteDescription,
+    url: `${base}/${slug}`,
+    dateModified: page.updatedAt.toISOString(),
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PageContent title={page.title} content={page.content} updatedAt={page.updatedAt} />
+    </>
+  );
 }
