@@ -32,8 +32,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     return paginated(rows, total, page, pageSize);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return created(comment);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }

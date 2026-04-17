@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { desc, eq, count, and, like } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { posts } from "@/lib/db/schema";
+import { posts, postCategories, postTags } from "@/lib/db/schema";
 import {
   ok,
   created,
@@ -26,6 +26,8 @@ const createPostSchema = z.object({
   scheduledAt: z.string().datetime().nullish(),
   metaTitle: z.string().nullish(),
   metaDescription: z.string().nullish(),
+  categoryIds: z.array(z.string().uuid()).optional(),
+  tagIds: z.array(z.string().uuid()).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -53,8 +55,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     return paginated(rows, total, page, pageSize);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
     const parsed = createPostSchema.safeParse(body);
     if (!parsed.success) return badRequest("Validation failed", parsed.error.flatten());
 
-    const { title, slug: rawSlug, ...rest } = parsed.data;
+    const { title, slug: rawSlug, categoryIds, tagIds, publishedAt, scheduledAt, ...rest } = parsed.data;
     const slug = rawSlug ?? slugify(title);
 
     const existing = await db.select({ id: posts.id }).from(posts).where(eq(posts.slug, slug)).limit(1);
@@ -75,11 +77,22 @@ export async function POST(req: NextRequest) {
 
     const [post] = await db
       .insert(posts)
-      .values({ title, slug, authorId: session.user.id, ...rest })
+      .values({
+        title, slug, authorId: session.user.id, ...rest,
+        publishedAt: publishedAt ? new Date(publishedAt) : null,
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+      })
       .returning();
 
+    if (categoryIds?.length) {
+      await db.insert(postCategories).values(categoryIds.map((categoryId) => ({ postId: post.id, categoryId })));
+    }
+    if (tagIds?.length) {
+      await db.insert(postTags).values(tagIds.map((tagId) => ({ postId: post.id, tagId })));
+    }
+
     return created(post);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }

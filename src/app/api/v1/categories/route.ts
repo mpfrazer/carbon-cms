@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
     ]);
 
     return paginated(rows, total, page, pageSize);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     const [category] = await db.insert(categories).values({ name, slug, ...rest }).returning();
     return created(category);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }

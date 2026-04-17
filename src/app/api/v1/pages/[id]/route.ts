@@ -26,8 +26,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const [page] = await db.select().from(pages).where(eq(pages.id, id)).limit(1);
     if (!page) return notFound("Page not found");
     return ok(page);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -57,8 +57,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
       .returning();
 
     return ok(updated);
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }
 
@@ -69,7 +69,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     if (!existing) return notFound("Page not found");
     await db.delete(pages).where(eq(pages.id, id));
     return noContent();
-  } catch {
-    return serverError();
+  } catch (e) {
+    return serverError(e);
   }
 }

@@ -24,7 +24,11 @@ export function conflict(message: string) {
   return NextResponse.json({ error: message }, { status: 409 });
 }
 
-export function serverError(message = "Internal server error") {
+export function serverError(error?: unknown) {
+  if (error) console.error("[serverError]", error);
+  const message = process.env.NODE_ENV === "development" && error instanceof Error
+    ? error.message
+    : "Internal server error";
   return NextResponse.json({ error: message }, { status: 500 });
 }
 

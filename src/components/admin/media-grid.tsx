@@ -11,7 +11,7 @@ interface MediaItem {
   mimeType: string;
   size: number;
   altText?: string | null;
-  createdAt: string;
+  createdAt: Date;
 }
 
 function formatSize(bytes: number) {
@@ -24,6 +24,7 @@ export function MediaGrid() {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function loadMedia() {
@@ -40,11 +41,17 @@ export function MediaGrid() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setUploadError(null);
     const form = new FormData();
     form.append("file", file);
-    await fetch("/api/v1/media", { method: "POST", body: form });
+    const res = await fetch("/api/v1/media", { method: "POST", body: form });
+    const json = await res.json();
+    if (!res.ok) {
+      setUploadError(json.error ?? "Upload failed");
+    } else {
+      loadMedia();
+    }
     setUploading(false);
-    loadMedia();
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -56,6 +63,9 @@ export function MediaGrid() {
 
   return (
     <div className="p-6">
+      {uploadError && (
+        <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{uploadError}</div>
+      )}
       <div className="mb-4 flex justify-end">
         <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleUpload} />
         <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
