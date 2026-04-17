@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RichEditor } from "@/components/admin/rich-editor";
+import { ExcerptGenerator } from "@/components/admin/ai/excerpt-generator";
+import { SeoOptimizer } from "@/components/admin/ai/seo-optimizer";
+import { TagSuggester } from "@/components/admin/ai/tag-suggester";
+import { CategorySuggester } from "@/components/admin/ai/category-suggester";
+import { TitleSuggester } from "@/components/admin/ai/title-suggester";
+import { OutlineGenerator } from "@/components/admin/ai/outline-generator";
 
 interface Taxonomy { id: string; name: string; }
 
@@ -102,6 +108,7 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-neutral-700">Title</label>
         <input type="text" value={title} onChange={(e) => handleTitleChange(e.target.value)} required className={inputClass} placeholder="Post title" />
+        <TitleSuggester currentTitle={title} content={content} onSelected={handleTitleChange} />
       </div>
 
       <div className="space-y-1.5">
@@ -111,11 +118,17 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
 
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-neutral-700">Content</label>
+        {!content && (
+          <OutlineGenerator title={title} onGenerated={setContent} />
+        )}
         <RichEditor value={content} onChange={setContent} />
       </div>
 
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-neutral-700">Excerpt</label>
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-neutral-700">Excerpt</label>
+          <ExcerptGenerator title={title} content={content} onGenerated={setExcerpt} />
+        </div>
         <textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={3} className={inputClass} placeholder="Optional short summary" />
       </div>
 
@@ -123,7 +136,16 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
         {/* Categories */}
         {allCategories.length > 0 && (
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Categories</label>
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-neutral-700">Categories</label>
+              <CategorySuggester
+                title={title}
+                content={content}
+                allCategories={allCategories}
+                selectedCategoryIds={selectedCategories}
+                onSelected={setSelectedCategories}
+              />
+            </div>
             <div className="rounded-md border border-neutral-200 divide-y divide-neutral-100 max-h-48 overflow-y-auto">
               {allCategories.map((cat) => (
                 <label key={cat.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-neutral-50 cursor-pointer">
@@ -139,7 +161,16 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
         {/* Tags */}
         {allTags.length > 0 && (
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Tags</label>
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-neutral-700">Tags</label>
+              <TagSuggester
+                title={title}
+                content={content}
+                existingTags={allTags}
+                selectedTagIds={selectedTags}
+                onSelected={setSelectedTags}
+              />
+            </div>
             <div className="rounded-md border border-neutral-200 max-h-48 overflow-y-auto p-2 flex flex-wrap gap-1.5">
               {allTags.map((tag) => {
                 const selected = selectedTags.includes(tag.id);
@@ -171,6 +202,16 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
       <details className="rounded-md border border-neutral-200 p-4">
         <summary className="cursor-pointer text-sm font-medium text-neutral-700">SEO</summary>
         <div className="mt-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-neutral-500">Auto-generate meta title and description</span>
+            <SeoOptimizer
+              title={title}
+              content={content}
+              currentMetaTitle={metaTitle}
+              currentMetaDescription={metaDescription}
+              onGenerated={(mt, md) => { setMetaTitle(mt); setMetaDescription(md); }}
+            />
+          </div>
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-neutral-700">Meta title</label>
             <input type="text" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className={inputClass} />

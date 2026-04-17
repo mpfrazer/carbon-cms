@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { Trash2, Plus, ChevronRight } from "lucide-react";
+import { AiButton } from "@/components/admin/ai/ai-button";
+import { useAi } from "@/components/admin/ai/use-ai";
 
 interface Category {
   id: string;
@@ -10,6 +12,21 @@ interface Category {
   description?: string | null;
   parentId?: string | null;
   createdAt: Date;
+}
+
+function DescriptionGenerator({ name, parentName, onGenerated }: { name: string; parentName?: string; onGenerated: (d: string) => void }) {
+  const { loading, error, run } = useAi();
+  async function generate() {
+    if (!name) return;
+    const result = await run("category-description", { name, parent: parentName ?? "" });
+    if (result) onGenerated(result.trim());
+  }
+  return (
+    <div className="flex items-center gap-1.5">
+      <AiButton onClick={generate} loading={loading} label="AI" />
+      {error && <span className="text-xs text-red-600">{error}</span>}
+    </div>
+  );
 }
 
 export function CategoriesManager({ initial }: { initial: Category[] }) {
@@ -85,7 +102,14 @@ export function CategoriesManager({ initial }: { initial: Category[] }) {
             </select>
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-neutral-600">Description</label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-medium text-neutral-600">Description</label>
+              <DescriptionGenerator
+                name={name}
+                parentName={roots.find((r) => r.id === parentId)?.name}
+                onGenerated={setDescription}
+              />
+            </div>
             <input value={description} onChange={(e) => setDescription(e.target.value)} className={inputClass + " w-full"} placeholder="Optional" />
           </div>
           <div className="sm:col-span-2 lg:col-span-4 flex justify-end">
