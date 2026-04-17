@@ -69,20 +69,4 @@ export async function complete(
   return response.choices[0]?.message?.content ?? "";
 }
 
-/** Strip HTML tags and collapse whitespace for sending to AI */
-export function stripHtml(html: string, maxChars = 2000): string {
-  return html
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, maxChars);
-}
-
-/** Parse JSON from an LLM response that may include markdown code fences */
-export function extractJson(raw: string): string {
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) return fenced[1].trim();
-  const jsonLike = raw.match(/[\[{][\s\S]*[\]}]/);
-  if (jsonLike) return jsonLike[0];
-  return raw.trim();
-}
+export { stripHtml, extractJson } from "@/lib/ai-utils";

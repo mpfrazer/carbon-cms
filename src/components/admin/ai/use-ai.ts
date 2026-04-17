@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { extractJson } from "@/lib/ai-client";
+import { extractJson } from "@/lib/ai-utils";
 
 type AiTask = "test" | "excerpt" | "seo" | "tags" | "category" | "titles" | "outline" | "improve" | "category-description";
 
