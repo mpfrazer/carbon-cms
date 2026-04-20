@@ -16,7 +16,11 @@ export interface AiConfig {
 
 export async function getAiConfig(): Promise<AiConfig> {
   const rows = await db.select().from(settings).where(inArray(settings.key, AI_KEYS));
-  const raw = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  const raw = Object.fromEntries(
+    rows.map((r) => {
+      try { return [r.key, JSON.parse(r.value)]; } catch { return [r.key, r.value]; }
+    })
+  );
 
   const provider = raw.aiProvider || "";
   const apiKey = raw.aiApiKey || "";
