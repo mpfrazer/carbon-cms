@@ -23,7 +23,7 @@ export function useAi() {
         setError(json.error ?? "AI request failed");
         return null;
       }
-      return json.result as string;
+      return json.data?.result as string;
     } catch {
       setError("Network error");
       return null;

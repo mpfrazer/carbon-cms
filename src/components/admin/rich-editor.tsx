@@ -104,7 +104,7 @@ export function RichEditor({ value, onChange, placeholder = "Write your content 
         setAiError(json.error ?? "AI request failed");
         return;
       }
-      const improved: string = json.result?.trim() ?? "";
+      const improved: string = json.data?.result?.trim() ?? "";
       if (improved) {
         editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, improved).run();
       }
