@@ -75,10 +75,10 @@ export function SettingsForm({ initialSettings }: { initialSettings: Settings })
         body: JSON.stringify({ task: "test", ctx: {} }),
       });
       const json = await res.json();
-      if (res.ok && json.result?.toLowerCase().includes("ok")) {
+      if (res.ok && json.data?.result?.toLowerCase().includes("ok")) {
         setAiTestResult({ ok: true, message: "Connected successfully." });
       } else {
-        setAiTestResult({ ok: false, message: json.error ?? json.result ?? "Unexpected response." });
+        setAiTestResult({ ok: false, message: json.error ?? json.data?.result ?? "Unexpected response." });
       }
     } catch {
       setAiTestResult({ ok: false, message: "Network error." });
