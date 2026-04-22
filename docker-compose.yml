@@ -1,0 +1,68 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: carbon
+      POSTGRES_USER: carbon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-carbon}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carbon"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./packages/api
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://carbon:${POSTGRES_PASSWORD:-carbon}@db:5432/carbon
+      AUTH_SECRET: ${AUTH_SECRET}
+      CARBON_INTERNAL_SECRET: ${CARBON_INTERNAL_SECRET}
+      CARBON_FRONTEND_URL: http://frontend:3003
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  admin:
+    build:
+      context: ./packages/admin
+      dockerfile: Dockerfile
+    environment:
+      CARBON_API_URL: http://api:3001
+      AUTH_SECRET: ${AUTH_SECRET}
+      CARBON_INTERNAL_SECRET: ${CARBON_INTERNAL_SECRET}
+      NEXTAUTH_URL: ${ADMIN_URL:-http://localhost:3002}
+      NODE_ENV: production
+    ports:
+      - "3002:3002"
+    depends_on:
+      - api
+
+  frontend:
+    build:
+      context: ./packages/frontend
+      dockerfile: Dockerfile
+    environment:
+      CARBON_API_URL: http://api:3001
+      CARBON_INTERNAL_SECRET: ${CARBON_INTERNAL_SECRET}
+      CARBON_RENDER_MODE: ${CARBON_RENDER_MODE:-ssr}
+      NEXTAUTH_URL: ${FRONTEND_URL:-http://localhost:3003}
+      NODE_ENV: production
+    volumes:
+      - themes:/app/src/themes
+    ports:
+      - "3003:3003"
+    depends_on:
+      - api
+
+volumes:
+  db_data:
+  themes:
