@@ -4,7 +4,7 @@ const internalSecret = process.env.CARBON_INTERNAL_SECRET ?? "";
 export async function apiFetch(path: string): Promise<Response> {
   return fetch(`${apiUrl}${path}`, {
     headers: { "X-Carbon-Internal": internalSecret },
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
 }
 
