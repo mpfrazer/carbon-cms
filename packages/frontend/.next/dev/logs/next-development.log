@@ -1,0 +1,33 @@
+{"timestamp":"00:00:01.531","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:01.531","source":"Server","level":"LOG","message":"  We detected TypeScript in your project and reconfigured your tsconfig.json file for you."}
+{"timestamp":"00:00:01.532","source":"Server","level":"LOG","message":"  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:\n"}
+{"timestamp":"00:00:01.532","source":"Server","level":"LOG","message":"  \t- include was updated to add '.next/dev/types/**/*.ts'"}
+{"timestamp":"00:00:01.533","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:02.193","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:01:16.651","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/settings?keys=siteTitle"}
+{"timestamp":"00:01:16.670","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/settings?keys=siteTitle,siteDescription,siteUrl"}
+{"timestamp":"00:01:16.737","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/settings?keys=siteTitle,siteDescription,siteUrl"}
+{"timestamp":"00:01:18.163","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:01:18.466","source":"Browser","level":"ERROR","message":"uncaughtError: Error: API error 500 for /api/v1/settings?keys=siteTitle"}
+{"timestamp":"00:01:18.726","source":"Server","level":"ERROR","message":"[browser] \"\\u001b[31mUncaught Error: API error 500 for /api/v1/settings?keys=siteTitle\\u001b[39m\\n\\u001b[31m    at apiGet (src/lib/api.ts:13:22)\\n    at  FrontendLayout (src/app/(frontend)/layout.tsx:7:48)\\u001b[39m\\n  11 | export async function apiGet<T>(path: string): Promise<T> {\\n  12 |   const res = await apiFetch(path);\\n> 13 |   if (!res.ok) throw new Error(`API error ${res.status} for ${path}`);\\n     |                      ^\\n  14 |   return res.json();\\n  15 | }\\n  16 |\""}
+{"timestamp":"00:01:18.727","source":"Browser","level":"ERROR","message":"\u001b[31mUncaught Error: API error 500 for /api/v1/settings?keys=siteTitle\u001b[39m\n\u001b[31m    at apiGet (src/lib/api.ts:13:22)\n    at  FrontendLayout (src/app/(frontend)/layout.tsx:7:48)\u001b[39m\n  11 | export async function apiGet<T>(path: string): Promise<T> {\n  12 |   const res = await apiFetch(path);\n> 13 |   if (!res.ok) throw new Error(`API error ${res.status} for ${path}`);\n     |                      ^\n  14 |   return res.json();\n  15 | }\n  16 |"}
+{"timestamp":"00:01:20.650","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/settings?keys=siteTitle"}
+{"timestamp":"00:01:20.691","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/pages?status=published&pageSize=50"}
+{"timestamp":"00:01:20.699","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/pages?status=published&pageSize=50"}
+{"timestamp":"00:02:32.945","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:02:32.947","source":"Server","level":"LOG","message":"Could not open api.ts in the editor."}
+{"timestamp":"00:02:32.948","source":"Server","level":"LOG","message":"The editor process exited with an error: Terminal editors can only be used on macOS."}
+{"timestamp":"00:02:32.948","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:02:32.948","source":"Server","level":"LOG","message":"To set up the editor integration, add something like REACT_EDITOR=atom to the .env.local file in your project folder and restart the development server."}
+{"timestamp":"00:02:32.949","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:07:05.410","source":"Server","level":"LOG","message":"✓ Compiled in 120ms"}
+{"timestamp":"00:07:07.430","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/settings?keys=siteTitle,siteDescription,siteUrl"}
+{"timestamp":"00:07:07.470","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/settings?keys=siteTitle"}
+{"timestamp":"00:07:07.477","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/settings?keys=siteTitle,siteDescription,siteUrl"}
+{"timestamp":"00:07:08.667","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:07:09.126","source":"Browser","level":"ERROR","message":"uncaughtError: Error: API error 500 for /api/v1/settings?keys=siteTitle"}
+{"timestamp":"00:07:09.312","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/settings?keys=siteTitle"}
+{"timestamp":"00:07:09.332","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/pages?status=published&pageSize=50"}
+{"timestamp":"00:07:09.409","source":"Server","level":"ERROR","message":"⨯ Error: API error 500 for /api/v1/pages?status=published&pageSize=50"}
+{"timestamp":"01:08:11.183","source":"Server","level":"ERROR","message":"[browser] \"\\u001b[31mUncaught Error: API error 500 for /api/v1/settings?keys=siteTitle\\u001b[39m\\n\\u001b[31m    at apiGet (src/lib/api.ts:13:22)\\n    at  FrontendLayout (src/app/(frontend)/layout.tsx:7:48)\\u001b[39m\\n  11 | export async function apiGet<T>(path: string): Promise<T> {\\n  12 |   const res = await apiFetch(path);\\n> 13 |   if (!res.ok) throw new Error(`API error ${res.status} for ${path}`);\\n     |                      ^\\n  14 |   return res.json();\\n  15 | }\\n  16 |\""}
+{"timestamp":"01:08:11.185","source":"Browser","level":"ERROR","message":"\u001b[31mUncaught Error: API error 500 for /api/v1/settings?keys=siteTitle\u001b[39m\n\u001b[31m    at apiGet (src/lib/api.ts:13:22)\n    at  FrontendLayout (src/app/(frontend)/layout.tsx:7:48)\u001b[39m\n  11 | export async function apiGet<T>(path: string): Promise<T> {\n  12 |   const res = await apiFetch(path);\n> 13 |   if (!res.ok) throw new Error(`API error ${res.status} for ${path}`);\n     |                      ^\n  14 |   return res.json();\n  15 | }\n  16 |"}

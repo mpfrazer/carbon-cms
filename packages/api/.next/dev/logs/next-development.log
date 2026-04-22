@@ -1,0 +1,38 @@
+{"timestamp":"00:00:02.592","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:02.592","source":"Server","level":"LOG","message":"  We detected TypeScript in your project and reconfigured your tsconfig.json file for you."}
+{"timestamp":"00:00:02.592","source":"Server","level":"LOG","message":"  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:\n"}
+{"timestamp":"00:00:02.593","source":"Server","level":"LOG","message":"  \t- include was updated to add '.next/dev/types/**/*.ts'"}
+{"timestamp":"00:00:02.593","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:02.639","source":"Server","level":"WARN","message":"⚠ The \"middleware\" file convention is deprecated. Please use \"proxy\" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy"}
+{"timestamp":"00:00:02.800","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:01:15.118","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:15.133","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:15.144","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:15.152","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:15.170","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:16.617","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:16.638","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:20.357","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:20.371","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:20.384","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:20.405","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:20.543","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:01:20.574","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:06:57.600","source":"Server","level":"LOG","message":"✓ Compiled in 474ms"}
+{"timestamp":"00:07:06.853","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:06.908","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:06.962","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:06.988","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:07.015","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:07.350","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:07.393","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:08.939","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:08.976","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:09.015","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:09.102","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:09.222","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"00:07:09.338","source":"Server","level":"ERROR","message":"⨯ Error: DATABASE_URL environment variable is not set"}
+{"timestamp":"01:09:57.464","source":"Server","level":"ERROR","message":"Error: Both middleware file \"./src/middleware.ts\" and proxy file \"./src/proxy.ts\" are detected. Please use \"./src/proxy.ts\" only. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy"}
+{"timestamp":"01:09:57.473","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection:\" Error: Both middleware file \"./src/middleware.ts\" and proxy file \"./src/proxy.ts\" are detected. Please use \"./src/proxy.ts\" only. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy"}
+{"timestamp":"01:09:57.480","source":"Server","level":"ERROR","message":"⨯ \"unhandledRejection: \" Error: Both middleware file \"./src/middleware.ts\" and proxy file \"./src/proxy.ts\" are detected. Please use \"./src/proxy.ts\" only. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy"}
+{"timestamp":"01:10:05.533","source":"Server","level":"LOG","message":"○ Compiling proxy ..."}
