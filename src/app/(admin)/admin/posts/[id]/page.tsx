@@ -8,18 +8,18 @@ import { notFound } from "next/navigation";
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const [[post], allCategories, allTags, postCats, postTagRows] = await Promise.all([
+  const [[post], postCats, postTagRows, allCategories, allTags] = await Promise.all([
     db.select().from(posts).where(eq(posts.id, id)).limit(1),
-    db.select({ id: categories.id, name: categories.name }).from(categories).orderBy(asc(categories.name)),
-    db.select({ id: tags.id, name: tags.name }).from(tags).orderBy(asc(tags.name)),
-    db.select({ id: categories.id, name: categories.name })
+    db.select({ id: categories.id, name: categories.name, slug: categories.slug })
       .from(postCategories)
       .innerJoin(categories, eq(postCategories.categoryId, categories.id))
       .where(eq(postCategories.postId, id)),
-    db.select({ id: tags.id, name: tags.name })
+    db.select({ id: tags.id, name: tags.name, slug: tags.slug })
       .from(postTags)
       .innerJoin(tags, eq(postTags.tagId, tags.id))
       .where(eq(postTags.postId, id)),
+    db.select({ id: categories.id, name: categories.name }).from(categories).orderBy(asc(categories.name)).limit(200),
+    db.select({ id: tags.id, name: tags.name }).from(tags).orderBy(asc(tags.name)).limit(200),
   ]);
 
   if (!post) notFound();

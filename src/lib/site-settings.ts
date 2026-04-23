@@ -13,7 +13,11 @@ export async function getSiteSettings(): Promise<SiteSettings> {
   const rows = await db.select().from(settings).where(eq(settings.autoload, true));
   const raw = Object.fromEntries(
     rows.map((r) => {
-      try { return [r.key, JSON.parse(r.value)]; } catch { return [r.key, r.value]; }
+      try {
+        return [r.key, JSON.parse(r.value)];
+      } catch {
+        return [r.key, r.value];
+      }
     })
   );
   return {

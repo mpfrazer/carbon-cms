@@ -5,11 +5,11 @@ import { categories } from "@/lib/db/schema";
 import { asc } from "drizzle-orm";
 
 export default async function CategoriesPage() {
-  const initial = await db.select().from(categories).orderBy(asc(categories.name));
+  const rows = await db.select().from(categories).orderBy(asc(categories.name)).limit(200);
   return (
     <div>
       <Header title="Categories" />
-      <CategoriesManager initial={initial} />
+      <CategoriesManager initial={rows} />
     </div>
   );
 }

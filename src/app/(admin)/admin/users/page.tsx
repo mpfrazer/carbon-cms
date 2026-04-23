@@ -8,8 +8,8 @@ export default async function UsersPage() {
   const rows = await db
     .select({ id: users.id, name: users.name, email: users.email, role: users.role, createdAt: users.createdAt })
     .from(users)
-    .orderBy(desc(users.createdAt));
-
+    .orderBy(desc(users.createdAt))
+    .limit(200);
   return (
     <div>
       <Header title="Users" />

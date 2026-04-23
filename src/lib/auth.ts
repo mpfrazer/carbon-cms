@@ -24,26 +24,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const { email, password } = parsed.data;
 
-        const user = await db
+        const [user] = await db
           .select()
           .from(users)
           .where(eq(users.email, email))
           .limit(1);
 
-        if (!user[0]) return null;
+        if (!user) return null;
 
-        const passwordValid = await bcrypt.compare(
-          password,
-          user[0].passwordHash
-        );
+        const passwordValid = await bcrypt.compare(password, user.passwordHash);
         if (!passwordValid) return null;
 
-        return {
-          id: user[0].id,
-          email: user[0].email,
-          name: user[0].name,
-          role: user[0].role,
-        };
+        return { id: user.id, email: user.email, name: user.name, role: user.role };
       },
     }),
   ],
@@ -64,7 +56,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-  pages: {
-    signIn: "/admin/login",
-  },
+  pages: { signIn: "/admin/login" },
 });

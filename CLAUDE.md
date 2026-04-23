@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Carbon is a lightweight, open-source CMS built as a modern alternative to WordPress and Drupal. It is API-first, self-hostable, and designed to be embedded inside a Next.js application. The goal is a batteries-included CMS that is fast, clean, and not bloated — with a built-in admin UI, a versioned REST API, and an optional template/theme engine for those who want a turnkey frontend.
+Carbon is a lightweight, open-source CMS built as a modern alternative to WordPress and Drupal. It is API-first, self-hostable, and ships as a single deployable unit. **The overarching goal is a CMS that anyone can install and run — no engineering background required.** Distribution targets include one-click deploys (Railway, Render, Vercel) and a guided `docker-compose`-based self-hosted install. The goal is a batteries-included CMS that is fast, clean, and not bloated — with a built-in admin UI, a versioned REST API, and a runtime-swappable theme engine.
 
 The name comes from carbon — the most fundamental building block of organic life, and the material in graphite that makes every pencil and printing press possible. Everything written traces back to carbon.
 

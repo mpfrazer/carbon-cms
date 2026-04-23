@@ -8,6 +8,7 @@ interface Settings {
   siteUrl?: string;
   adminEmail?: string;
   postsPerPage?: number;
+  renderMode?: "ssr" | "csr";
   allowComments?: boolean;
   commentModeration?: boolean;
   aiProvider?: string;
@@ -232,6 +233,52 @@ export function SettingsForm({ initialSettings }: { initialSettings: Settings })
                 {aiTestResult.ok ? "✓" : "✗"} {aiTestResult.message}
               </span>
             )}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Performance</h2>
+            <p className="mt-1 text-xs text-neutral-500">Controls how your public site renders pages to visitors.</p>
+          </div>
+          <div className="space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="renderMode"
+                value="ssr"
+                checked={(settings.renderMode ?? "ssr") === "ssr"}
+                onChange={() => setSettings({ ...settings, renderMode: "ssr" })}
+                className="mt-0.5 h-4 w-4 border-neutral-300"
+              />
+              <div>
+                <span className="block text-sm font-medium text-neutral-700">Server-Side Rendering (SSR)</span>
+                <span className="block text-xs text-neutral-500 mt-0.5">
+                  Pages are built on the server each time a visitor loads them. Theme changes go live immediately without a rebuild.
+                  Uses more server resources and pages are not cached at the edge.
+                </span>
+              </div>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="renderMode"
+                value="csr"
+                checked={settings.renderMode === "csr"}
+                onChange={() => setSettings({ ...settings, renderMode: "csr" })}
+                className="mt-0.5 h-4 w-4 border-neutral-300"
+              />
+              <div>
+                <span className="block text-sm font-medium text-neutral-700">Static / Client-Side Rendering (CSR)</span>
+                <span className="block text-xs text-neutral-500 mt-0.5">
+                  Pages are pre-built and served as static files from a CDN. Faster page loads and lower server load,
+                  but theme changes require a rebuild (typically 15–60 seconds) before they appear.
+                </span>
+              </div>
+            </label>
+            <p className="text-xs text-neutral-400">
+              If you are unsure, start with SSR. You can switch to CSR later when you are ready to optimise for performance.
+            </p>
           </div>
         </section>
 

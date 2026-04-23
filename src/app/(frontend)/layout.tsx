@@ -1,20 +1,24 @@
-import { SiteLayout } from "@/themes/default/layout";
+import { getThemeComponents } from "@/lib/theme-provider";
 import { getSiteSettings } from "@/lib/site-settings";
 import { db } from "@/lib/db";
 import { pages } from "@/lib/db/schema";
-import { eq, isNull, asc, and } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
-  const [siteSettings, navPages] = await Promise.all([
+  const [{ SiteLayout }, { siteTitle }, navPages] = await Promise.all([
+    getThemeComponents(),
     getSiteSettings(),
     db.select({ slug: pages.slug, title: pages.title })
       .from(pages)
-      .where(and(eq(pages.status, "published"), isNull(pages.parentId)))
-      .orderBy(asc(pages.menuOrder), asc(pages.title)),
+      .where(eq(pages.status, "published"))
+      .orderBy(asc(pages.menuOrder), asc(pages.title))
+      .limit(50),
   ]);
 
+  const filteredPages = navPages.filter((p) => p.slug !== "home");
+
   return (
-    <SiteLayout siteTitle={siteSettings.siteTitle} navPages={navPages}>
+    <SiteLayout siteTitle={siteTitle} navPages={filteredPages}>
       {children}
     </SiteLayout>
   );

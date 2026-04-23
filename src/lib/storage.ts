@@ -9,17 +9,13 @@ const s3 = new S3Client({
 });
 
 const bucket = process.env.AWS_S3_BUCKET!;
-// Public base URL for objects, e.g. https://my-bucket.s3.us-east-1.amazonaws.com
-// or a CloudFront distribution URL. Trailing slash optional.
-const urlBase = (process.env.AWS_S3_URL_BASE ?? `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com`).replace(/\/$/, "");
+const urlBase = (
+  process.env.AWS_S3_URL_BASE ??
+  `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com`
+).replace(/\/$/, "");
 
 export async function uploadFile(key: string, buffer: Buffer, mimeType: string): Promise<string> {
-  await s3.send(new PutObjectCommand({
-    Bucket: bucket,
-    Key: key,
-    Body: buffer,
-    ContentType: mimeType,
-  }));
+  await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: buffer, ContentType: mimeType }));
   return `${urlBase}/${key}`;
 }
 

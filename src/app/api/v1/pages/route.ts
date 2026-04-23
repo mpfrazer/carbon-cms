@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { desc, eq, count, and, like } from "drizzle-orm";
+import { desc, asc, eq, count, and, like } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { pages } from "@/lib/db/schema";
@@ -22,6 +22,16 @@ const createPageSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
+
+    // ?hierarchy=true returns a flat list of {id, title} for parent-page selectors
+    if (searchParams.get("hierarchy") === "true") {
+      const rows = await db
+        .select({ id: pages.id, title: pages.title })
+        .from(pages)
+        .orderBy(asc(pages.title));
+      return ok(rows);
+    }
+
     const { page, pageSize, offset } = parsePagination(searchParams);
     const status = searchParams.get("status");
     const search = searchParams.get("search");

@@ -28,8 +28,7 @@ export function buildPrompt(task: AiTask, ctx: AiContext): BuiltPrompt {
 
     case "excerpt":
       return {
-        system:
-          "You are a skilled content editor. Respond with only the excerpt text — no quotes, labels, or explanation.",
+        system: "You are a skilled content editor. Respond with only the excerpt text — no quotes, labels, or explanation.",
         user: `Write a compelling excerpt for a blog post. Keep it to 1–2 sentences and under 280 characters. Focus on what the reader will learn or gain.
 
 Post title: ${ctx.title}
@@ -40,8 +39,7 @@ ${ctx.content}`,
 
     case "seo":
       return {
-        system:
-          "You are an SEO expert. Respond with ONLY a valid JSON object — no explanation, no code fences.",
+        system: "You are an SEO expert. Respond with ONLY a valid JSON object — no explanation, no code fences.",
         user: `Generate an SEO-optimized meta title and description for this content.
 
 Requirements:
@@ -58,8 +56,7 @@ Respond with exactly: {"metaTitle":"...","metaDescription":"..."}`,
 
     case "tags":
       return {
-        system:
-          "You are a content categorization expert. Respond with ONLY a valid JSON array of strings — no explanation.",
+        system: "You are a content categorization expert. Respond with ONLY a valid JSON array of strings — no explanation.",
         user: `Suggest the most relevant tags for this blog post.
 
 Post title: ${ctx.title}
@@ -76,8 +73,7 @@ Rules:
 
     case "category":
       return {
-        system:
-          "You are a content categorization expert. Respond with ONLY a valid JSON array of category names — no explanation.",
+        system: "You are a content categorization expert. Respond with ONLY a valid JSON array of category names — no explanation.",
         user: `Which categories best fit this blog post?
 
 Post title: ${ctx.title}
@@ -94,8 +90,7 @@ Rules:
 
     case "titles":
       return {
-        system:
-          "You are a creative content writer. Respond with ONLY a valid JSON array of exactly 5 strings — no explanation.",
+        system: "You are a creative content writer. Respond with ONLY a valid JSON array of exactly 5 strings — no explanation.",
         user: `Generate 5 alternative title options for this blog post.
 
 Current title: ${ctx.currentTitle}
@@ -110,8 +105,7 @@ Requirements:
 
     case "outline":
       return {
-        system:
-          "You are a content strategist. Respond with only valid HTML using only h2, h3, p, ul, and li tags.",
+        system: "You are a content strategist. Respond with only valid HTML using only h2, h3, p, ul, and li tags.",
         user: `Create a structured blog post outline for the title: "${ctx.title}"
 ${ctx.notes ? `\nTopic notes: ${ctx.notes}` : ""}
 
@@ -137,20 +131,17 @@ Use only HTML tags: <h2>, <h3>, <p>, <ul>, <li>. No other tags.`,
       };
       const instruction = actions[ctx.action] ?? actions.improve;
       return {
-        system:
-          "You are an expert editor. Respond with ONLY the revised text — no explanation, no quotes, no labels.",
+        system: "You are an expert editor. Respond with ONLY the revised text — no explanation, no quotes, no labels.",
         user: `${instruction}
 
-${ctx.context ? `Surrounding context (do not rewrite this):\n"${ctx.context}"\n` : ""}
-Text to rewrite:
+${ctx.context ? `Surrounding context (do not rewrite this):\n"${ctx.context}"\n` : ""}Text to rewrite:
 "${ctx.selectedText}"`,
       };
     }
 
     case "category-description":
       return {
-        system:
-          "You are a content strategist. Respond with only the description text — no quotes or labels.",
+        system: "You are a content strategist. Respond with only the description text — no quotes or labels.",
         user: `Write a brief, clear description (1–2 sentences) for a blog category named "${ctx.name}"${
           ctx.parent ? `, which is a subcategory of "${ctx.parent}"` : ""
         }. Describe what types of content belong in this category.`,

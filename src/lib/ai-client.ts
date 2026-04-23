@@ -22,9 +22,7 @@ export async function getAiConfig(): Promise<AiConfig> {
   const apiKey = raw.aiApiKey || "";
   const model = raw.aiModel || "";
   const baseUrl = raw.aiBaseUrl || "";
-
-  const configured =
-    !!provider && !!model && (provider === "ollama" || !!apiKey);
+  const configured = !!provider && !!model && (provider === "ollama" || !!apiKey);
 
   return { provider, baseUrl, model, apiKey, configured };
 }
@@ -36,9 +34,7 @@ export async function complete(
 ): Promise<string> {
   const config = await getAiConfig();
 
-  if (!config.configured) {
-    throw new Error("AI_NOT_CONFIGURED");
-  }
+  if (!config.configured) throw new Error("AI_NOT_CONFIGURED");
 
   if (config.provider === "anthropic") {
     const client = new Anthropic({ apiKey: config.apiKey });

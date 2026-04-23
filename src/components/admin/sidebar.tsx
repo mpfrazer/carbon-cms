@@ -15,6 +15,7 @@ import {
   UserCircle,
   Tag,
   FolderOpen,
+  Palette,
 } from "lucide-react";
 
 const navItems = [
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/admin/media", label: "Media", icon: Image },
   { href: "/admin/comments", label: "Comments", icon: MessageSquare },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/themes", label: "Themes", icon: Palette },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/profile", label: "My Profile", icon: UserCircle },
 ];

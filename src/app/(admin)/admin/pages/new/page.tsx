@@ -6,7 +6,6 @@ import { asc } from "drizzle-orm";
 
 export default async function NewPagePage() {
   const allPages = await db.select({ id: pages.id, title: pages.title }).from(pages).orderBy(asc(pages.title));
-
   return (
     <div>
       <Header title="New Page" />

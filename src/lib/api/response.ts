@@ -26,18 +26,14 @@ export function conflict(message: string) {
 
 export function serverError(error?: unknown) {
   if (error) console.error("[serverError]", error);
-  const message = process.env.NODE_ENV === "development" && error instanceof Error
-    ? error.message
-    : "Internal server error";
+  const message =
+    process.env.NODE_ENV === "development" && error instanceof Error
+      ? error.message
+      : "Internal server error";
   return NextResponse.json({ error: message }, { status: 500 });
 }
 
-export function paginated<T>(
-  data: T[],
-  total: number,
-  page: number,
-  pageSize: number
-) {
+export function paginated<T>(data: T[], total: number, page: number, pageSize: number) {
   return NextResponse.json({
     data,
     pagination: {

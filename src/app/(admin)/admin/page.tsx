@@ -4,7 +4,7 @@ import { posts, pages, comments, users, media } from "@/lib/db/schema";
 import { count, eq } from "drizzle-orm";
 import { FileText, File, MessageSquare, Users, Image } from "lucide-react";
 
-async function getStats() {
+export default async function DashboardPage() {
   const [
     [{ value: totalPosts }],
     [{ value: publishedPosts }],
@@ -21,18 +21,12 @@ async function getStats() {
     db.select({ value: count() }).from(media),
   ]);
 
-  return { totalPosts, publishedPosts, totalPages, pendingComments, totalUsers, totalMedia };
-}
-
-export default async function DashboardPage() {
-  const stats = await getStats();
-
   const cards = [
-    { label: "Total Posts", value: stats.totalPosts, sub: `${stats.publishedPosts} published`, icon: FileText, href: "/admin/posts" },
-    { label: "Pages", value: stats.totalPages, sub: "all pages", icon: File, href: "/admin/pages" },
-    { label: "Comments", value: stats.pendingComments, sub: "awaiting moderation", icon: MessageSquare, href: "/admin/comments" },
-    { label: "Users", value: stats.totalUsers, sub: "team members", icon: Users, href: "/admin/users" },
-    { label: "Media", value: stats.totalMedia, sub: "uploaded files", icon: Image, href: "/admin/media" },
+    { label: "Total Posts", value: totalPosts, sub: `${publishedPosts} published`, icon: FileText, href: "/admin/posts" },
+    { label: "Pages", value: totalPages, sub: "all pages", icon: File, href: "/admin/pages" },
+    { label: "Comments", value: pendingComments, sub: "awaiting moderation", icon: MessageSquare, href: "/admin/comments" },
+    { label: "Users", value: totalUsers, sub: "team members", icon: Users, href: "/admin/users" },
+    { label: "Media", value: totalMedia, sub: "uploaded files", icon: Image, href: "/admin/media" },
   ];
 
   return (
