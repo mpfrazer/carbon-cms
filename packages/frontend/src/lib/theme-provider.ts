@@ -3,9 +3,7 @@ import { apiGet } from "@/lib/api/client";
 
 export interface ThemeComponents {
   SiteLayout: ComponentType<{ siteTitle: string; navPages: { slug: string; title: string }[]; children: React.ReactNode }>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   BlogIndex: ComponentType<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   BlogPost: ComponentType<any>;
   PageContent: ComponentType<{ title: string; content: string; updatedAt: Date }>;
 }

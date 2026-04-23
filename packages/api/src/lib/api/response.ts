@@ -46,11 +46,10 @@ export function paginated<T>(data: T[], total: number, page: number, pageSize: n
 }
 
 export function parsePagination(searchParams: URLSearchParams) {
-  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
-  const pageSize = Math.min(
-    100,
-    Math.max(1, parseInt(searchParams.get("pageSize") ?? "20", 10))
-  );
+  const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
+  const rawSize = parseInt(searchParams.get("pageSize") ?? "20", 10);
+  const page = Math.max(1, isNaN(rawPage) ? 1 : rawPage);
+  const pageSize = Math.min(100, Math.max(1, isNaN(rawSize) ? 20 : rawSize));
   const offset = (page - 1) * pageSize;
   return { page, pageSize, offset };
 }
