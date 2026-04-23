@@ -8,7 +8,7 @@ const PUBLIC_GET_PREFIXES = [
   "/api/v1/settings",
 ];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (!pathname.startsWith("/api/v1")) return NextResponse.next();
   if (pathname === "/api/v1/auth/login") return NextResponse.next();
