@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { desc, eq, count, and, like } from "drizzle-orm";
+import { desc, eq, count, and, like, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { posts, postCategories, postTags } from "@/lib/db/schema";
+import { posts, postCategories, postTags, categories } from "@/lib/db/schema";
 import {
   ok,
   created,
@@ -54,7 +54,22 @@ export async function GET(req: NextRequest) {
       db.select({ value: count() }).from(posts).where(where),
     ]);
 
-    return paginated(rows, total, page, pageSize);
+    if (rows.length === 0) return paginated([], total, page, pageSize);
+
+    const catRows = await db
+      .select({ postId: postCategories.postId, id: categories.id, name: categories.name, slug: categories.slug })
+      .from(postCategories)
+      .innerJoin(categories, eq(postCategories.categoryId, categories.id))
+      .where(inArray(postCategories.postId, rows.map((r) => r.id)));
+
+    const catsByPost = new Map<string, { id: string; name: string; slug: string }[]>();
+    for (const row of catRows) {
+      const list = catsByPost.get(row.postId) ?? [];
+      list.push({ id: row.id, name: row.name, slug: row.slug });
+      catsByPost.set(row.postId, list);
+    }
+
+    return paginated(rows.map((p) => ({ ...p, categories: catsByPost.get(p.id) ?? [] })), total, page, pageSize);
   } catch (e) {
     return serverError(e);
   }

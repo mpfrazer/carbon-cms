@@ -44,7 +44,7 @@ export function BlogIndex({ posts, page, totalPages }: BlogIndexProps) {
                     <span className="text-sm text-neutral-400">{post.authorName}</span>
                   </>
                 )}
-                {post.categories.map((cat) => (
+                {(post.categories ?? []).map((cat) => (
                   <span key={cat.id} className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-600">
                     {cat.name}
                   </span>
