@@ -65,7 +65,12 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label htmlFor="password" className="block text-sm font-medium text-neutral-700">Password</label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="block text-sm font-medium text-neutral-700">Password</label>
+              <Link href="/admin/forgot-password" className="text-xs text-neutral-500 hover:text-neutral-700 underline underline-offset-2">
+                Forgot password?
+              </Link>
+            </div>
             <input id="password" name="password" type="password" required autoComplete="current-password"
               className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
               placeholder="••••••••" />
@@ -76,6 +81,10 @@ export default function LoginPage() {
             {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
+
+        {searchParams.get("reset") === "1" && (
+          <p className="mt-4 text-center text-sm text-green-700">Password reset successfully. You can now sign in.</p>
+        )}
 
         {searchParams.get("setup") === "1" && (
           <p className="mt-4 text-center text-sm text-green-700">Admin account created. You can now sign in.</p>
