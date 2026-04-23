@@ -10,9 +10,12 @@ const updateUserSchema = z.object({
   email: z.string().email().optional(),
   name: z.string().min(1).max(200).optional(),
   password: z.string().min(8).optional(),
-  role: z.enum(["admin", "editor", "author"]).optional(),
-  bio: z.string().optional().nullable(),
-  avatarUrl: z.string().url().optional().nullable(),
+  role: z.enum(["admin", "editor", "author", "subscriber"]).optional(),
+  bio: z.string().nullable().optional(),
+  website: z.string().url().nullable().optional(),
+  avatarUrl: z.string().url().nullable().optional(),
+  suspended: z.boolean().optional(),
+  emailVerified: z.boolean().optional(),
 });
 
 type Params = { params: Promise<{ id: string }> };
@@ -47,15 +50,30 @@ export async function PUT(req: NextRequest, { params }: Params) {
       if (emailConflict) return conflict("Email is already in use");
     }
 
-    const { password, ...rest } = parsed.data;
+    const { password, suspended: suspendedValue, emailVerified: emailVerifiedValue, ...rest } = parsed.data;
     const updates: Record<string, unknown> = { ...rest, updatedAt: new Date() };
     if (password) updates.passwordHash = await bcrypt.hash(password, 12);
+    if (suspendedValue !== undefined) {
+      updates.suspended = suspendedValue;
+      updates.suspendedAt = suspendedValue ? new Date() : null;
+    }
+    if (emailVerifiedValue !== undefined) {
+      updates.emailVerified = emailVerifiedValue ? new Date() : null;
+      if (emailVerifiedValue) {
+        updates.emailVerificationToken = null;
+        updates.emailVerificationExpiry = null;
+      }
+    }
 
     const [updated] = await db
       .update(users)
       .set(updates)
       .where(eq(users.id, id))
-      .returning({ id: users.id, email: users.email, name: users.name, role: users.role, avatarUrl: users.avatarUrl, bio: users.bio, updatedAt: users.updatedAt });
+      .returning({
+        id: users.id, email: users.email, name: users.name, role: users.role,
+        avatarUrl: users.avatarUrl, bio: users.bio, website: users.website,
+        suspended: users.suspended, emailVerified: users.emailVerified, updatedAt: users.updatedAt,
+      });
 
     return ok(updated);
   } catch (e) {

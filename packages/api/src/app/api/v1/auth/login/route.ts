@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -25,6 +25,14 @@ export async function POST(req: NextRequest) {
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) return badRequest("Invalid credentials");
+
+    if (user.suspended) {
+      return NextResponse.json({ error: "This account has been suspended." }, { status: 403 });
+    }
+
+    if (user.emailVerificationToken !== null && !user.emailVerified) {
+      return NextResponse.json({ error: "Please verify your email address before logging in." }, { status: 403 });
+    }
 
     return ok({ id: user.id, email: user.email, name: user.name, role: user.role });
   } catch (e) {

@@ -10,7 +10,7 @@ const createUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1).max(200),
   password: z.string().min(8),
-  role: z.enum(["admin", "editor", "author"]).default("author"),
+  role: z.enum(["admin", "editor", "author", "subscriber"]).default("author"),
   bio: z.string().optional(),
 });
 
@@ -18,15 +18,20 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
     const { page, pageSize, offset } = parsePagination(searchParams);
+    const role = searchParams.get("role") as "admin" | "editor" | "author" | "subscriber" | null;
+
+    const where = role ? eq(users.role, role) : undefined;
+
+    const cols = {
+      id: users.id, email: users.email, name: users.name, role: users.role,
+      avatarUrl: users.avatarUrl, bio: users.bio, website: users.website,
+      emailVerified: users.emailVerified, suspended: users.suspended,
+      createdAt: users.createdAt,
+    };
 
     const [rows, [{ value: total }]] = await Promise.all([
-      db
-        .select({ id: users.id, email: users.email, name: users.name, role: users.role, avatarUrl: users.avatarUrl, bio: users.bio, createdAt: users.createdAt })
-        .from(users)
-        .orderBy(desc(users.createdAt))
-        .limit(pageSize)
-        .offset(offset),
-      db.select({ value: count() }).from(users),
+      db.select(cols).from(users).where(where).orderBy(desc(users.createdAt)).limit(pageSize).offset(offset),
+      db.select({ value: count() }).from(users).where(where),
     ]);
 
     return paginated(rows, total, page, pageSize);

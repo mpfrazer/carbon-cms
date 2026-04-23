@@ -6,12 +6,21 @@ const PUBLIC_GET_PREFIXES = [
   "/api/v1/categories",
   "/api/v1/tags",
   "/api/v1/settings",
+  "/api/v1/comments",
+];
+
+const PUBLIC_ANY_PATHS = [
+  "/api/v1/auth/login",
+  "/api/v1/auth/register",
+  "/api/v1/auth/verify-email",
+  "/api/v1/auth/resend-verification",
+  "/api/v1/setup",
 ];
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (!pathname.startsWith("/api/v1")) return NextResponse.next();
-  if (pathname === "/api/v1/auth/login") return NextResponse.next();
+  if (PUBLIC_ANY_PATHS.includes(pathname)) return NextResponse.next();
 
   const authHeader = req.headers.get("authorization");
   if (authHeader === `Bearer ${process.env.AUTH_SECRET}`) return NextResponse.next();

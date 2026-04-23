@@ -12,7 +12,7 @@ import { relations } from "drizzle-orm";
 
 // --- Enums ---
 
-export const userRoleEnum = pgEnum("user_role", ["admin", "editor", "author"]);
+export const userRoleEnum = pgEnum("user_role", ["admin", "editor", "author", "subscriber"]);
 
 export const postStatusEnum = pgEnum("post_status", [
   "draft",
@@ -40,6 +40,12 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("author"),
   avatarUrl: text("avatar_url"),
   bio: text("bio"),
+  website: text("website"),
+  emailVerified: timestamp("email_verified"),
+  emailVerificationToken: text("email_verification_token"),
+  emailVerificationExpiry: timestamp("email_verification_expiry"),
+  suspended: boolean("suspended").notNull().default(false),
+  suspendedAt: timestamp("suspended_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -163,12 +169,14 @@ export const comments = pgTable("comments", {
   postId: uuid("post_id")
     .notNull()
     .references(() => posts.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   authorName: text("author_name").notNull(),
   authorEmail: text("author_email").notNull(),
   authorUrl: text("author_url"),
   content: text("content").notNull(),
   status: commentStatusEnum("status").notNull().default("pending"),
   parentId: uuid("parent_id"),
+  editedAt: timestamp("edited_at"),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

@@ -11,6 +11,14 @@ interface Settings {
   renderMode?: "ssr" | "csr";
   allowComments?: boolean;
   commentModeration?: boolean;
+  requireLoginToComment?: boolean;
+  requireEmailVerification?: boolean;
+  smtpHost?: string;
+  smtpPort?: string;
+  smtpUser?: string;
+  smtpPass?: string;
+  smtpFrom?: string;
+  smtpSecure?: boolean;
   aiProvider?: string;
   aiApiKey?: string;
   aiModel?: string;
@@ -33,6 +41,9 @@ export function SettingsForm({ initialSettings }: { initialSettings: Settings })
   const [aiTesting, setAiTesting] = useState(false);
   const [aiTestResult, setAiTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [showSmtpPass, setShowSmtpPass] = useState(false);
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [emailTestResult, setEmailTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,6 +96,29 @@ export function SettingsForm({ initialSettings }: { initialSettings: Settings })
       setAiTestResult({ ok: false, message: "Network error." });
     } finally {
       setAiTesting(false);
+    }
+  }
+
+  async function testEmailConnection() {
+    setTestingEmail(true);
+    setEmailTestResult(null);
+    await fetch("/api/v1/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    try {
+      const res = await fetch("/api/v1/settings/test-email", { method: "POST" });
+      const json = await res.json();
+      if (res.ok) {
+        setEmailTestResult({ ok: true, message: "Test email sent." });
+      } else {
+        setEmailTestResult({ ok: false, message: json.error ?? "Failed to send." });
+      }
+    } catch {
+      setEmailTestResult({ ok: false, message: "Network error." });
+    } finally {
+      setTestingEmail(false);
     }
   }
 
@@ -147,6 +181,88 @@ export function SettingsForm({ initialSettings }: { initialSettings: Settings })
               onChange={(e) => setSettings({ ...settings, commentModeration: e.target.checked })}
               className="h-4 w-4 rounded border-neutral-300" />
             <label htmlFor="commentModeration" className="text-sm text-neutral-700">Hold comments for moderation</label>
+          </div>
+          <div className="flex items-center gap-3">
+            <input type="checkbox" id="requireLoginToComment" checked={settings.requireLoginToComment ?? false}
+              onChange={(e) => setSettings({ ...settings, requireLoginToComment: e.target.checked })}
+              className="h-4 w-4 rounded border-neutral-300" />
+            <label htmlFor="requireLoginToComment" className="text-sm text-neutral-700">Require login to comment</label>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">User Registration</h2>
+          <div className="flex items-center gap-3">
+            <input type="checkbox" id="requireEmailVerification"
+              checked={settings.requireEmailVerification ?? false}
+              onChange={(e) => setSettings({ ...settings, requireEmailVerification: e.target.checked })}
+              className="h-4 w-4 rounded border-neutral-300" />
+            <label htmlFor="requireEmailVerification" className="text-sm text-neutral-700">
+              Require email verification before login
+            </label>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Email (SMTP)</h2>
+            <p className="mt-1 text-xs text-neutral-500">Used for verification emails and notifications. Leave blank to disable outbound email.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-neutral-700">SMTP host</label>
+              <input type="text" value={settings.smtpHost ?? ""}
+                onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
+                className={inputClass} placeholder="smtp.example.com" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-neutral-700">Port</label>
+              <input type="number" value={settings.smtpPort ?? "587"}
+                onChange={(e) => setSettings({ ...settings, smtpPort: e.target.value })}
+                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-neutral-700">Username</label>
+              <input type="text" value={settings.smtpUser ?? ""}
+                onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
+                className={inputClass} autoComplete="off" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-neutral-700">Password</label>
+              <div className="relative">
+                <input type={showSmtpPass ? "text" : "password"} value={settings.smtpPass ?? ""}
+                  onChange={(e) => setSettings({ ...settings, smtpPass: e.target.value })}
+                  className={inputClass + " pr-16"} autoComplete="off" />
+                <button type="button" onClick={() => setShowSmtpPass((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-700">
+                  {showSmtpPass ? "Hide" : "Show"}
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-neutral-700">From address</label>
+            <input type="email" value={settings.smtpFrom ?? ""}
+              onChange={(e) => setSettings({ ...settings, smtpFrom: e.target.value })}
+              className={inputClass} placeholder="no-reply@example.com" />
+          </div>
+          <div className="flex items-center gap-3">
+            <input type="checkbox" id="smtpSecure"
+              checked={settings.smtpSecure ?? false}
+              onChange={(e) => setSettings({ ...settings, smtpSecure: e.target.checked })}
+              className="h-4 w-4 rounded border-neutral-300" />
+            <label htmlFor="smtpSecure" className="text-sm text-neutral-700">Use TLS (port 465)</label>
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={testEmailConnection} disabled={testingEmail || !settings.smtpHost}
+              className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors">
+              {testingEmail ? "Sending…" : "Send test email"}
+            </button>
+            {emailTestResult && (
+              <span className={`text-sm ${emailTestResult.ok ? "text-green-700" : "text-red-600"}`}>
+                {emailTestResult.ok ? "✓" : "✗"} {emailTestResult.message}
+              </span>
+            )}
           </div>
         </section>
 
