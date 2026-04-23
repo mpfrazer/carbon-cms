@@ -5,6 +5,8 @@ export interface SiteSettings {
   siteDescription: string;
   siteUrl: string;
   postsPerPage: number;
+  allowComments: boolean;
+  requireLoginToComment: boolean;
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -14,5 +16,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     siteDescription: (raw.siteDescription as string) || "",
     siteUrl: (raw.siteUrl as string) || "",
     postsPerPage: Number(raw.postsPerPage) || 10,
+    allowComments: raw.allowComments !== false && raw.allowComments !== "false",
+    requireLoginToComment: raw.requireLoginToComment === true || raw.requireLoginToComment === "true",
   };
 }

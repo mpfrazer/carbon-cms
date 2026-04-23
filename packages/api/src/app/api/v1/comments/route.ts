@@ -1,16 +1,25 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { desc, eq, count, and } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { comments } from "@/lib/db/schema";
+import { comments, posts, settings } from "@/lib/db/schema";
 import { ok, created, badRequest, serverError, paginated, parsePagination } from "@/lib/api/response";
+
+function stripHtml(str: string): string {
+  return str.replace(/<[^>]*>/g, "").trim();
+}
+
+async function getSetting(key: string): Promise<string | null> {
+  const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, key)).limit(1);
+  return row?.value ?? null;
+}
 
 const createCommentSchema = z.object({
   postId: z.string().uuid(),
   authorName: z.string().min(1).max(200),
   authorEmail: z.string().email(),
   authorUrl: z.string().url().optional(),
-  content: z.string().min(1),
+  content: z.string().min(1).max(10000),
   parentId: z.string().uuid().optional(),
 });
 
@@ -18,16 +27,48 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = req.nextUrl;
     const { page, pageSize, offset } = parsePagination(searchParams);
-    const status = searchParams.get("status");
     const postId = searchParams.get("postId");
 
+    const isAdmin = req.headers.get("authorization") === `Bearer ${process.env.AUTH_SECRET}`;
+    const role = req.headers.get("x-user-role");
+    const canModerate = isAdmin && (role === "admin" || role === "editor");
+
     const conditions = [];
-    if (status) conditions.push(eq(comments.status, status as "pending" | "approved" | "spam" | "trash"));
+    if (canModerate) {
+      const status = searchParams.get("status");
+      if (status) conditions.push(eq(comments.status, status as "pending" | "approved" | "spam" | "trash"));
+    } else {
+      conditions.push(eq(comments.status, "approved"));
+    }
     if (postId) conditions.push(eq(comments.postId, postId));
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [rows, [{ value: total }]] = await Promise.all([
-      db.select().from(comments).where(where).orderBy(desc(comments.createdAt)).limit(pageSize).offset(offset),
+      db
+        .select({
+          id: comments.id,
+          postId: comments.postId,
+          userId: comments.userId,
+          authorName: comments.authorName,
+          authorEmail: comments.authorEmail,
+          authorUrl: comments.authorUrl,
+          content: comments.content,
+          status: comments.status,
+          parentId: comments.parentId,
+          editedAt: comments.editedAt,
+          ipAddress: comments.ipAddress,
+          userAgent: comments.userAgent,
+          createdAt: comments.createdAt,
+          updatedAt: comments.updatedAt,
+          postTitle: posts.title,
+          postSlug: posts.slug,
+        })
+        .from(comments)
+        .leftJoin(posts, eq(comments.postId, posts.id))
+        .where(where)
+        .orderBy(desc(comments.createdAt))
+        .limit(pageSize)
+        .offset(offset),
       db.select({ value: count() }).from(comments).where(where),
     ]);
 
@@ -43,12 +84,41 @@ export async function POST(req: NextRequest) {
     const parsed = createCommentSchema.safeParse(body);
     if (!parsed.success) return badRequest("Validation failed", parsed.error.flatten());
 
+    const [allowComments, requireLogin, commentModeration] = await Promise.all([
+      getSetting("allowComments"),
+      getSetting("requireLoginToComment"),
+      getSetting("commentModeration"),
+    ]);
+
+    if (allowComments === "false") {
+      return NextResponse.json({ error: "Comments are disabled" }, { status: 403 });
+    }
+
+    const userId = req.headers.get("x-user-id");
+    if (requireLogin === "true" && !userId) {
+      return NextResponse.json({ error: "You must be logged in to comment" }, { status: 401 });
+    }
+
+    const [post] = await db.select({ id: posts.id }).from(posts).where(eq(posts.id, parsed.data.postId)).limit(1);
+    if (!post) return badRequest("Post not found");
+
+    const content = stripHtml(parsed.data.content);
+    if (!content) return badRequest("Comment content cannot be empty after sanitization");
+
+    const status = commentModeration === "false" ? "approved" : "pending";
     const ipAddress = req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined;
     const userAgent = req.headers.get("user-agent") ?? undefined;
 
     const [comment] = await db
       .insert(comments)
-      .values({ ...parsed.data, status: "pending", ipAddress, userAgent })
+      .values({
+        ...parsed.data,
+        content,
+        userId: userId ?? undefined,
+        status,
+        ipAddress,
+        userAgent,
+      })
       .returning();
 
     return created(comment);

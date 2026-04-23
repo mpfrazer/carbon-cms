@@ -3,7 +3,7 @@ import { UsersManager } from "@/components/admin/users-manager";
 import { serverGet } from "@/lib/api/server";
 
 export default async function UsersPage() {
-  const { data: rows } = await serverGet("/api/v1/users?pageSize=200") as { data: unknown[] };
+  const { data: rows } = await serverGet("/api/v1/users?pageSize=500") as { data: unknown[] };
   return (
     <div>
       <Header title="Users" />

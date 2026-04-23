@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CommentsSection } from "@/components/comments-section";
+import type { Comment } from "@/components/comments-section";
 
 interface BlogPostProps {
   title: string;
@@ -8,13 +10,18 @@ interface BlogPostProps {
   authorName: string | null;
   categories: { id: string; name: string; slug: string }[];
   tags: { id: string; name: string; slug: string }[];
+  postId: string;
+  comments: Comment[];
+  allowComments: boolean;
+  requireLoginToComment: boolean;
+  currentUser: { id: string; name: string; email: string } | null;
 }
 
 function formatDate(date: Date) {
   return new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
-export function BlogPost({ title, content, publishedAt, createdAt, authorName, categories, tags }: BlogPostProps) {
+export function BlogPost({ title, content, publishedAt, createdAt, authorName, categories, tags, postId, comments, allowComments, requireLoginToComment, currentUser }: BlogPostProps) {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
       <Link href="/blog" className="mb-8 inline-block text-sm text-neutral-500 hover:text-neutral-900 transition-colors">
@@ -55,6 +62,14 @@ export function BlogPost({ title, content, publishedAt, createdAt, authorName, c
           ))}
         </footer>
       )}
+
+      <CommentsSection
+        postId={postId}
+        initialComments={comments}
+        allowComments={allowComments}
+        requireLoginToComment={requireLoginToComment}
+        currentUser={currentUser}
+      />
     </article>
   );
 }

@@ -6,9 +6,10 @@ interface SiteLayoutProps {
   siteTitle: string;
   navPages: NavPage[];
   children: React.ReactNode;
+  user?: { name: string } | null;
 }
 
-export function SiteLayout({ siteTitle, navPages, children }: SiteLayoutProps) {
+export function SiteLayout({ siteTitle, navPages, children, user }: SiteLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col bg-white text-neutral-900">
       <header className="border-b border-neutral-200 bg-white">
@@ -26,6 +27,21 @@ export function SiteLayout({ siteTitle, navPages, children }: SiteLayoutProps) {
             <Link href="/blog" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
               Blog
             </Link>
+            {user ? (
+              <Link href="/account" className="text-sm font-medium text-neutral-900 hover:text-neutral-600 transition-colors">
+                {user.name}
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
+                  Sign in
+                </Link>
+                <Link href="/register"
+                  className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 transition-colors">
+                  Register
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>

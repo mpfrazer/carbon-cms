@@ -1,14 +1,23 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Pencil } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [setupNeeded, setSetupNeeded] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/v1/setup").then((r) => r.json()).then((json) => {
+      if (json.data?.needed) setSetupNeeded(true);
+    }).catch(() => {});
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -67,6 +76,19 @@ export default function LoginPage() {
             {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
+
+        {searchParams.get("setup") === "1" && (
+          <p className="mt-4 text-center text-sm text-green-700">Admin account created. You can now sign in.</p>
+        )}
+
+        {setupNeeded && (
+          <p className="mt-4 text-center text-sm text-neutral-500">
+            First time here?{" "}
+            <Link href="/admin/setup" className="text-neutral-900 underline underline-offset-2 hover:text-neutral-600">
+              Set up your account
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );

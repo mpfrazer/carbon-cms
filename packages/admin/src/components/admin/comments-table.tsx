@@ -15,23 +15,51 @@ interface Comment {
   authorEmail: string;
   content: string;
   status: string;
-  createdAt: Date;
+  postId: string;
+  postTitle: string | null;
+  postSlug: string | null;
+  editedAt: string | null;
+  createdAt: string;
 }
+
+const TABS = ["all", "pending", "approved", "spam", "trash"] as const;
+type Tab = (typeof TABS)[number];
 
 export function CommentsTable() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("pending");
+  const [filter, setFilter] = useState<Tab>("pending");
+  const [counts, setCounts] = useState<Record<Tab, number>>({ all: 0, pending: 0, approved: 0, spam: 0, trash: 0 });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  async function loadComments(status: string) {
+  async function loadCounts() {
+    const results = await Promise.all(
+      TABS.map(async (tab) => {
+        const qs = tab === "all" ? "" : `&status=${tab}`;
+        const res = await fetch(`/api/v1/comments?pageSize=1${qs}`);
+        const json = await res.json();
+        return [tab, json.pagination?.total ?? 0] as [Tab, number];
+      })
+    );
+    setCounts(Object.fromEntries(results) as Record<Tab, number>);
+  }
+
+  async function loadComments(tab: Tab) {
     setLoading(true);
-    const res = await fetch(`/api/v1/comments?status=${status}&pageSize=50`);
+    const qs = tab === "all" ? "" : `&status=${tab}`;
+    const res = await fetch(`/api/v1/comments?pageSize=50${qs}`);
     const json = await res.json();
     setComments(json.data ?? []);
     setLoading(false);
   }
 
-  useEffect(() => { loadComments(filter); }, [filter]);
+  useEffect(() => {
+    loadCounts();
+  }, []);
+
+  useEffect(() => {
+    loadComments(filter);
+  }, [filter]);
 
   async function updateStatus(id: string, status: string) {
     await fetch(`/api/v1/comments/${id}`, {
@@ -39,18 +67,32 @@ export function CommentsTable() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    loadComments(filter);
+    await Promise.all([loadComments(filter), loadCounts()]);
+  }
+
+  async function deleteComment(id: string) {
+    setDeletingId(id);
+    await fetch(`/api/v1/comments/${id}`, { method: "DELETE" });
+    setDeletingId(null);
+    await Promise.all([loadComments(filter), loadCounts()]);
   }
 
   return (
     <div className="p-6">
       <div className="mb-4 flex gap-1 border-b border-neutral-200">
-        {["pending", "approved", "spam", "trash"].map((s) => (
-          <button key={s} onClick={() => setFilter(s)}
-            className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
-              filter === s ? "border-neutral-900 text-neutral-900" : "border-transparent text-neutral-500 hover:text-neutral-700"
+        {TABS.map((tab) => (
+          <button key={tab} onClick={() => setFilter(tab)}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
+              filter === tab ? "border-neutral-900 text-neutral-900" : "border-transparent text-neutral-500 hover:text-neutral-700"
             }`}>
-            {s}
+            {tab}
+            {counts[tab] > 0 && (
+              <span className={`rounded-full px-1.5 py-0.5 text-xs font-medium ${
+                tab === "pending" ? "bg-yellow-100 text-yellow-700" : "bg-neutral-100 text-neutral-600"
+              }`}>
+                {counts[tab]}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -59,13 +101,14 @@ export function CommentsTable() {
         {loading ? (
           <div className="py-12 text-center text-sm text-neutral-400">Loading…</div>
         ) : comments.length === 0 ? (
-          <div className="py-12 text-center text-sm text-neutral-400">No {filter} comments.</div>
+          <div className="py-12 text-center text-sm text-neutral-400">No {filter === "all" ? "" : filter} comments.</div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
                 <th className="px-4 py-3 text-left font-medium text-neutral-600">Author</th>
                 <th className="px-4 py-3 text-left font-medium text-neutral-600">Comment</th>
+                <th className="px-4 py-3 text-left font-medium text-neutral-600">Post</th>
                 <th className="px-4 py-3 text-left font-medium text-neutral-600">Status</th>
                 <th className="px-4 py-3 text-left font-medium text-neutral-600">Date</th>
                 <th className="px-4 py-3 text-right font-medium text-neutral-600">Actions</th>
@@ -78,15 +121,19 @@ export function CommentsTable() {
                     <p className="font-medium text-neutral-900">{comment.authorName}</p>
                     <p className="text-xs text-neutral-400">{comment.authorEmail}</p>
                   </td>
-                  <td className="px-4 py-3 max-w-sm">
+                  <td className="px-4 py-3 max-w-xs">
                     <p className="line-clamp-2 text-neutral-700">{comment.content}</p>
+                    {comment.editedAt && <p className="text-xs text-neutral-400 mt-0.5">edited</p>}
+                  </td>
+                  <td className="px-4 py-3 text-neutral-600 max-w-[160px]">
+                    <p className="truncate text-xs">{comment.postTitle ?? comment.postId}</p>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium capitalize ${statusColors[comment.status] ?? ""}`}>
                       {comment.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-neutral-500">{new Date(comment.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-neutral-500 whitespace-nowrap">{new Date(comment.createdAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-2">
                       {comment.status !== "approved" && (
@@ -98,6 +145,13 @@ export function CommentsTable() {
                       {comment.status !== "trash" && (
                         <button onClick={() => updateStatus(comment.id, "trash")} className="text-xs text-neutral-500 hover:text-neutral-700">Trash</button>
                       )}
+                      <button
+                        onClick={() => deleteComment(comment.id)}
+                        disabled={deletingId === comment.id}
+                        className="text-xs text-red-700 hover:text-red-900 font-medium disabled:opacity-50"
+                      >
+                        {deletingId === comment.id ? "…" : "Delete"}
+                      </button>
                     </div>
                   </td>
                 </tr>

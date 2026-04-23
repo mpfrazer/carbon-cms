@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { getThemeComponents } from "@/lib/theme-provider";
 import { getSiteSettings } from "@/lib/site-settings";
 import { apiGet } from "@/lib/api/client";
+import { auth } from "@/lib/auth";
 import type { Metadata } from "next";
+import type { Comment } from "@/components/comments-section";
 
 interface Category { id: string; name: string; slug: string }
 interface Tag { id: string; name: string; slug: string }
@@ -17,7 +19,6 @@ type Props = { params: Promise<{ slug: string }> };
 
 async function getPostBySlug(slug: string): Promise<Post | null> {
   try {
-    // First find by slug, then fetch full post with relations by ID
     const { data: basic } = await apiGet(`/api/v1/posts?slug=${encodeURIComponent(slug)}&status=published`) as { data: Post | null };
     if (!basic) return null;
     const { data: full } = await apiGet(`/api/v1/posts/${basic.id}`) as { data: Post };
@@ -53,21 +54,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
 
-  const [{ BlogPost }, { siteTitle, siteDescription, siteUrl }, post] = await Promise.all([
+  const [{ BlogPost }, settings, post, session] = await Promise.all([
     getThemeComponents(),
     getSiteSettings(),
     getPostBySlug(slug),
+    auth(),
   ]);
 
   if (!post) notFound();
 
-  const base = siteUrl || process.env.NEXTAUTH_URL || "";
+  const commentsRes = await apiGet(`/api/v1/comments?postId=${post.id}&pageSize=100`) as { data: Comment[] };
+  const postComments = commentsRes.data ?? [];
+
+  const currentUser = session?.user?.id
+    ? { id: session.user.id, name: session.user.name ?? "", email: session.user.email ?? "" }
+    : null;
+
+  const base = settings.siteUrl || process.env.NEXTAUTH_URL || "";
   const jsonLd = {
     "@context": "https://schema.org", "@type": "BlogPosting",
-    headline: post.title, description: post.excerpt ?? siteDescription,
+    headline: post.title, description: post.excerpt ?? settings.siteDescription,
     url: `${base}/blog/${slug}`,
     datePublished: post.publishedAt ?? post.createdAt, dateModified: post.updatedAt,
-    publisher: { "@type": "Organization", name: siteTitle },
+    publisher: { "@type": "Organization", name: settings.siteTitle },
     mainEntityOfPage: { "@type": "WebPage", "@id": `${base}/blog/${slug}` },
   };
 
@@ -82,6 +91,11 @@ export default async function BlogPostPage({ params }: Props) {
         authorName={null}
         categories={post.categories}
         tags={post.tags}
+        postId={post.id}
+        comments={postComments}
+        allowComments={settings.allowComments}
+        requireLoginToComment={settings.requireLoginToComment}
+        currentUser={currentUser}
       />
     </>
   );
