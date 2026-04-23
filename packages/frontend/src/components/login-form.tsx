@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +37,11 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {searchParams.get("reset") === "1" && (
+        <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+          Password reset successfully. You can now sign in.
+        </div>
+      )}
       {error && (
         <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
@@ -45,7 +51,12 @@ export function LoginForm() {
           required autoComplete="email" className={inputClass} />
       </div>
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-neutral-700">Password</label>
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-neutral-700">Password</label>
+          <Link href="/forgot-password" className="text-xs text-neutral-500 hover:text-neutral-700 underline underline-offset-2">
+            Forgot password?
+          </Link>
+        </div>
         <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
           required autoComplete="current-password" className={inputClass} />
       </div>

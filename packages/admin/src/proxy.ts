@@ -6,7 +6,12 @@ export const proxy = auth((req) => {
   const session = req.auth;
 
   if (pathname.startsWith("/admin")) {
-    if (pathname === "/admin/login" || pathname === "/admin/setup") {
+    if (
+      pathname === "/admin/login" ||
+      pathname === "/admin/setup" ||
+      pathname === "/admin/forgot-password" ||
+      pathname === "/admin/reset-password"
+    ) {
       if (session) return NextResponse.redirect(new URL("/admin", req.url));
       return NextResponse.next();
     }

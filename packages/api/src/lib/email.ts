@@ -40,6 +40,21 @@ export async function sendVerificationEmail(to: string, name: string, token: str
   });
 }
 
+export async function sendPasswordResetEmail(to: string, name: string, resetUrl: string) {
+  const cfg = await getSmtpConfig();
+  if (!cfg.smtpHost) {
+    console.warn("[email] SMTP not configured — skipping password reset email to", to);
+    return;
+  }
+  await makeTransport(cfg).sendMail({
+    from: cfg.smtpFrom || cfg.smtpUser,
+    to,
+    subject: "Reset your password",
+    text: `Hi ${name},\n\nReset your password by visiting:\n${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, you can ignore this email.`,
+    html: `<p>Hi ${name},</p><p><a href="${resetUrl}">Reset your password</a></p><p>This link expires in 1 hour. If you didn't request this, you can ignore this email.</p>`,
+  });
+}
+
 export async function sendWelcomeEmail(to: string, name: string) {
   const cfg = await getSmtpConfig();
   if (!cfg.smtpHost) return;

@@ -46,6 +46,8 @@ export const users = pgTable("users", {
   emailVerificationExpiry: timestamp("email_verification_expiry"),
   suspended: boolean("suspended").notNull().default(false),
   suspendedAt: timestamp("suspended_at"),
+  passwordResetToken: text("password_reset_token"),
+  passwordResetExpiry: timestamp("password_reset_expiry"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
