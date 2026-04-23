@@ -4,10 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { comments, settings } from "@/lib/db/schema";
 import { ok, badRequest, notFound, noContent, serverError } from "@/lib/api/response";
-
-function stripHtml(str: string): string {
-  return str.replace(/<[^>]*>/g, "").trim();
-}
+import { stripHtml } from "@/lib/utils";
 
 type Params = { params: Promise<{ id: string }> };
 

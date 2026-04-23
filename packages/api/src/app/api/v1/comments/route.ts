@@ -4,10 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { comments, posts, settings } from "@/lib/db/schema";
 import { ok, created, badRequest, serverError, paginated, parsePagination } from "@/lib/api/response";
-
-function stripHtml(str: string): string {
-  return str.replace(/<[^>]*>/g, "").trim();
-}
+import { stripHtml } from "@/lib/utils";
 
 async function getSetting(key: string): Promise<string | null> {
   const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, key)).limit(1);

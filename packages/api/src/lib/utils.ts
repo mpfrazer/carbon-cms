@@ -6,3 +6,7 @@ export function slugify(str: string): string {
     .replace(/[\s_-]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+
+export function stripHtml(str: string): string {
+  return str.replace(/<[^>]*>/g, "").trim();
+}
