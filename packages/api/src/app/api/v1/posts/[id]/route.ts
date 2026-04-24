@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { posts, postCategories, postTags, categories, tags } from "@/lib/db/schema";
+import { posts, postCategories, postTags, categories, tags, media } from "@/lib/db/schema";
 import { ok, badRequest, notFound, conflict, noContent, serverError } from "@/lib/api/response";
 import { slugify } from "@/lib/utils";
 
@@ -29,7 +29,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const [post] = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
     if (!post) return notFound("Post not found");
 
-    const [postCats, postTagRows] = await Promise.all([
+    const [postCats, postTagRows, featuredImageRows] = await Promise.all([
       db.select({ id: categories.id, name: categories.name, slug: categories.slug })
         .from(postCategories)
         .innerJoin(categories, eq(postCategories.categoryId, categories.id))
@@ -38,9 +38,16 @@ export async function GET(_req: NextRequest, { params }: Params) {
         .from(postTags)
         .innerJoin(tags, eq(postTags.tagId, tags.id))
         .where(eq(postTags.postId, id)),
+      post.featuredImageId
+        ? db.select({ id: media.id, url: media.url, altText: media.altText })
+            .from(media)
+            .where(eq(media.id, post.featuredImageId))
+            .limit(1)
+        : Promise.resolve([]),
     ]);
 
-    return ok({ ...post, categories: postCats, tags: postTagRows });
+    const featuredImage = featuredImageRows[0] ?? null;
+    return ok({ ...post, categories: postCats, tags: postTagRows, featuredImage });
   } catch (e) {
     return serverError(e);
   }

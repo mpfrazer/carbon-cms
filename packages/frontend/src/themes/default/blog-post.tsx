@@ -10,6 +10,8 @@ interface BlogPostProps {
   createdAt: Date;
   authorName: string | null;
   authorAvatarUrl?: string | null;
+  featuredImageUrl?: string | null;
+  featuredImageAlt?: string | null;
   categories: { id: string; name: string; slug: string }[];
   tags: { id: string; name: string; slug: string }[];
   postId: string;
@@ -23,7 +25,7 @@ function formatDate(date: Date) {
   return new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
-export function BlogPost({ title, content, publishedAt, createdAt, authorName, authorAvatarUrl, categories, tags, postId, comments, allowComments, requireLoginToComment, currentUser }: BlogPostProps) {
+export function BlogPost({ title, content, publishedAt, createdAt, authorName, authorAvatarUrl, featuredImageUrl, featuredImageAlt, categories, tags, postId, comments, allowComments, requireLoginToComment, currentUser }: BlogPostProps) {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
       <Link href="/blog" className="mb-8 inline-block text-sm text-neutral-500 hover:text-neutral-900 transition-colors">
@@ -52,6 +54,19 @@ export function BlogPost({ title, content, publishedAt, createdAt, authorName, a
           )}
         </div>
       </header>
+
+      {featuredImageUrl && (
+        <div className="mb-10 -mx-4 sm:-mx-6">
+          <Image
+            src={featuredImageUrl}
+            alt={featuredImageAlt ?? ""}
+            width={1200}
+            height={630}
+            className="w-full object-cover"
+            priority
+          />
+        </div>
+      )}
 
       <div
         className="prose prose-neutral max-w-none prose-headings:font-semibold prose-a:text-neutral-900 prose-a:underline prose-a:underline-offset-2"

@@ -5,7 +5,12 @@ import { notFound } from "next/navigation";
 
 interface Category { id: string; name: string; slug?: string }
 interface Tag { id: string; name: string; slug?: string }
-interface Post { id: string; categories: Category[]; tags: Tag[]; [key: string]: unknown }
+interface Post {
+  id: string; title: string; slug: string; content: string; status: string;
+  excerpt?: string | null; metaTitle?: string | null; metaDescription?: string | null;
+  categories: Category[]; tags: Tag[];
+  featuredImage?: { id: string; url: string; altText: string | null } | null;
+}
 
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -26,7 +31,20 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
     <div>
       <Header title="Edit Post" />
       <PostForm
-        post={post as Parameters<typeof PostForm>[0]["post"]}
+        post={{
+          id: post.id,
+          title: post.title,
+          slug: post.slug,
+          content: post.content,
+          status: post.status,
+          excerpt: post.excerpt,
+          metaTitle: post.metaTitle,
+          metaDescription: post.metaDescription,
+          categories: post.categories,
+          tags: post.tags,
+          featuredImageId: post.featuredImage?.id ?? null,
+          featuredImageUrl: post.featuredImage?.url ?? null,
+        }}
         allCategories={allCategories}
         allTags={allTags}
       />
