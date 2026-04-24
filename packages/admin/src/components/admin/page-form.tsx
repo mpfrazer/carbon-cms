@@ -35,6 +35,7 @@ export function PageForm({ page, allPages }: PageFormProps) {
   const [metaDescription, setMetaDescription] = useState(page?.metaDescription ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
 
   const parentOptions = allPages.filter((p) => p.id !== page?.id);
 
@@ -69,6 +70,20 @@ export function PageForm({ page, allPages }: PageFormProps) {
 
     router.push("/admin/pages");
     router.refresh();
+  }
+
+  async function handlePreview() {
+    if (!page) return;
+    setPreviewing(true);
+    try {
+      const res = await fetch(`/api/v1/pages/${page.id}/preview`);
+      const json = await res.json();
+      if (res.ok && json.data?.previewUrl) {
+        window.open(json.data.previewUrl, "_blank", "noopener,noreferrer");
+      }
+    } finally {
+      setPreviewing(false);
+    }
   }
 
   async function handleDelete() {
@@ -147,6 +162,12 @@ export function PageForm({ page, allPages }: PageFormProps) {
         <div className="flex gap-3">
           <button type="button" onClick={() => router.back()}
             className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">Cancel</button>
+          {isEditing && (
+            <button type="button" onClick={handlePreview} disabled={previewing}
+              className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors">
+              {previewing ? "Opening…" : "Preview"}
+            </button>
+          )}
           <button type="submit" disabled={saving}
             className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
             {saving ? "Saving…" : isEditing ? "Save changes" : "Create page"}
