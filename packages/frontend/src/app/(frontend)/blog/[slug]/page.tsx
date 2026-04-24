@@ -13,6 +13,7 @@ interface Post {
   excerpt: string | null; metaTitle: string | null; metaDescription: string | null;
   publishedAt: string | null; createdAt: string; updatedAt: string;
   authorId: string; categories: Category[]; tags: Tag[];
+  featuredImage?: { id: string; url: string; altText: string | null } | null;
 }
 interface Author { name: string; avatarUrl: string | null; }
 
@@ -95,6 +96,8 @@ export default async function BlogPostPage({ params }: Props) {
         createdAt={new Date(post.createdAt)}
         authorName={author?.name ?? null}
         authorAvatarUrl={author?.avatarUrl ?? null}
+        featuredImageUrl={post.featuredImage?.url ?? null}
+        featuredImageAlt={post.featuredImage?.altText ?? post.title}
         categories={post.categories}
         tags={post.tags}
         postId={post.id}

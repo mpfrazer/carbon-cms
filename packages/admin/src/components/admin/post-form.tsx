@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { ImageIcon, X } from "lucide-react";
 import { RichEditor } from "@/components/admin/rich-editor";
 import { ExcerptGenerator } from "@/components/admin/ai/excerpt-generator";
 import { SeoOptimizer } from "@/components/admin/ai/seo-optimizer";
@@ -12,6 +14,117 @@ import { OutlineGenerator } from "@/components/admin/ai/outline-generator";
 
 interface Taxonomy { id: string; name: string; }
 
+interface MediaItem { id: string; url: string; altText: string | null; mimeType: string; }
+
+function FeaturedImagePicker({
+  value,
+  previewUrl,
+  onChange,
+}: {
+  value: string | null;
+  previewUrl: string | null;
+  onChange: (id: string | null, url: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [images, setImages] = useState<MediaItem[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const uploadRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/v1/media?pageSize=100")
+      .then((r) => r.json())
+      .then((j) => setImages((j.data ?? []).filter((m: MediaItem) => m.mimeType.startsWith("image/"))));
+
+    function onClickOutside(e: MouseEvent) {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [open]);
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/v1/media", { method: "POST", body: form });
+    const json = await res.json();
+    if (res.ok) {
+      onChange(json.data.id, json.data.url);
+      setOpen(false);
+    }
+    setUploading(false);
+    if (uploadRef.current) uploadRef.current.value = "";
+  }
+
+  return (
+    <div className="space-y-2">
+      {previewUrl ? (
+        <div className="relative rounded-md overflow-hidden border border-neutral-200 bg-neutral-50">
+          <Image src={previewUrl} alt="Featured image" width={800} height={400} className="w-full object-cover max-h-64" />
+          <button
+            type="button"
+            onClick={() => onChange(null, null)}
+            className="absolute top-2 right-2 rounded-full bg-white/90 p-1 text-neutral-600 hover:text-red-500 shadow transition-colors"
+            title="Remove featured image"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-md border-2 border-dashed border-neutral-200 py-8 text-sm text-neutral-400 hover:border-neutral-300 hover:text-neutral-600 transition-colors"
+        >
+          <ImageIcon className="h-4 w-4" />
+          Choose featured image
+        </button>
+      )}
+      {previewUrl && (
+        <button type="button" onClick={() => setOpen(true)} className="text-xs text-neutral-500 hover:text-neutral-800 underline underline-offset-2 transition-colors">
+          Change image
+        </button>
+      )}
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div ref={modalRef} className="w-full max-w-2xl rounded-xl bg-white shadow-xl flex flex-col max-h-[80vh]">
+            <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
+              <span className="text-sm font-semibold text-neutral-800">Choose featured image</span>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => uploadRef.current?.click()} disabled={uploading}
+                  className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors">
+                  {uploading ? "Uploading…" : "Upload new"}
+                </button>
+                <input ref={uploadRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+                <button type="button" onClick={() => setOpen(false)} className="text-neutral-400 hover:text-neutral-700 transition-colors">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="overflow-y-auto p-4 grid grid-cols-3 gap-3">
+              {images.map((img) => (
+                <button key={img.id} type="button"
+                  onClick={() => { onChange(img.id, img.url); setOpen(false); }}
+                  className={`rounded-md overflow-hidden border-2 transition-colors ${value === img.id ? "border-neutral-900" : "border-transparent hover:border-neutral-300"}`}>
+                  <Image src={img.url} alt={img.altText ?? ""} width={300} height={200} className="w-full h-32 object-cover" />
+                </button>
+              ))}
+              {images.length === 0 && !uploading && (
+                <p className="col-span-3 py-8 text-center text-sm text-neutral-400">No images in library yet.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface PostFormProps {
   post?: {
     id: string;
@@ -20,6 +133,8 @@ interface PostFormProps {
     content: string;
     excerpt?: string | null;
     status: string;
+    featuredImageId?: string | null;
+    featuredImageUrl?: string | null;
     metaTitle?: string | null;
     metaDescription?: string | null;
     categories?: Taxonomy[];
@@ -38,6 +153,8 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
   const [content, setContent] = useState(post?.content ?? "");
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [status, setStatus] = useState(post?.status ?? "draft");
+  const [featuredImageId, setFeaturedImageId] = useState<string | null>(post?.featuredImageId ?? null);
+  const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(post?.featuredImageUrl ?? null);
   const [metaTitle, setMetaTitle] = useState(post?.metaTitle ?? "");
   const [metaDescription, setMetaDescription] = useState(post?.metaDescription ?? "");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
@@ -74,6 +191,7 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
       title, slug, content,
       excerpt: excerpt || null,
       status,
+      featuredImageId: featuredImageId ?? null,
       metaTitle: metaTitle || null,
       metaDescription: metaDescription || null,
       categoryIds: selectedCategories,
@@ -137,6 +255,15 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
           <OutlineGenerator title={title} onGenerated={setContent} />
         )}
         <RichEditor value={content} onChange={setContent} />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-neutral-700">Featured image</label>
+        <FeaturedImagePicker
+          value={featuredImageId}
+          previewUrl={featuredImageUrl}
+          onChange={(id, url) => { setFeaturedImageId(id); setFeaturedImageUrl(url); }}
+        />
       </div>
 
       <div className="space-y-1.5">
