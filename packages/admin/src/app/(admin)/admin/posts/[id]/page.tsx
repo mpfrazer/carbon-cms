@@ -1,6 +1,7 @@
 import { Header } from "@/components/admin/header";
 import { PostForm } from "@/components/admin/post-form";
 import { serverGet } from "@/lib/api/server";
+import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 
 interface Category { id: string; name: string; slug?: string }
@@ -8,12 +9,15 @@ interface Tag { id: string; name: string; slug?: string }
 interface Post {
   id: string; title: string; slug: string; content: string; status: string;
   excerpt?: string | null; metaTitle?: string | null; metaDescription?: string | null;
+  reviewNote?: string | null;
   categories: Category[]; tags: Tag[];
   featuredImage?: { id: string; url: string; altText: string | null } | null;
 }
 
 export default async function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const session = await auth();
+  const userRole = (session?.user as { role?: string })?.role ?? "author";
 
   const [postRes, categoriesRes, tagsRes] = await Promise.all([
     serverGet(`/api/v1/posts/${id}`),
@@ -40,6 +44,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
           excerpt: post.excerpt,
           metaTitle: post.metaTitle,
           metaDescription: post.metaDescription,
+          reviewNote: post.reviewNote,
           categories: post.categories,
           tags: post.tags,
           featuredImageId: post.featuredImage?.id ?? null,
@@ -47,6 +52,7 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
         }}
         allCategories={allCategories}
         allTags={allTags}
+        userRole={userRole}
       />
     </div>
   );

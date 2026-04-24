@@ -5,6 +5,7 @@ import { webhooks, webhookDeliveries } from "@/lib/db/schema";
 
 export type WebhookEvent =
   | "post.created" | "post.published" | "post.updated" | "post.deleted"
+  | "post.submitted_review" | "post.approved" | "post.rejected"
   | "page.created" | "page.published" | "page.updated" | "page.deleted"
   | "comment.created" | "comment.approved"
   | "media.uploaded" | "media.deleted";
