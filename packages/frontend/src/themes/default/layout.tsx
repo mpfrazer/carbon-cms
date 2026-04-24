@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserMenu } from "./user-menu";
 
 interface NavPage { slug: string; title: string; }
 
@@ -6,7 +7,7 @@ interface SiteLayoutProps {
   siteTitle: string;
   navPages: NavPage[];
   children: React.ReactNode;
-  user?: { name: string } | null;
+  user?: { name: string; role: string } | null;
 }
 
 export function SiteLayout({ siteTitle, navPages, children, user }: SiteLayoutProps) {
@@ -28,9 +29,7 @@ export function SiteLayout({ siteTitle, navPages, children, user }: SiteLayoutPr
               Blog
             </Link>
             {user ? (
-              <Link href="/account" className="text-sm font-medium text-neutral-900 hover:text-neutral-600 transition-colors">
-                {user.name}
-              </Link>
+              <UserMenu name={user.name} role={user.role} />
             ) : (
               <>
                 <Link href="/login" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">

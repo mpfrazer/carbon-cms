@@ -14,7 +14,9 @@ export default async function FrontendLayout({ children }: { children: React.Rea
 
   const Layout = SiteLayout as typeof SiteLayoutType;
   const navPages = (pagesRes as { data: { slug: string; title: string }[] }).data.filter((p) => p.slug !== "home");
-  const user = session?.user?.name ? { name: session.user.name } : null;
+  const user = session?.user?.name
+    ? { name: session.user.name, role: (session.user as { role?: string }).role ?? "subscriber" }
+    : null;
 
   return (
     <Layout siteTitle={siteTitle} navPages={navPages} user={user}>
