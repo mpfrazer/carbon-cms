@@ -1,3 +1,5 @@
+// TODO: Search UI — decide whether to add a global search bar to the admin,
+// a /search page on the frontend, or both. The API endpoint is ready either way.
 import { NextRequest } from "next/server";
 import { sql, and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
