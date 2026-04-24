@@ -14,6 +14,7 @@ interface Post {
   publishedAt: string | null; createdAt: string; updatedAt: string;
   authorId: string; categories: Category[]; tags: Tag[];
 }
+interface Author { name: string; avatarUrl: string | null; }
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -63,8 +64,12 @@ export default async function BlogPostPage({ params }: Props) {
 
   if (!post) notFound();
 
-  const commentsRes = await apiGet(`/api/v1/comments?postId=${post.id}&pageSize=100`) as { data: Comment[] };
+  const [commentsRes, authorRes] = await Promise.all([
+    apiGet(`/api/v1/comments?postId=${post.id}&pageSize=100`) as Promise<{ data: Comment[] }>,
+    apiGet(`/api/v1/users/${post.authorId}`) as Promise<{ data: Author }>,
+  ]);
   const postComments = commentsRes.data ?? [];
+  const author = authorRes.data ?? null;
 
   const currentUser = session?.user?.id
     ? { id: session.user.id, name: session.user.name ?? "", email: session.user.email ?? "" }
@@ -88,7 +93,8 @@ export default async function BlogPostPage({ params }: Props) {
         content={post.content}
         publishedAt={post.publishedAt ? new Date(post.publishedAt) : null}
         createdAt={new Date(post.createdAt)}
-        authorName={null}
+        authorName={author?.name ?? null}
+        authorAvatarUrl={author?.avatarUrl ?? null}
         categories={post.categories}
         tags={post.tags}
         postId={post.id}

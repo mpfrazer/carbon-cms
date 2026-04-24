@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { CommentsSection } from "@/components/comments-section";
 import type { Comment } from "@/components/comments-section";
@@ -8,6 +9,7 @@ interface BlogPostProps {
   publishedAt: Date | null;
   createdAt: Date;
   authorName: string | null;
+  authorAvatarUrl?: string | null;
   categories: { id: string; name: string; slug: string }[];
   tags: { id: string; name: string; slug: string }[];
   postId: string;
@@ -21,7 +23,7 @@ function formatDate(date: Date) {
   return new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
-export function BlogPost({ title, content, publishedAt, createdAt, authorName, categories, tags, postId, comments, allowComments, requireLoginToComment, currentUser }: BlogPostProps) {
+export function BlogPost({ title, content, publishedAt, createdAt, authorName, authorAvatarUrl, categories, tags, postId, comments, allowComments, requireLoginToComment, currentUser }: BlogPostProps) {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
       <Link href="/blog" className="mb-8 inline-block text-sm text-neutral-500 hover:text-neutral-900 transition-colors">
@@ -42,6 +44,9 @@ export function BlogPost({ title, content, publishedAt, createdAt, authorName, c
           {authorName && (
             <>
               <span className="text-neutral-300">·</span>
+              {authorAvatarUrl ? (
+                <Image src={authorAvatarUrl} alt={authorName} width={20} height={20} className="h-5 w-5 rounded-full object-cover" />
+              ) : null}
               <span>{authorName}</span>
             </>
           )}

@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 
 interface UserMenuProps {
   name: string;
   role: string;
+  avatarUrl?: string | null;
 }
 
-export function UserMenu({ name, role }: UserMenuProps) {
+export function UserMenu({ name, role, avatarUrl }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -32,9 +34,13 @@ export function UserMenu({ name, role }: UserMenuProps) {
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-colors"
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white select-none">
-          {initial}
-        </span>
+        {avatarUrl ? (
+          <Image src={avatarUrl} alt={name} width={28} height={28} className="h-7 w-7 rounded-full object-cover" />
+        ) : (
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white select-none">
+            {initial}
+          </span>
+        )}
         <span>{name}</span>
       </button>
 

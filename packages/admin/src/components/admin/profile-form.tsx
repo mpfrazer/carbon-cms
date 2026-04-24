@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import Image from "next/image";
 
 interface ProfileFormProps {
   user: {
@@ -8,6 +9,7 @@ interface ProfileFormProps {
     name: string;
     email: string;
     bio?: string | null;
+    avatarUrl?: string | null;
   };
 }
 
@@ -15,6 +17,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [bio, setBio] = useState(user.bio ?? "");
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,6 +32,39 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarError(null);
+    setAvatarUploading(true);
+
+    const form = new FormData();
+    form.append("file", file);
+    const uploadRes = await fetch("/api/v1/media", { method: "POST", body: form });
+    const uploadJson = await uploadRes.json();
+
+    if (!uploadRes.ok) {
+      setAvatarError(uploadJson.error ?? "Upload failed");
+      setAvatarUploading(false);
+      return;
+    }
+
+    const newUrl: string = uploadJson.data.url;
+    const saveRes = await fetch(`/api/v1/users/${user.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ avatarUrl: newUrl }),
+    });
+
+    if (saveRes.ok) {
+      setAvatarUrl(newUrl);
+    } else {
+      setAvatarError("Upload succeeded but failed to save avatar URL");
+    }
+    setAvatarUploading(false);
+    if (avatarInputRef.current) avatarInputRef.current.value = "";
+  }
 
   async function handleProfileSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -86,6 +125,34 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
   return (
     <div className="p-6 space-y-10 max-w-xl">
+
+      {/* Avatar */}
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 mb-4">Avatar</h2>
+        <div className="flex items-center gap-4">
+          {avatarUrl ? (
+            <Image src={avatarUrl} alt="Avatar" width={64} height={64} className="h-16 w-16 rounded-full object-cover" />
+          ) : (
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-200 text-xl font-semibold text-neutral-600 select-none">
+              {user.name.charAt(0).toUpperCase()}
+            </span>
+          )}
+          <div className="space-y-1">
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarUploading}
+              className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+            >
+              {avatarUploading ? "Uploading…" : "Change photo"}
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+            {avatarError && <p className="text-xs text-red-600">{avatarError}</p>}
+          </div>
+        </div>
+      </section>
+
+      <hr className="border-neutral-200" />
 
       {/* Profile */}
       <section>
