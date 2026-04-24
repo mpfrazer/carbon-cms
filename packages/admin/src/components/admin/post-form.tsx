@@ -48,6 +48,7 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
 
   function handleTitleChange(val: string) {
     setTitle(val);
@@ -90,6 +91,20 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
 
     router.push("/admin/posts");
     router.refresh();
+  }
+
+  async function handlePreview() {
+    if (!post) return;
+    setPreviewing(true);
+    try {
+      const res = await fetch(`/api/v1/posts/${post.id}/preview`);
+      const json = await res.json();
+      if (res.ok && json.data?.previewUrl) {
+        window.open(json.data.previewUrl, "_blank", "noopener,noreferrer");
+      }
+    } finally {
+      setPreviewing(false);
+    }
   }
 
   async function handleDelete() {
@@ -230,6 +245,12 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
         <div className="flex gap-3">
           <button type="button" onClick={() => router.back()}
             className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">Cancel</button>
+          {isEditing && (
+            <button type="button" onClick={handlePreview} disabled={previewing}
+              className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors">
+              {previewing ? "Opening…" : "Preview"}
+            </button>
+          )}
           <button type="submit" disabled={saving}
             className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
             {saving ? "Saving…" : isEditing ? "Save changes" : "Create post"}
