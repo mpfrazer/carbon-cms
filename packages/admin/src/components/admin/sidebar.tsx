@@ -18,6 +18,7 @@ import {
   Tag,
   FolderOpen,
   Palette,
+  KeyRound,
 } from "lucide-react";
 
 interface NavItem {
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { href: "/admin/comments", label: "Comments", icon: MessageSquare, badge: "pendingComments" },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/themes", label: "Themes", icon: Palette },
+  { href: "/admin/api-keys", label: "API Keys", icon: KeyRound },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/profile", label: "My Profile", icon: UserCircle },
 ];
