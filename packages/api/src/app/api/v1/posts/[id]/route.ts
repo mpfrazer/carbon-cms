@@ -13,7 +13,7 @@ const updatePostSchema = z.object({
   slug: z.string().min(1).max(500).optional(),
   content: z.string().optional(),
   excerpt: z.string().optional().nullable(),
-  status: z.enum(["draft", "published", "scheduled", "archived"]).optional(),
+  status: z.enum(["draft", "published", "scheduled", "archived", "in_review"]).optional(),
   featuredImageId: z.string().uuid().optional().nullable(),
   publishedAt: z.string().datetime().optional().nullable(),
   scheduledAt: z.string().datetime().optional().nullable(),

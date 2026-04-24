@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ImageIcon, X } from "lucide-react";
+import { ImageIcon, X, Clock, CheckCircle, XCircle } from "lucide-react";
 import { RichEditor } from "@/components/admin/rich-editor";
 import { ExcerptGenerator } from "@/components/admin/ai/excerpt-generator";
 import { SeoOptimizer } from "@/components/admin/ai/seo-optimizer";
@@ -134,6 +134,7 @@ interface PostFormProps {
     content: string;
     excerpt?: string | null;
     status: string;
+    reviewNote?: string | null;
     featuredImageId?: string | null;
     featuredImageUrl?: string | null;
     metaTitle?: string | null;
@@ -143,11 +144,13 @@ interface PostFormProps {
   };
   allCategories: Taxonomy[];
   allTags: Taxonomy[];
+  userRole?: string;
 }
 
-export function PostForm({ post, allCategories, allTags }: PostFormProps) {
+export function PostForm({ post, allCategories, allTags, userRole = "author" }: PostFormProps) {
   const router = useRouter();
   const isEditing = !!post;
+  const isReviewer = userRole === "admin" || userRole === "editor";
 
   const [title, setTitle] = useState(post?.title ?? "");
   const [slug, setSlug] = useState(post?.slug ?? "");
@@ -167,6 +170,9 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewNote, setReviewNote] = useState("");
+  const [approvingOrRejecting, setApprovingOrRejecting] = useState(false);
 
   function handleTitleChange(val: string) {
     setTitle(val);
@@ -181,6 +187,49 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
 
   function toggleTag(id: string) {
     setSelectedTags((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
+  }
+
+  async function handleSubmitForReview() {
+    if (!post) return;
+    setSubmittingReview(true);
+    setError(null);
+    const res = await fetch(`/api/v1/posts/${post.id}/submit-review`, { method: "POST" });
+    const json = await res.json();
+    if (!res.ok) { setError(json.error ?? "Failed to submit for review"); setSubmittingReview(false); return; }
+    router.refresh();
+    window.location.reload();
+  }
+
+  async function handleApprove() {
+    if (!post || !confirm("Approve and publish this post?")) return;
+    setApprovingOrRejecting(true);
+    setError(null);
+    const res = await fetch(`/api/v1/posts/${post.id}/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: reviewNote || undefined }),
+    });
+    const json = await res.json();
+    if (!res.ok) { setError(json.error ?? "Failed to approve"); setApprovingOrRejecting(false); return; }
+    router.push("/admin/posts");
+    router.refresh();
+  }
+
+  async function handleReject() {
+    if (!post) return;
+    if (!reviewNote.trim()) { setError("A note is required when rejecting a post."); return; }
+    if (!confirm("Reject this post and return it to draft?")) return;
+    setApprovingOrRejecting(true);
+    setError(null);
+    const res = await fetch(`/api/v1/posts/${post.id}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note: reviewNote }),
+    });
+    const json = await res.json();
+    if (!res.ok) { setError(json.error ?? "Failed to reject"); setApprovingOrRejecting(false); return; }
+    router.push("/admin/posts");
+    router.refresh();
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -238,6 +287,58 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-6 max-w-3xl">
       {error && <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>}
+
+      {/* Review workflow banner */}
+      {isEditing && status === "in_review" && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-4 space-y-3">
+          <div className="flex items-center gap-2 text-amber-800">
+            <Clock className="h-4 w-4 shrink-0" />
+            <span className="text-sm font-medium">Awaiting review</span>
+          </div>
+          {post.reviewNote && (
+            <p className="text-sm text-amber-700 italic">&ldquo;{post.reviewNote}&rdquo;</p>
+          )}
+          {isReviewer && (
+            <div className="space-y-2 pt-1">
+              <textarea
+                value={reviewNote}
+                onChange={(e) => setReviewNote(e.target.value)}
+                placeholder="Add a note (required when rejecting)…"
+                rows={2}
+                className="w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={approvingOrRejecting}
+                  onClick={handleApprove}
+                  className="flex items-center gap-1.5 rounded-md bg-green-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-50 transition-colors"
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  {approvingOrRejecting ? "Working…" : "Approve & publish"}
+                </button>
+                <button
+                  type="button"
+                  disabled={approvingOrRejecting}
+                  onClick={handleReject}
+                  className="flex items-center gap-1.5 rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  {approvingOrRejecting ? "Working…" : "Reject"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Prior review note shown after rejection */}
+      {isEditing && status === "draft" && post.reviewNote && (
+        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3">
+          <p className="text-xs font-medium text-neutral-500 mb-1">Reviewer note</p>
+          <p className="text-sm text-neutral-700 italic">&ldquo;{post.reviewNote}&rdquo;</p>
+        </div>
+      )}
 
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-neutral-700">Title</label>
@@ -387,10 +488,22 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
               {previewing ? "Opening…" : "Preview"}
             </button>
           )}
-          <button type="submit" disabled={saving}
-            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
-            {saving ? "Saving…" : isEditing ? "Save changes" : "Create post"}
-          </button>
+          {isEditing && status === "draft" && !isReviewer && (
+            <button
+              type="button"
+              disabled={submittingReview}
+              onClick={handleSubmitForReview}
+              className="rounded-md border border-neutral-400 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+            >
+              {submittingReview ? "Submitting…" : "Submit for review"}
+            </button>
+          )}
+          {status !== "in_review" && (
+            <button type="submit" disabled={saving}
+              className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
+              {saving ? "Saving…" : isEditing ? "Save changes" : "Create post"}
+            </button>
+          )}
         </div>
       </div>
     </form>

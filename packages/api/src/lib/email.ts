@@ -95,6 +95,65 @@ export async function sendCommentNotificationEmail(opts: {
   );
 }
 
+export async function sendReviewSubmittedEmail(opts: {
+  postTitle: string;
+  postId: string;
+  authorName: string;
+}) {
+  const cfg = await getSmtpConfig();
+  if (!cfg.smtpHost) return;
+
+  const reviewers = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(inArray(users.role, ["admin", "editor"]));
+  if (reviewers.length === 0) return;
+
+  const adminUrl = process.env.CARBON_ADMIN_URL ?? "http://localhost:3000";
+  const postUrl = `${adminUrl}/admin/posts/${opts.postId}`;
+  const subject = `Post ready for review: "${opts.postTitle}"`;
+  const text = `${opts.authorName} submitted "${opts.postTitle}" for review.\n\nReview it at: ${postUrl}`;
+  const html = `<p><strong>${opts.authorName}</strong> submitted &ldquo;${opts.postTitle}&rdquo; for review.</p><p><a href="${postUrl}">Review the post</a></p>`;
+
+  const transport = makeTransport(cfg);
+  await Promise.all(
+    reviewers.map((r) =>
+      transport.sendMail({ from: cfg.smtpFrom || cfg.smtpUser, to: r.email, subject, text, html })
+    )
+  );
+}
+
+export async function sendReviewDecisionEmail(opts: {
+  to: string;
+  authorName: string;
+  postTitle: string;
+  postId: string;
+  decision: "approved" | "rejected";
+  note?: string | null;
+}) {
+  const cfg = await getSmtpConfig();
+  if (!cfg.smtpHost) return;
+
+  const adminUrl = process.env.CARBON_ADMIN_URL ?? "http://localhost:3000";
+  const postUrl = `${adminUrl}/admin/posts/${opts.postId}`;
+  const verb = opts.decision === "approved" ? "approved" : "rejected";
+  const subject = `Your post "${opts.postTitle}" was ${verb}`;
+  const noteBlock = opts.note ? `\n\nReviewer note:\n${opts.note}` : "";
+  const noteHtml = opts.note
+    ? `<blockquote style="border-left:3px solid #ccc;margin:8px 0;padding:0 1em;color:#555">${opts.note}</blockquote>`
+    : "";
+  const text = `Hi ${opts.authorName},\n\nYour post "${opts.postTitle}" was ${verb}.${noteBlock}\n\nView it at: ${postUrl}`;
+  const html = `<p>Hi ${opts.authorName},</p><p>Your post &ldquo;${opts.postTitle}&rdquo; was <strong>${verb}</strong>.</p>${noteHtml}<p><a href="${postUrl}">View the post</a></p>`;
+
+  await makeTransport(cfg).sendMail({
+    from: cfg.smtpFrom || cfg.smtpUser,
+    to: opts.to,
+    subject,
+    text,
+    html,
+  });
+}
+
 export async function sendWelcomeEmail(to: string, name: string) {
   const cfg = await getSmtpConfig();
   if (!cfg.smtpHost) return;

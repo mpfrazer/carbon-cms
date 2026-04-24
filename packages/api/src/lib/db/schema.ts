@@ -19,6 +19,7 @@ export const postStatusEnum = pgEnum("post_status", [
   "published",
   "scheduled",
   "archived",
+  "in_review",
 ]);
 
 export const pageStatusEnum = pgEnum("page_status", ["draft", "published"]);
@@ -108,6 +109,7 @@ export const posts = pgTable("posts", {
   scheduledAt: timestamp("scheduled_at"),
   metaTitle: text("meta_title"),
   metaDescription: text("meta_description"),
+  reviewNote: text("review_note"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
