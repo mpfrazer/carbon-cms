@@ -232,6 +232,17 @@ export const webhookDeliveries = pgTable("webhook_deliveries", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// --- Revisions ---
+
+export const revisions = pgTable("revisions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contentType: text("content_type").notNull(), // "post" | "page"
+  contentId: uuid("content_id").notNull(),
+  snapshot: text("snapshot").notNull(), // JSON blob of all editable fields
+  savedBy: uuid("saved_by").references(() => users.id, { onDelete: "set null" }),
+  savedAt: timestamp("saved_at").notNull().defaultNow(),
+});
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -300,4 +311,8 @@ export const webhooksRelations = relations(webhooks, ({ many }) => ({
 
 export const webhookDeliveriesRelations = relations(webhookDeliveries, ({ one }) => ({
   webhook: one(webhooks, { fields: [webhookDeliveries.webhookId], references: [webhooks.id] }),
+}));
+
+export const revisionsRelations = relations(revisions, ({ one }) => ({
+  savedByUser: one(users, { fields: [revisions.savedBy], references: [users.id] }),
 }));

@@ -6,6 +6,7 @@ import { pages } from "@/lib/db/schema";
 import { ok, created, badRequest, conflict, serverError, paginated, parsePagination } from "@/lib/api/response";
 import { slugify } from "@/lib/utils";
 import { dispatchWebhooks } from "@/lib/webhook";
+import { saveRevision } from "@/lib/revisions";
 
 const createPageSchema = z.object({
   title: z.string().min(1).max(500),
@@ -75,6 +76,11 @@ export async function POST(req: NextRequest) {
     if (existing.length > 0) return conflict(`Slug "${slug}" is already in use`);
 
     const [page] = await db.insert(pages).values({ title, slug, authorId, ...rest }).returning();
+    void saveRevision("page", page.id, {
+      title: page.title, slug: page.slug, content: page.content,
+      status: page.status, parentId: page.parentId, featuredImageId: page.featuredImageId,
+      menuOrder: page.menuOrder, metaTitle: page.metaTitle, metaDescription: page.metaDescription,
+    }, authorId);
     dispatchWebhooks("page.created", page);
     if (page.status === "published") dispatchWebhooks("page.published", page);
     return created(page);

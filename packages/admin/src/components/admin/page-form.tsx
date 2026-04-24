@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RichEditor } from "@/components/admin/rich-editor";
+import { RevisionPanel } from "@/components/admin/revision-panel";
 
 interface PageItem { id: string; title: string; }
 
@@ -154,6 +155,14 @@ export function PageForm({ page, allPages }: PageFormProps) {
           </div>
         </div>
       </details>
+
+      {isEditing && (
+        <RevisionPanel
+          contentType="pages"
+          contentId={page.id}
+          onRestored={() => window.location.reload()}
+        />
+      )}
 
       <div className="flex items-center justify-between pt-2">
         {isEditing ? (

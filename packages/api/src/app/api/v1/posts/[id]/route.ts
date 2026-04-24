@@ -6,6 +6,7 @@ import { posts, postCategories, postTags, categories, tags, media } from "@/lib/
 import { ok, badRequest, notFound, conflict, noContent, serverError } from "@/lib/api/response";
 import { slugify } from "@/lib/utils";
 import { dispatchWebhooks } from "@/lib/webhook";
+import { saveRevision } from "@/lib/revisions";
 
 const updatePostSchema = z.object({
   title: z.string().min(1).max(500).optional(),
@@ -98,6 +99,12 @@ export async function PUT(req: NextRequest, { params }: Params) {
       }
     }
 
+    void saveRevision("post", id, {
+      title: updated.title, slug: updated.slug, content: updated.content, excerpt: updated.excerpt,
+      status: updated.status, featuredImageId: updated.featuredImageId,
+      publishedAt: updated.publishedAt, scheduledAt: updated.scheduledAt,
+      metaTitle: updated.metaTitle, metaDescription: updated.metaDescription,
+    }, req.headers.get("x-user-id"));
     dispatchWebhooks("post.updated", updated);
     if (updated.status === "published" && existing.status !== "published") {
       dispatchWebhooks("post.published", updated);

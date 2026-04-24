@@ -6,6 +6,7 @@ import { pages } from "@/lib/db/schema";
 import { ok, badRequest, notFound, conflict, noContent, serverError } from "@/lib/api/response";
 import { slugify } from "@/lib/utils";
 import { dispatchWebhooks } from "@/lib/webhook";
+import { saveRevision } from "@/lib/revisions";
 
 const updatePageSchema = z.object({
   title: z.string().min(1).max(500).optional(),
@@ -57,6 +58,11 @@ export async function PUT(req: NextRequest, { params }: Params) {
       .where(eq(pages.id, id))
       .returning();
 
+    void saveRevision("page", id, {
+      title: updated.title, slug: updated.slug, content: updated.content,
+      status: updated.status, parentId: updated.parentId, featuredImageId: updated.featuredImageId,
+      menuOrder: updated.menuOrder, metaTitle: updated.metaTitle, metaDescription: updated.metaDescription,
+    }, req.headers.get("x-user-id"));
     dispatchWebhooks("page.updated", updated);
     if (updated.status === "published" && existing.status !== "published") {
       dispatchWebhooks("page.published", updated);
