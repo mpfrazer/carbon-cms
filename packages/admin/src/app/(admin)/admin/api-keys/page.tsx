@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Header } from "@/components/admin/header";
 import { ApiKeysManager } from "@/components/admin/api-keys-manager";
 
