@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { pages } from "@/lib/db/schema";
 import { ok, badRequest, notFound, conflict, noContent, serverError } from "@/lib/api/response";
 import { slugify } from "@/lib/utils";
+import { dispatchWebhooks } from "@/lib/webhook";
 
 const updatePageSchema = z.object({
   title: z.string().min(1).max(500).optional(),
@@ -56,6 +57,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
       .where(eq(pages.id, id))
       .returning();
 
+    dispatchWebhooks("page.updated", updated);
+    if (updated.status === "published" && existing.status !== "published") {
+      dispatchWebhooks("page.published", updated);
+    }
     return ok(updated);
   } catch (e) {
     return serverError(e);
@@ -68,6 +73,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     const [existing] = await db.select({ id: pages.id }).from(pages).where(eq(pages.id, id)).limit(1);
     if (!existing) return notFound("Page not found");
     await db.delete(pages).where(eq(pages.id, id));
+    dispatchWebhooks("page.deleted", { id });
     return noContent();
   } catch (e) {
     return serverError(e);

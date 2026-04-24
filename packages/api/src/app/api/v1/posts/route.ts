@@ -13,6 +13,7 @@ import {
   parsePagination,
 } from "@/lib/api/response";
 import { slugify } from "@/lib/utils";
+import { dispatchWebhooks } from "@/lib/webhook";
 
 const createPostSchema = z.object({
   title: z.string().min(1).max(500),
@@ -106,6 +107,8 @@ export async function POST(req: NextRequest) {
       await db.insert(postTags).values(tagIds.map((tagId) => ({ postId: post.id, tagId })));
     }
 
+    dispatchWebhooks("post.created", post);
+    if (post.status === "published") dispatchWebhooks("post.published", post);
     return created(post);
   } catch (e) {
     return serverError(e);

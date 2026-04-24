@@ -6,6 +6,7 @@ import { comments, posts, settings } from "@/lib/db/schema";
 import { ok, created, badRequest, serverError, paginated, parsePagination } from "@/lib/api/response";
 import { stripHtml } from "@/lib/utils";
 import { sendCommentNotificationEmail } from "@/lib/email";
+import { dispatchWebhooks } from "@/lib/webhook";
 
 async function getSetting(key: string): Promise<string | null> {
   const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, key)).limit(1);
@@ -128,6 +129,7 @@ export async function POST(req: NextRequest) {
       }).catch((err) => console.error("[email] comment notification failed:", err));
     }
 
+    dispatchWebhooks("comment.created", comment);
     return created(comment);
   } catch (e) {
     return serverError(e);

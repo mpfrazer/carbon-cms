@@ -19,6 +19,7 @@ import {
   FolderOpen,
   Palette,
   KeyRound,
+  Webhook,
 } from "lucide-react";
 
 interface NavItem {
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/themes", label: "Themes", icon: Palette },
   { href: "/admin/api-keys", label: "API Keys", icon: KeyRound },
+  { href: "/admin/webhooks", label: "Webhooks", icon: Webhook },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/profile", label: "My Profile", icon: UserCircle },
 ];
