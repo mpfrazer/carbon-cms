@@ -27,13 +27,32 @@ function formatDateTime(iso: string) {
 }
 
 export default async function DashboardPage() {
-  const [{ data: stats }, { data: scheduledData }] = await Promise.all([
-    serverGet("/api/v1/stats") as Promise<{ data: Stats }>,
-    serverGet("/api/v1/posts?status=scheduled&pageSize=10") as Promise<{ data: Post[] }>,
-  ]);
+  let stats: Stats | null = null;
+  let scheduledPosts: Post[] = [];
+
+  try {
+    const [{ data: statsData }, { data: scheduledData }] = await Promise.all([
+      serverGet("/api/v1/stats") as Promise<{ data: Stats }>,
+      serverGet("/api/v1/posts?status=scheduled&pageSize=10") as Promise<{ data: Post[] }>,
+    ]);
+    stats = statsData;
+    scheduledPosts = scheduledData ?? [];
+  } catch {
+    // API unreachable — render degraded state below
+  }
+
+  if (!stats) {
+    return (
+      <div>
+        <Header title="Dashboard" />
+        <div className="p-6">
+          <p className="text-sm text-neutral-500">Unable to reach the API server. Make sure it is running and try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   const { totalPosts, publishedPosts, totalPages, pendingComments, totalUsers, totalMedia } = stats;
-  const scheduledPosts: Post[] = scheduledData ?? [];
 
   const cards = [
     { label: "Total Posts", value: totalPosts, sub: `${publishedPosts} published`, icon: FileText, href: "/admin/posts" },

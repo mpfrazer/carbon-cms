@@ -25,7 +25,12 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
     if (!isFormData) headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(url, { method: req.method, headers, body, cache: "no-store" });
+  let res: Response;
+  try {
+    res = await fetch(url, { method: req.method, headers, body, cache: "no-store" });
+  } catch {
+    return NextResponse.json({ error: "API server unreachable" }, { status: 502 });
+  }
   const resContentType = res.headers.get("content-type") ?? "";
 
   if (resContentType.includes("application/json")) {
