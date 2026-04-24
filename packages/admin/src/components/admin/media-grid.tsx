@@ -25,6 +25,7 @@ export function MediaGrid() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function loadMedia() {
@@ -57,7 +58,18 @@ export function MediaGrid() {
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this file?")) return;
-    await fetch(`/api/v1/media/${id}`, { method: "DELETE" });
+    setDeleteError(null);
+    const res = await fetch(`/api/v1/media/${id}`, { method: "DELETE" });
+    if (res.status === 409) {
+      const json = await res.json();
+      const { posts = [], pages = [] } = json.inUse ?? {};
+      const refs = [
+        ...posts.map((p: { title: string }) => `post "${p.title}"`),
+        ...pages.map((p: { title: string }) => `page "${p.title}"`),
+      ];
+      setDeleteError(`This file is used as a featured image in: ${refs.join(", ")}. Remove it from those items first.`);
+      return;
+    }
     loadMedia();
   }
 
@@ -65,6 +77,9 @@ export function MediaGrid() {
     <div className="p-6">
       {uploadError && (
         <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{uploadError}</div>
+      )}
+      {deleteError && (
+        <div className="mb-4 rounded-md bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">{deleteError}</div>
       )}
       <div className="mb-4 flex justify-end">
         <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleUpload} />

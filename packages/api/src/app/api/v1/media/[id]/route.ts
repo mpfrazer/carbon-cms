@@ -1,8 +1,8 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { media } from "@/lib/db/schema";
+import { media, posts, pages } from "@/lib/db/schema";
 import { ok, badRequest, notFound, noContent, serverError } from "@/lib/api/response";
 import { deleteFile, keyFromUrl } from "@/lib/storage";
 
@@ -47,9 +47,21 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     const [item] = await db.select().from(media).where(eq(media.id, id)).limit(1);
     if (!item) return notFound("Media not found");
 
+    const [referencingPosts, referencingPages] = await Promise.all([
+      db.select({ id: posts.id, title: posts.title }).from(posts).where(eq(posts.featuredImageId, id)),
+      db.select({ id: pages.id, title: pages.title }).from(pages).where(eq(pages.featuredImageId, id)),
+    ]);
+
+    if (referencingPosts.length > 0 || referencingPages.length > 0) {
+      return NextResponse.json(
+        { error: "This file is in use and cannot be deleted.", inUse: { posts: referencingPosts, pages: referencingPages } },
+        { status: 409 }
+      );
+    }
+
     try {
       await deleteFile(keyFromUrl(item.url));
-    } catch (e) {
+    } catch {
       // Object may already be gone — continue with DB deletion
     }
 
