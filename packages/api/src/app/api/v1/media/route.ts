@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { media } from "@/lib/db/schema";
 import { ok, created, badRequest, serverError, paginated, parsePagination } from "@/lib/api/response";
 import { uploadFile } from "@/lib/storage";
+import { dispatchWebhooks } from "@/lib/webhook";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "application/pdf"];
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
       .values({ filename: key, originalFilename: file.name, mimeType: file.type, size: file.size, url, altText, caption, uploadedBy })
       .returning();
 
+    dispatchWebhooks("media.uploaded", item);
     return created(item);
   } catch (e) {
     return serverError(e);

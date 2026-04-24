@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { posts, postCategories, postTags, categories, tags } from "@/lib/db/schema";
 import { ok, badRequest, notFound, conflict, noContent, serverError } from "@/lib/api/response";
 import { slugify } from "@/lib/utils";
+import { dispatchWebhooks } from "@/lib/webhook";
 
 const updatePostSchema = z.object({
   title: z.string().min(1).max(500).optional(),
@@ -90,6 +91,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
       }
     }
 
+    dispatchWebhooks("post.updated", updated);
+    if (updated.status === "published" && existing.status !== "published") {
+      dispatchWebhooks("post.published", updated);
+    }
     return ok(updated);
   } catch (e) {
     return serverError(e);
@@ -102,6 +107,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     const [existing] = await db.select({ id: posts.id }).from(posts).where(eq(posts.id, id)).limit(1);
     if (!existing) return notFound("Post not found");
     await db.delete(posts).where(eq(posts.id, id));
+    dispatchWebhooks("post.deleted", { id });
     return noContent();
   } catch (e) {
     return serverError(e);

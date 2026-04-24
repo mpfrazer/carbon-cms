@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { comments, settings } from "@/lib/db/schema";
 import { ok, badRequest, notFound, noContent, serverError } from "@/lib/api/response";
 import { stripHtml } from "@/lib/utils";
+import { dispatchWebhooks } from "@/lib/webhook";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -49,6 +50,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
         .set({ status: parsed.data.status, updatedAt: new Date() })
         .where(eq(comments.id, id))
         .returning();
+      if (updated.status === "approved" && existing.status !== "approved") {
+        dispatchWebhooks("comment.approved", updated);
+      }
       return ok(updated);
     }
 

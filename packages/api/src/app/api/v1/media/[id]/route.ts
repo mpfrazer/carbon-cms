@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { media, posts, pages } from "@/lib/db/schema";
 import { ok, badRequest, notFound, noContent, serverError } from "@/lib/api/response";
 import { deleteFile, keyFromUrl } from "@/lib/storage";
+import { dispatchWebhooks } from "@/lib/webhook";
 
 const updateMediaSchema = z.object({
   altText: z.string().optional().nullable(),
@@ -66,6 +67,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     }
 
     await db.delete(media).where(eq(media.id, id));
+    dispatchWebhooks("media.deleted", { id });
     return noContent();
   } catch (e) {
     return serverError(e);
