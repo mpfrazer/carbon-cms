@@ -89,7 +89,7 @@ export function ApiKeysManager() {
       <section className="space-y-4">
         <div>
           <h2 className="text-sm font-semibold text-neutral-800">Create new key</h2>
-          <p className="mt-1 text-xs text-neutral-500">Give the key a name that identifies its consumer (e.g. "Personal brand site"). The key is shown only once — copy it before leaving.</p>
+          <p className="mt-1 text-xs text-neutral-500">Give the key a name that identifies its consumer (e.g. &ldquo;Personal brand site&rdquo;). The key is shown only once — copy it before leaving.</p>
         </div>
 
         <form onSubmit={handleCreate} className="flex gap-3">
