@@ -42,10 +42,17 @@ export function ApiKeysManager() {
 
   async function loadKeys() {
     setLoading(true);
-    const res = await fetch("/api/v1/api-keys");
-    const json = await res.json();
-    setKeys(json.data ?? []);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/v1/api-keys");
+      if (res.ok) {
+        const json = await res.json();
+        setKeys(json.data ?? []);
+      }
+    } catch {
+      // network error — keep previous state
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { loadKeys(); }, []);
