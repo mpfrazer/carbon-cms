@@ -14,6 +14,7 @@ import {
 } from "@/lib/api/response";
 import { slugify } from "@/lib/utils";
 import { dispatchWebhooks } from "@/lib/webhook";
+import { saveRevision } from "@/lib/revisions";
 
 const createPostSchema = z.object({
   title: z.string().min(1).max(500),
@@ -107,6 +108,12 @@ export async function POST(req: NextRequest) {
       await db.insert(postTags).values(tagIds.map((tagId) => ({ postId: post.id, tagId })));
     }
 
+    void saveRevision("post", post.id, {
+      title: post.title, slug: post.slug, content: post.content, excerpt: post.excerpt,
+      status: post.status, featuredImageId: post.featuredImageId,
+      publishedAt: post.publishedAt, scheduledAt: post.scheduledAt,
+      metaTitle: post.metaTitle, metaDescription: post.metaDescription,
+    }, authorId);
     dispatchWebhooks("post.created", post);
     if (post.status === "published") dispatchWebhooks("post.published", post);
     return created(post);

@@ -11,6 +11,7 @@ import { TagSuggester } from "@/components/admin/ai/tag-suggester";
 import { CategorySuggester } from "@/components/admin/ai/category-suggester";
 import { TitleSuggester } from "@/components/admin/ai/title-suggester";
 import { OutlineGenerator } from "@/components/admin/ai/outline-generator";
+import { RevisionPanel } from "@/components/admin/revision-panel";
 
 interface Taxonomy { id: string; name: string; }
 
@@ -364,6 +365,14 @@ export function PostForm({ post, allCategories, allTags }: PostFormProps) {
           </div>
         </div>
       </details>
+
+      {isEditing && (
+        <RevisionPanel
+          contentType="posts"
+          contentId={post.id}
+          onRestored={() => window.location.reload()}
+        />
+      )}
 
       <div className="flex items-center justify-between pt-2">
         {isEditing ? (
