@@ -14,9 +14,16 @@ export default async function FrontendLayout({ children }: { children: React.Rea
 
   const Layout = SiteLayout as typeof SiteLayoutType;
   const navPages = (pagesRes as { data: { slug: string; title: string }[] }).data.filter((p) => p.slug !== "home");
-  const user = session?.user?.name
-    ? { name: session.user.name, role: (session.user as { role?: string }).role ?? "subscriber" }
-    : null;
+
+  let user: { name: string; role: string; avatarUrl?: string | null } | null = null;
+  if (session?.user?.id && session.user.name) {
+    let avatarUrl: string | null = null;
+    try {
+      const { data: userData } = await apiGet(`/api/v1/users/${session.user.id}`) as { data: { avatarUrl?: string | null } };
+      avatarUrl = userData.avatarUrl ?? null;
+    } catch { /* non-critical */ }
+    user = { name: session.user.name, role: (session.user as { role?: string }).role ?? "subscriber", avatarUrl };
+  }
 
   return (
     <Layout siteTitle={siteTitle} navPages={navPages} user={user}>

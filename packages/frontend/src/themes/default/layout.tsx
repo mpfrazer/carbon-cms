@@ -7,7 +7,7 @@ interface SiteLayoutProps {
   siteTitle: string;
   navPages: NavPage[];
   children: React.ReactNode;
-  user?: { name: string; role: string } | null;
+  user?: { name: string; role: string; avatarUrl?: string | null } | null;
 }
 
 export function SiteLayout({ siteTitle, navPages, children, user }: SiteLayoutProps) {
@@ -29,7 +29,7 @@ export function SiteLayout({ siteTitle, navPages, children, user }: SiteLayoutPr
               Blog
             </Link>
             {user ? (
-              <UserMenu name={user.name} role={user.role} />
+              <UserMenu name={user.name} role={user.role} avatarUrl={user.avatarUrl} />
             ) : (
               <>
                 <Link href="/login" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
