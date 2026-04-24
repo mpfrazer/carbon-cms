@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { comments, posts, settings } from "@/lib/db/schema";
 import { ok, created, badRequest, serverError, paginated, parsePagination } from "@/lib/api/response";
 import { stripHtml } from "@/lib/utils";
+import { sendCommentNotificationEmail } from "@/lib/email";
 
 async function getSetting(key: string): Promise<string | null> {
   const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, key)).limit(1);
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You must be logged in to comment" }, { status: 401 });
     }
 
-    const [post] = await db.select({ id: posts.id }).from(posts).where(eq(posts.id, parsed.data.postId)).limit(1);
+    const [post] = await db.select({ id: posts.id, title: posts.title, slug: posts.slug }).from(posts).where(eq(posts.id, parsed.data.postId)).limit(1);
     if (!post) return badRequest("Post not found");
 
     const content = stripHtml(parsed.data.content);
@@ -117,6 +118,15 @@ export async function POST(req: NextRequest) {
         userAgent,
       })
       .returning();
+
+    if (status === "pending") {
+      sendCommentNotificationEmail({
+        authorName: comment.authorName,
+        postTitle: post.title,
+        postSlug: post.slug,
+        excerpt: comment.content.slice(0, 200) + (comment.content.length > 200 ? "…" : ""),
+      }).catch((err) => console.error("[email] comment notification failed:", err));
+    }
 
     return created(comment);
   } catch (e) {

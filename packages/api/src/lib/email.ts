@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
-import { inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { settings } from "@/lib/db/schema";
+import { settings, users } from "@/lib/db/schema";
 
 const SMTP_KEYS = ["smtpHost", "smtpPort", "smtpUser", "smtpPass", "smtpFrom", "smtpSecure"];
 
@@ -53,6 +53,46 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
     text: `Hi ${name},\n\nReset your password by visiting:\n${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, you can ignore this email.`,
     html: `<p>Hi ${name},</p><p><a href="${resetUrl}">Reset your password</a></p><p>This link expires in 1 hour. If you didn't request this, you can ignore this email.</p>`,
   });
+}
+
+export async function sendCommentNotificationEmail(opts: {
+  authorName: string;
+  postTitle: string;
+  postSlug: string;
+  excerpt: string;
+}) {
+  const cfg = await getSmtpConfig();
+  if (!cfg.smtpHost) return;
+
+  const admins = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.role, "admin"));
+  if (admins.length === 0) return;
+
+  const adminUrl = process.env.CARBON_ADMIN_URL ?? "http://localhost:3000";
+  const commentsUrl = `${adminUrl}/admin/comments`;
+
+  const subject = `New comment on "${opts.postTitle}"`;
+  const text = [
+    `${opts.authorName} left a comment on "${opts.postTitle}":`,
+    ``,
+    opts.excerpt,
+    ``,
+    `Review and moderate at: ${commentsUrl}`,
+  ].join("\n");
+  const html = [
+    `<p><strong>${opts.authorName}</strong> left a comment on &ldquo;${opts.postTitle}&rdquo;:</p>`,
+    `<blockquote style="border-left:3px solid #ccc;margin:0;padding:0 1em;color:#555">${opts.excerpt}</blockquote>`,
+    `<p><a href="${commentsUrl}">Review and moderate comments</a></p>`,
+  ].join("");
+
+  const transport = makeTransport(cfg);
+  await Promise.all(
+    admins.map((admin) =>
+      transport.sendMail({ from: cfg.smtpFrom || cfg.smtpUser, to: admin.email, subject, text, html })
+    )
+  );
 }
 
 export async function sendWelcomeEmail(to: string, name: string) {
