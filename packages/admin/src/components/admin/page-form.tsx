@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { LayoutTemplate, FileText } from "lucide-react";
 import { RichEditor } from "@/components/admin/rich-editor";
+import { BlockEditor, type PageBlock } from "@/components/admin/block-editor";
 import { RevisionPanel } from "@/components/admin/revision-panel";
 
 interface PageItem { id: string; title: string; }
@@ -13,6 +15,7 @@ interface PageFormProps {
     title: string;
     slug: string;
     content: string;
+    blocks?: string | null;
     status: string;
     parentId?: string | null;
     menuOrder?: number | null;
@@ -25,6 +28,18 @@ interface PageFormProps {
 export function PageForm({ page, allPages }: PageFormProps) {
   const router = useRouter();
   const isEditing = !!page;
+
+  // Determine initial editor mode: block-based if blocks JSON exists, otherwise rich text
+  const initialBlocks: PageBlock[] | null = (() => {
+    if (!page?.blocks) return null;
+    try {
+      const parsed = JSON.parse(page.blocks);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch { return null; }
+  })();
+
+  const [editorMode, setEditorMode] = useState<"richtext" | "blocks">(initialBlocks ? "blocks" : "richtext");
+  const [blocks, setBlocks] = useState<PageBlock[]>(initialBlocks ?? []);
 
   const [title, setTitle] = useState(page?.title ?? "");
   const [slug, setSlug] = useState(page?.slug ?? "");
@@ -47,18 +62,41 @@ export function PageForm({ page, allPages }: PageFormProps) {
     }
   }
 
+  function switchToBlocks() {
+    // Migrate existing rich-text content to a single text block
+    if (editorMode === "richtext" && content) {
+      setBlocks([{ type: "text", content }]);
+    } else if (editorMode === "richtext") {
+      setBlocks([]);
+    }
+    setEditorMode("blocks");
+  }
+
+  function switchToRichText() {
+    setEditorMode("richtext");
+    // Preserve blocks data but don't send it
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSaving(true);
 
-    const body = {
-      title, slug, content, status,
+    const body: Record<string, unknown> = {
+      title, slug, status,
       parentId: parentId || null,
       menuOrder: parseInt(menuOrder, 10) || 0,
       metaTitle: metaTitle || null,
       metaDescription: metaDescription || null,
     };
+
+    if (editorMode === "blocks") {
+      body.blocks = JSON.stringify(blocks);
+      // content derived server-side from blocks
+    } else {
+      body.content = content;
+      body.blocks = null; // clear blocks if switching back to rich text
+    }
 
     const res = await fetch(isEditing ? `/api/v1/pages/${page.id}` : "/api/v1/pages", {
       method: isEditing ? "PUT" : "POST",
@@ -110,9 +148,33 @@ export function PageForm({ page, allPages }: PageFormProps) {
         <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} required className={inputClass + " font-mono"} />
       </div>
 
-      <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-neutral-700">Content</label>
-        <RichEditor value={content} onChange={setContent} />
+      {/* Editor mode toggle */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-neutral-700">Content</label>
+          <div className="flex rounded-md border border-neutral-200 overflow-hidden text-xs font-medium">
+            <button
+              type="button"
+              onClick={switchToRichText}
+              className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${editorMode === "richtext" ? "bg-neutral-900 text-white" : "text-neutral-500 hover:bg-neutral-50"}`}
+            >
+              <FileText className="h-3.5 w-3.5" /> Rich text
+            </button>
+            <button
+              type="button"
+              onClick={switchToBlocks}
+              className={`flex items-center gap-1.5 px-3 py-1.5 border-l border-neutral-200 transition-colors ${editorMode === "blocks" ? "bg-neutral-900 text-white" : "text-neutral-500 hover:bg-neutral-50"}`}
+            >
+              <LayoutTemplate className="h-3.5 w-3.5" /> Page builder
+            </button>
+          </div>
+        </div>
+
+        {editorMode === "richtext" ? (
+          <RichEditor value={content} onChange={setContent} />
+        ) : (
+          <BlockEditor value={blocks} onChange={setBlocks} />
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

@@ -2,10 +2,12 @@ import { notFound } from "next/navigation";
 import { getThemeComponents } from "@/lib/theme-provider";
 import { getSiteSettings } from "@/lib/site-settings";
 import { apiGet } from "@/lib/api/client";
+import { BlockRenderer } from "@/components/block-renderer";
+import type { PageBlock } from "@/lib/blocks";
 import type { Metadata } from "next";
 
 interface Page {
-  id: string; title: string; slug: string; content: string; status: string;
+  id: string; title: string; slug: string; content: string; blocks: string | null; status: string;
   metaTitle: string | null; metaDescription: string | null; updatedAt: string;
 }
 
@@ -49,10 +51,24 @@ export default async function PageRoute({ params }: Props) {
   const base = siteUrl || process.env.NEXTAUTH_URL || "";
   const jsonLd = { "@context": "https://schema.org", "@type": "WebPage", name: page.title, description: page.metaDescription ?? siteDescription, url: `${base}/${slug}`, dateModified: page.updatedAt };
 
+  let blocks: PageBlock[] | null = null;
+  if (page.blocks) {
+    try {
+      const parsed = JSON.parse(page.blocks);
+      if (Array.isArray(parsed)) blocks = parsed as PageBlock[];
+    } catch { /* fall through to legacy renderer */ }
+  }
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <PageContent title={page.title} content={page.content} updatedAt={new Date(page.updatedAt)} />
+      {blocks ? (
+        <article className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+          <BlockRenderer blocks={blocks} />
+        </article>
+      ) : (
+        <PageContent title={page.title} content={page.content} updatedAt={new Date(page.updatedAt)} />
+      )}
     </>
   );
 }

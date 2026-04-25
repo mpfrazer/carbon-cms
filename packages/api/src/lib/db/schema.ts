@@ -132,6 +132,7 @@ export const pages = pgTable("pages", {
   menuOrder: integer("menu_order").notNull().default(0),
   metaTitle: text("meta_title"),
   metaDescription: text("meta_description"),
+  blocks: text("blocks"), // JSON array of PageBlock, null = legacy rich-text mode
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

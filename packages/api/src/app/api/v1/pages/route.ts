@@ -7,11 +7,13 @@ import { ok, created, badRequest, conflict, serverError, paginated, parsePaginat
 import { slugify } from "@/lib/utils";
 import { dispatchWebhooks } from "@/lib/webhook";
 import { saveRevision } from "@/lib/revisions";
+import { serializeBlocksToContent } from "@/lib/blocks";
 
 const createPageSchema = z.object({
   title: z.string().min(1).max(500),
   slug: z.string().min(1).max(500).optional(),
   content: z.string().default(""),
+  blocks: z.string().nullable().optional(),
   status: z.enum(["draft", "published"]).default("draft"),
   parentId: z.string().uuid().nullish(),
   featuredImageId: z.string().uuid().nullish(),
@@ -69,15 +71,23 @@ export async function POST(req: NextRequest) {
     const parsed = createPageSchema.safeParse(body);
     if (!parsed.success) return badRequest("Validation failed", parsed.error.flatten());
 
-    const { title, slug: rawSlug, ...rest } = parsed.data;
+    const { title, slug: rawSlug, blocks: rawBlocks, content: rawContent, ...rest } = parsed.data;
     const slug = rawSlug ?? slugify(title);
 
     const existing = await db.select({ id: pages.id }).from(pages).where(eq(pages.slug, slug)).limit(1);
     if (existing.length > 0) return conflict(`Slug "${slug}" is already in use`);
 
-    const [page] = await db.insert(pages).values({ title, slug, authorId, ...rest }).returning();
+    let content = rawContent ?? "";
+    if (rawBlocks) {
+      try {
+        const parsed2 = JSON.parse(rawBlocks);
+        if (Array.isArray(parsed2)) content = serializeBlocksToContent(parsed2);
+      } catch { /* ignore */ }
+    }
+
+    const [page] = await db.insert(pages).values({ title, slug, authorId, content, blocks: rawBlocks ?? null, ...rest }).returning();
     void saveRevision("page", page.id, {
-      title: page.title, slug: page.slug, content: page.content,
+      title: page.title, slug: page.slug, content: page.content, blocks: page.blocks,
       status: page.status, parentId: page.parentId, featuredImageId: page.featuredImageId,
       menuOrder: page.menuOrder, metaTitle: page.metaTitle, metaDescription: page.metaDescription,
     }, authorId);
