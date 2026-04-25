@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { PageBlock } from "@/lib/blocks";
 
@@ -15,11 +14,15 @@ function HeroBlock({ heading, subheading, ctaText, ctaUrl, backgroundImageUrl }:
   heading: string; subheading?: string; ctaText?: string; ctaUrl?: string; backgroundImageUrl?: string;
 }) {
   return (
-    <div className={`relative rounded-xl overflow-hidden py-20 px-8 text-center mb-8 ${backgroundImageUrl ? "" : "bg-neutral-900"}`}>
-      {backgroundImageUrl && (
-        <Image src={backgroundImageUrl} alt="" fill className="object-cover" />
-      )}
-      <div className={`relative z-10 ${backgroundImageUrl ? "text-white" : "text-white"}`}>
+    <div
+      className="relative rounded-xl overflow-hidden py-20 px-8 text-center mb-8 bg-neutral-900"
+      style={backgroundImageUrl ? {
+        backgroundImage: `url(${JSON.stringify(backgroundImageUrl)})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      } : undefined}
+    >
+      <div className="relative z-10 text-white">
         <h1
           className="text-4xl font-bold tracking-tight sm:text-5xl"
           style={{ fontFamily: "var(--carbon-font-heading)" }}
@@ -47,15 +50,12 @@ function ImageBlock({ url, alt, caption, fullWidth }: {
 }) {
   return (
     <figure className={`my-8 ${fullWidth ? "-mx-4 sm:-mx-6" : ""}`}>
-      <div className="relative w-full overflow-hidden rounded-lg">
-        <Image
-          src={url}
-          alt={alt ?? ""}
-          width={1200}
-          height={600}
-          className="w-full object-cover"
-        />
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={alt ?? ""}
+        className="w-full rounded-lg object-cover"
+      />
       {caption && (
         <figcaption className="mt-2 text-center text-sm text-neutral-500">{caption}</figcaption>
       )}
