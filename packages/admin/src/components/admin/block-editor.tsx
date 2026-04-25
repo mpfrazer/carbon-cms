@@ -60,6 +60,8 @@ function HeroBlockForm({ block, onChange }: { block: HeroBlock; onChange: (b: He
         </div>
       </div>
       <div>
+        {/* TODO: add a media library picker here (same modal pattern as FeaturedImagePicker)
+            so users can choose a background image from uploaded media instead of pasting a URL. */}
         <label className="block text-xs font-medium text-neutral-600 mb-1">Background image URL</label>
         <input type="url" value={block.backgroundImageUrl ?? ""} onChange={(e) => onChange({ ...block, backgroundImageUrl: e.target.value || undefined })} placeholder="https://…" className={input} />
       </div>
