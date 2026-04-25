@@ -1,4 +1,5 @@
 import { apiGet } from "@/lib/api/client";
+import { parseThemeAppearance, type ThemeAppearance } from "@/lib/theme";
 
 export interface SiteSettings {
   siteTitle: string;
@@ -7,6 +8,7 @@ export interface SiteSettings {
   postsPerPage: number;
   allowComments: boolean;
   requireLoginToComment: boolean;
+  appearance: ThemeAppearance;
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -18,5 +20,6 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     postsPerPage: Number(raw.postsPerPage) || 10,
     allowComments: raw.allowComments !== false && raw.allowComments !== "false",
     requireLoginToComment: raw.requireLoginToComment === true || raw.requireLoginToComment === "true",
+    appearance: parseThemeAppearance(raw),
   };
 }
