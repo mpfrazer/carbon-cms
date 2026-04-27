@@ -4,6 +4,103 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Palette, Check, Loader2, ImageIcon, X } from "lucide-react";
 
+// Minimal font registry for the admin UI — keep in sync with packages/frontend/src/lib/fonts.ts
+const ADMIN_FONTS = [
+  // System
+  { name: "system", label: "System sans-serif", category: "System", stack: "system-ui, -apple-system, sans-serif", googleFamily: null, contexts: ["body", "heading"] },
+  { name: "system-serif", label: "System serif", category: "System", stack: "Georgia, 'Times New Roman', serif", googleFamily: null, contexts: ["body", "heading"] },
+  { name: "system-mono", label: "System monospace", category: "System", stack: "'Courier New', Courier, monospace", googleFamily: null, contexts: ["body"] },
+  // Sans-serif
+  { name: "inter", label: "Inter", category: "Sans-serif", stack: "'Inter', system-ui, sans-serif", googleFamily: "Inter", contexts: ["body", "heading"] },
+  { name: "plus-jakarta-sans", label: "Plus Jakarta Sans", category: "Sans-serif", stack: "'Plus Jakarta Sans', system-ui, sans-serif", googleFamily: "Plus Jakarta Sans", contexts: ["body", "heading"] },
+  { name: "dm-sans", label: "DM Sans", category: "Sans-serif", stack: "'DM Sans', system-ui, sans-serif", googleFamily: "DM Sans", contexts: ["body", "heading"] },
+  { name: "lato", label: "Lato", category: "Sans-serif", stack: "'Lato', system-ui, sans-serif", googleFamily: "Lato", contexts: ["body", "heading"] },
+  { name: "open-sans", label: "Open Sans", category: "Sans-serif", stack: "'Open Sans', system-ui, sans-serif", googleFamily: "Open Sans", contexts: ["body", "heading"] },
+  { name: "nunito", label: "Nunito", category: "Sans-serif", stack: "'Nunito', system-ui, sans-serif", googleFamily: "Nunito", contexts: ["body", "heading"] },
+  // Serif
+  { name: "source-serif-4", label: "Source Serif 4", category: "Serif", stack: "'Source Serif 4', Georgia, serif", googleFamily: "Source Serif 4", contexts: ["body", "heading"] },
+  { name: "merriweather", label: "Merriweather", category: "Serif", stack: "'Merriweather', Georgia, serif", googleFamily: "Merriweather", contexts: ["body", "heading"] },
+  { name: "lora", label: "Lora", category: "Serif", stack: "'Lora', Georgia, serif", googleFamily: "Lora", contexts: ["body", "heading"] },
+  { name: "libre-baskerville", label: "Libre Baskerville", category: "Serif", stack: "'Libre Baskerville', Georgia, serif", googleFamily: "Libre Baskerville", contexts: ["body", "heading"] },
+  // Display serif
+  { name: "playfair-display", label: "Playfair Display", category: "Display serif", stack: "'Playfair Display', Georgia, serif", googleFamily: "Playfair Display", contexts: ["heading"] },
+  { name: "dm-serif-display", label: "DM Serif Display", category: "Display serif", stack: "'DM Serif Display', Georgia, serif", googleFamily: "DM Serif Display", contexts: ["heading"] },
+  { name: "fraunces", label: "Fraunces", category: "Display serif", stack: "'Fraunces', Georgia, serif", googleFamily: "Fraunces", contexts: ["heading"] },
+  // Geometric
+  { name: "space-grotesk", label: "Space Grotesk", category: "Geometric", stack: "'Space Grotesk', system-ui, sans-serif", googleFamily: "Space Grotesk", contexts: ["body", "heading"] },
+  { name: "sora", label: "Sora", category: "Geometric", stack: "'Sora', system-ui, sans-serif", googleFamily: "Sora", contexts: ["body", "heading"] },
+  { name: "raleway", label: "Raleway", category: "Geometric", stack: "'Raleway', system-ui, sans-serif", googleFamily: "Raleway", contexts: ["body", "heading"] },
+  // Monospace
+  { name: "jetbrains-mono", label: "JetBrains Mono", category: "Monospace", stack: "'JetBrains Mono', 'Courier New', monospace", googleFamily: "JetBrains Mono", contexts: ["body"] },
+  { name: "ibm-plex-mono", label: "IBM Plex Mono", category: "Monospace", stack: "'IBM Plex Mono', 'Courier New', monospace", googleFamily: "IBM Plex Mono", contexts: ["body"] },
+] as const;
+
+type AdminFont = typeof ADMIN_FONTS[number];
+
+const HEADING_WEIGHTS = [
+  { value: "300", label: "Light (300)" },
+  { value: "400", label: "Regular (400)" },
+  { value: "600", label: "Semibold (600)" },
+  { value: "700", label: "Bold (700)" },
+];
+
+function groupByCategory(fonts: readonly AdminFont[]) {
+  const map = new Map<string, AdminFont[]>();
+  for (const f of fonts) {
+    if (!map.has(f.category)) map.set(f.category, []);
+    map.get(f.category)!.push(f);
+  }
+  return map;
+}
+
+function buildAdminGoogleFontsUrl(fontNames: string[]): string | null {
+  const families = fontNames
+    .map((name) => ADMIN_FONTS.find((f) => f.name === name))
+    .filter((f): f is AdminFont => !!f && f.googleFamily !== null)
+    .map((f) => `family=${encodeURIComponent(f.googleFamily!)}:wght@400;500;600;700`);
+  if (families.length === 0) return null;
+  return `https://fonts.googleapis.com/css2?${families.join("&")}&display=swap`;
+}
+
+function getStack(name: string): string {
+  return ADMIN_FONTS.find((f) => f.name === name)?.stack ?? "system-ui, sans-serif";
+}
+
+function FontSelect({
+  value,
+  onChange,
+  filter,
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  filter: "body" | "heading";
+  label: string;
+}) {
+  const inputClass = "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500";
+  const filtered = ADMIN_FONTS.filter((f) => (f.contexts as readonly string[]).includes(filter));
+  const grouped = groupByCategory(filtered);
+  const previewStack = getStack(value);
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-neutral-700 mb-1.5">{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={inputClass}>
+        {Array.from(grouped.entries()).map(([cat, fonts]) => (
+          <optgroup key={cat} label={cat}>
+            {fonts.map((f) => (
+              <option key={f.name} value={f.name}>{f.label}</option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+      <p className="mt-2 text-base text-neutral-500 truncate" style={{ fontFamily: previewStack }}>
+        The quick brown fox jumps over the lazy dog
+      </p>
+    </div>
+  );
+}
+
 interface Theme {
   name: string;
   active: boolean;
@@ -18,20 +115,10 @@ interface AppearanceState {
   themeAccentColor: string;
   themeFontBody: string;
   themeFontHeading: string;
+  themeHeadingWeight: string;
   themeLogoUrl: string;
   themeFooterText: string;
 }
-
-const FONT_OPTIONS = [
-  { value: "system", label: "System (sans-serif)" },
-  { value: "serif", label: "Serif" },
-  { value: "mono", label: "Monospace" },
-];
-
-const HEADING_FONT_OPTIONS = [
-  { value: "system", label: "System (sans-serif)" },
-  { value: "serif", label: "Serif" },
-];
 
 function LogoPicker({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -141,11 +228,25 @@ export function ThemesManager({
     themeAccentColor: (initialAppearance.themeAccentColor as string) || "#171717",
     themeFontBody: (initialAppearance.themeFontBody as string) || "system",
     themeFontHeading: (initialAppearance.themeFontHeading as string) || "system",
+    themeHeadingWeight: (initialAppearance.themeHeadingWeight as string) || "700",
     themeLogoUrl: (initialAppearance.themeLogoUrl as string) || "",
     themeFooterText: (initialAppearance.themeFooterText as string) || "",
   });
   const [appearanceSaving, setAppearanceSaving] = useState(false);
   const [appearanceMessage, setAppearanceMessage] = useState<string | null>(null);
+
+  // Inject Google Fonts into the admin page for live preview
+  useEffect(() => {
+    const url = buildAdminGoogleFontsUrl([appearance.themeFontBody, appearance.themeFontHeading]);
+    if (!url) return;
+    const existing = document.getElementById("carbon-admin-preview-fonts");
+    if (existing) { (existing as HTMLLinkElement).href = url; return; }
+    const link = document.createElement("link");
+    link.id = "carbon-admin-preview-fonts";
+    link.rel = "stylesheet";
+    link.href = url;
+    document.head.appendChild(link);
+  }, [appearance.themeFontBody, appearance.themeFontHeading]);
 
   function setField<K extends keyof AppearanceState>(key: K, value: AppearanceState[K]) {
     setAppearance((prev) => ({ ...prev, [key]: value }));
@@ -212,6 +313,7 @@ export function ThemesManager({
         themeAccentColor: appearance.themeAccentColor || null,
         themeFontBody: appearance.themeFontBody,
         themeFontHeading: appearance.themeFontHeading,
+        themeHeadingWeight: appearance.themeHeadingWeight,
         themeLogoUrl: appearance.themeLogoUrl || null,
         themeFooterText: appearance.themeFooterText || null,
       }),
@@ -289,19 +391,27 @@ export function ThemesManager({
           </div>
 
           {/* Body font */}
-          <div>
-            <label className={labelClass}>Body font</label>
-            <select value={appearance.themeFontBody} onChange={(e) => setField("themeFontBody", e.target.value)} className={inputClass}>
-              {FONT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
+          <FontSelect
+            value={appearance.themeFontBody}
+            onChange={(v) => setField("themeFontBody", v)}
+            filter="body"
+            label="Body font"
+          />
 
-          {/* Heading font */}
+          {/* Heading font + weight */}
+          <FontSelect
+            value={appearance.themeFontHeading}
+            onChange={(v) => setField("themeFontHeading", v)}
+            filter="heading"
+            label="Heading font"
+          />
+
           <div>
-            <label className={labelClass}>Heading font</label>
-            <select value={appearance.themeFontHeading} onChange={(e) => setField("themeFontHeading", e.target.value)} className={inputClass}>
-              {HEADING_FONT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            <label className={labelClass}>Heading weight</label>
+            <select value={appearance.themeHeadingWeight} onChange={(e) => setField("themeHeadingWeight", e.target.value)} className={inputClass}>
+              {HEADING_WEIGHTS.map((w) => <option key={w.value} value={w.value}>{w.label}</option>)}
             </select>
+            <p className="mt-2 text-neutral-400 text-xs">Controls h1–h6 weight across the frontend.</p>
           </div>
 
           {/* Logo */}
