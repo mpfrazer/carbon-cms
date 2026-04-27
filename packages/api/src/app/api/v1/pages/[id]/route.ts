@@ -7,11 +7,13 @@ import { ok, badRequest, notFound, conflict, noContent, serverError } from "@/li
 import { slugify } from "@/lib/utils";
 import { dispatchWebhooks } from "@/lib/webhook";
 import { saveRevision } from "@/lib/revisions";
+import { serializeBlocksToContent } from "@/lib/blocks";
 
 const updatePageSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   slug: z.string().min(1).max(500).optional(),
   content: z.string().optional(),
+  blocks: z.string().nullable().optional(), // JSON string or null
   status: z.enum(["draft", "published"]).optional(),
   parentId: z.string().uuid().optional().nullable(),
   featuredImageId: z.string().uuid().optional().nullable(),
@@ -43,7 +45,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const [existing] = await db.select().from(pages).where(eq(pages.id, id)).limit(1);
     if (!existing) return notFound("Page not found");
 
-    const { title, slug: rawSlug, ...rest } = parsed.data;
+    const { title, slug: rawSlug, blocks: rawBlocks, content: rawContent, ...rest } = parsed.data;
     let slug = rawSlug;
     if (title && !slug) slug = slugify(title);
 
@@ -52,14 +54,30 @@ export async function PUT(req: NextRequest, { params }: Params) {
       if (slugConflict) return conflict(`Slug "${slug}" is already in use`);
     }
 
+    // When blocks are provided, derive a plain-text content fallback for search/RSS
+    let content = rawContent;
+    if (rawBlocks !== undefined && rawBlocks !== null) {
+      try {
+        const parsed2 = JSON.parse(rawBlocks);
+        if (Array.isArray(parsed2)) content = serializeBlocksToContent(parsed2);
+      } catch { /* keep rawContent if blocks are invalid */ }
+    }
+
     const [updated] = await db
       .update(pages)
-      .set({ ...(title ? { title } : {}), ...(slug ? { slug } : {}), ...rest, updatedAt: new Date() })
+      .set({
+        ...(title ? { title } : {}),
+        ...(slug ? { slug } : {}),
+        ...(content !== undefined ? { content } : {}),
+        ...(rawBlocks !== undefined ? { blocks: rawBlocks } : {}),
+        ...rest,
+        updatedAt: new Date(),
+      })
       .where(eq(pages.id, id))
       .returning();
 
     void saveRevision("page", id, {
-      title: updated.title, slug: updated.slug, content: updated.content,
+      title: updated.title, slug: updated.slug, content: updated.content, blocks: updated.blocks,
       status: updated.status, parentId: updated.parentId, featuredImageId: updated.featuredImageId,
       menuOrder: updated.menuOrder, metaTitle: updated.metaTitle, metaDescription: updated.metaDescription,
     }, req.headers.get("x-user-id"));
