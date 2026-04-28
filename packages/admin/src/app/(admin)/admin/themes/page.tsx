@@ -11,7 +11,7 @@ interface Theme {
   preview?: string;
 }
 
-const APPEARANCE_KEYS = ["themeAccentColor", "themeFontBody", "themeFontHeading", "themeLogoUrl", "themeFooterText"];
+const APPEARANCE_KEYS = ["themeAccentColor", "themeFontBody", "themeFontHeading", "themeHeadingWeight", "themeLogoUrl", "themeFooterText"];
 
 export default async function ThemesPage() {
   const [{ data: themes }, { data: appearance }] = await Promise.all([
