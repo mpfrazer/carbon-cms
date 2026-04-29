@@ -61,7 +61,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     }
 
     try {
-      await deleteFile(keyFromUrl(item.url));
+      await deleteFile(await keyFromUrl(item.url));
     } catch {
       // Object may already be gone — continue with DB deletion
     }

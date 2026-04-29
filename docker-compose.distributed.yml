@@ -1,0 +1,95 @@
+# docker-compose.distributed.yml
+#
+# Reference configuration for running each Carbon component on a separate host.
+# Each service connects to external Postgres and S3-compatible storage.
+# Copy this file to your target host and set the required environment variables.
+#
+# Required env vars are marked with a comment; optional ones have defaults shown.
+#
+# Typical setup:
+#   Server A: run the api service
+#   Server B: run the admin service
+#   Server C: run the frontend service
+#   External: managed Postgres (Neon, RDS, Supabase, etc.)
+#   External: S3-compatible object storage (AWS S3, Cloudflare R2, MinIO, etc.)
+
+# --- API server ---
+# Deploy this on your API host. Put it behind your load balancer / ingress on port 443.
+#
+# services:
+#   api:
+#     image: ghcr.io/carbon-cms/api:latest
+#     environment:
+#       DATABASE_URL: ${DATABASE_URL}               # required — postgres://user:pass@host/db
+#       AUTH_SECRET: ${AUTH_SECRET}                 # required — must match admin and frontend
+#       NEXTAUTH_URL: ${API_PUBLIC_URL}             # required — https://api.yourdomain.com
+#       STORAGE_DRIVER: s3
+#       AWS_S3_BUCKET: ${AWS_S3_BUCKET}             # required
+#       AWS_REGION: ${AWS_REGION}                   # required
+#       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}     # required
+#       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}  # required
+#       AWS_S3_URL_BASE: ${AWS_S3_URL_BASE}         # optional — CDN URL for media (e.g. https://media.yourdomain.com)
+#       CARBON_ALLOWED_ORIGINS: ${CARBON_ALLOWED_ORIGINS}  # required — comma-separated list of allowed cross-origin callers
+#                                                           # e.g. "https://yourdomain.com,https://admin.yourdomain.com"
+#       NODE_ENV: production
+#       PORT: 3001
+#       HOSTNAME: 0.0.0.0
+#     ports:
+#       - "3001:3001"
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/v1/health || exit 1"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 6
+
+# --- Admin server ---
+# Deploy this on your admin host. Restrict access by IP or VPN at the ingress level.
+#
+# services:
+#   admin:
+#     image: ghcr.io/carbon-cms/admin:latest
+#     environment:
+#       CARBON_API_URL: ${API_PUBLIC_URL}           # required — full URL of the API (https://api.yourdomain.com)
+#       AUTH_SECRET: ${AUTH_SECRET}                 # required — must match api and frontend
+#       NEXTAUTH_URL: ${ADMIN_PUBLIC_URL}           # required — https://admin.yourdomain.com
+#       NODE_ENV: production
+#       PORT: 3002
+#       HOSTNAME: 0.0.0.0
+#     ports:
+#       - "3002:3002"
+#     restart: unless-stopped
+
+# --- Frontend server ---
+# Deploy this on your frontend host (or CDN-origin).
+#
+# services:
+#   frontend:
+#     image: ghcr.io/carbon-cms/frontend:latest
+#     environment:
+#       CARBON_API_URL: ${API_PUBLIC_URL}           # required — full URL of the API (https://api.yourdomain.com)
+#       NEXTAUTH_URL: ${FRONTEND_PUBLIC_URL}        # required — https://yourdomain.com
+#       NODE_ENV: production
+#       PORT: 3003
+#       HOSTNAME: 0.0.0.0
+#     ports:
+#       - "3003:3003"
+#     restart: unless-stopped
+
+# --- Notes ---
+#
+# CORS: set CARBON_ALLOWED_ORIGINS on the API to the origins of your admin and
+#       frontend so browsers can make cross-origin requests:
+#         CARBON_ALLOWED_ORIGINS=https://yourdomain.com,https://admin.yourdomain.com
+#
+# AUTH_SECRET: generate once with `openssl rand -hex 32` and use the same value
+#              on all three services. It signs session tokens and internal API calls.
+#
+# Health check: GET /api/v1/health returns {"status":"ok","db":"ok"} when the
+#               API is running and the database is reachable. Use this for load
+#               balancer health checks and uptime monitors.
+#
+# Ingress: each service should sit behind a TLS-terminating reverse proxy or
+#          load balancer (nginx, Caddy, AWS ALB, Cloudflare Tunnel, etc.).
+#          The API does not need to be publicly reachable for Solo mode, but
+#          must be reachable from admin and frontend in Enterprise mode.

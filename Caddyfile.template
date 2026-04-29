@@ -1,0 +1,19 @@
+{
+	email {$CADDY_EMAIL}
+}
+
+{$CARBON_DOMAIN} {
+	# Serve uploaded media files directly from the shared volume
+	handle /uploads/* {
+		root * /srv/media
+		file_server
+	}
+
+	handle {
+		reverse_proxy frontend:{$FRONTEND_PORT}
+	}
+}
+
+admin.{$CARBON_DOMAIN} {
+	reverse_proxy admin:{$ADMIN_PORT}
+}

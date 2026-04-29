@@ -1,61 +1,105 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - media:/srv/media:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      CARBON_DOMAIN: ${CARBON_DOMAIN}
+      CADDY_EMAIL: ${CADDY_EMAIL}
+      API_PORT: ${API_PORT}
+      ADMIN_PORT: ${ADMIN_PORT}
+      FRONTEND_PORT: ${FRONTEND_PORT}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+
   db:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: carbon
       POSTGRES_USER: carbon
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-carbon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - db_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U carbon"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   api:
+    image: ghcr.io/carbon-cms/api:${CARBON_VERSION:-latest}
     build:
       context: ./packages/api
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql://carbon:${POSTGRES_PASSWORD:-carbon}@db:5432/carbon
+      DATABASE_URL: postgresql://carbon:${POSTGRES_PASSWORD}@db:5432/carbon
       AUTH_SECRET: ${AUTH_SECRET}
-      NEXTAUTH_URL: ${API_URL:-http://localhost:3001}
+      NEXTAUTH_URL: http://api:${API_PORT}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      MEDIA_DIR: /srv/media
+      CARBON_PUBLIC_URL: ${CARBON_PUBLIC_URL}
+      CARBON_ALLOWED_ORIGINS: ${CARBON_ALLOWED_ORIGINS:-}
       NODE_ENV: production
-    ports:
-      - "3001:3001"
+      PORT: ${API_PORT}
+      HOSTNAME: 0.0.0.0
+    volumes:
+      - media:/srv/media
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${API_PORT}/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   admin:
+    image: ghcr.io/carbon-cms/admin:${CARBON_VERSION:-latest}
     build:
       context: ./packages/admin
       dockerfile: Dockerfile
     environment:
-      CARBON_API_URL: http://api:3001
+      CARBON_API_URL: http://api:${API_PORT}
       AUTH_SECRET: ${AUTH_SECRET}
-      NEXTAUTH_URL: ${ADMIN_URL:-http://localhost:3002}
+      NEXTAUTH_URL: https://admin.${CARBON_DOMAIN}
       NODE_ENV: production
-    ports:
-      - "3002:3002"
+      PORT: ${ADMIN_PORT}
+      HOSTNAME: 0.0.0.0
+    restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
   frontend:
+    image: ghcr.io/carbon-cms/frontend:${CARBON_VERSION:-latest}
     build:
       context: ./packages/frontend
       dockerfile: Dockerfile
     environment:
-      CARBON_API_URL: http://api:3001
-      NEXTAUTH_URL: ${FRONTEND_URL:-http://localhost:3003}
+      CARBON_API_URL: http://api:${API_PORT}
+      NEXTAUTH_URL: https://${CARBON_DOMAIN}
       NODE_ENV: production
-    ports:
-      - "3003:3003"
+      PORT: ${FRONTEND_PORT}
+      HOSTNAME: 0.0.0.0
+    restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
 volumes:
   db_data:
+  media:
+  caddy_data:
+  caddy_config:

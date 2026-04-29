@@ -19,6 +19,13 @@ interface Settings {
   smtpPass?: string;
   smtpFrom?: string;
   smtpSecure?: boolean;
+  storageDriver?: "local" | "s3";
+  mediaDir?: string;
+  awsS3Bucket?: string;
+  awsRegion?: string;
+  awsAccessKeyId?: string;
+  awsSecretAccessKey?: string;
+  awsS3UrlBase?: string;
   aiProvider?: string;
   aiApiKey?: string;
   aiModel?: string;
@@ -34,7 +41,7 @@ const AI_PROVIDERS = [
   { value: "custom", label: "Custom / LiteLLM proxy", baseUrl: "", modelHint: "" },
 ];
 
-export function SettingsForm({ initialSettings }: { initialSettings: Settings }) {
+export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePublicUrl }: { initialSettings: Settings; effectiveMediaDir: string; effectivePublicUrl: string }) {
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -42,8 +49,11 @@ export function SettingsForm({ initialSettings }: { initialSettings: Settings })
   const [aiTestResult, setAiTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
   const [showSmtpPass, setShowSmtpPass] = useState(false);
+  const [showAwsSecret, setShowAwsSecret] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
   const [emailTestResult, setEmailTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [testingPath, setTestingPath] = useState(false);
+  const [pathTestResult, setPathTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -119,6 +129,28 @@ export function SettingsForm({ initialSettings }: { initialSettings: Settings })
       setEmailTestResult({ ok: false, message: "Network error." });
     } finally {
       setTestingEmail(false);
+    }
+  }
+
+  async function testStoragePath() {
+    setTestingPath(true);
+    setPathTestResult(null);
+    try {
+      const res = await fetch("/api/v1/settings/test-storage-path", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: settings.mediaDir ?? effectiveMediaDir }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setPathTestResult({ ok: true, message: "Path is writable." });
+      } else {
+        setPathTestResult({ ok: false, message: json.error ?? "Path is not writable." });
+      }
+    } catch {
+      setPathTestResult({ ok: false, message: "Network error." });
+    } finally {
+      setTestingPath(false);
     }
   }
 
@@ -264,6 +296,165 @@ export function SettingsForm({ initialSettings }: { initialSettings: Settings })
               </span>
             )}
           </div>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Media Storage</h2>
+            <p className="mt-1 text-xs text-neutral-500">
+              Where uploaded files are stored. Local stores files on this server. S3 stores them in an S3-compatible bucket.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="storageDriver"
+                value="local"
+                checked={(settings.storageDriver ?? "local") === "local"}
+                onChange={() => setSettings({ ...settings, storageDriver: "local" })}
+                className="mt-0.5 h-4 w-4 border-neutral-300"
+              />
+              <div>
+                <span className="block text-sm font-medium text-neutral-700">Local storage (default)</span>
+                <span className="block text-xs text-neutral-500 mt-0.5">
+                  Files are saved on this server. Simple and self-contained — no external accounts needed.
+                </span>
+              </div>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="storageDriver"
+                value="s3"
+                checked={settings.storageDriver === "s3"}
+                onChange={() => setSettings({ ...settings, storageDriver: "s3" })}
+                className="mt-0.5 h-4 w-4 border-neutral-300"
+              />
+              <div>
+                <span className="block text-sm font-medium text-neutral-700">S3-compatible storage</span>
+                <span className="block text-xs text-neutral-500 mt-0.5">
+                  Files are stored in an S3 bucket. Works with AWS S3, Cloudflare R2, MinIO, and others.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          {(settings.storageDriver ?? "local") === "local" && (
+            <div className="rounded-lg border border-neutral-200 p-4 space-y-3">
+              <div className="rounded-md bg-neutral-50 border border-neutral-200 px-3 py-2 text-xs text-neutral-600">
+                Uploaded files are served at{" "}
+                <code className="font-mono">{effectivePublicUrl}/uploads/…</code>
+                {". "}
+                To change this base URL, set the <code className="font-mono">CARBON_PUBLIC_URL</code> environment variable.
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700">Storage path</label>
+                <input
+                  type="text"
+                  value={settings.mediaDir ?? ""}
+                  onChange={(e) => { setSettings({ ...settings, mediaDir: e.target.value }); setPathTestResult(null); }}
+                  className={inputClass}
+                  placeholder={effectiveMediaDir}
+                />
+                <p className="text-xs text-neutral-400">
+                  Absolute path on the server where uploaded files are stored. Currently active:{" "}
+                  <code className="font-mono">{effectiveMediaDir}</code>
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={testStoragePath}
+                  disabled={testingPath}
+                  className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+                >
+                  {testingPath ? "Testing…" : "Test path"}
+                </button>
+                {pathTestResult && (
+                  <span className={`text-sm ${pathTestResult.ok ? "text-green-700" : "text-red-600"}`}>
+                    {pathTestResult.ok ? "✓" : "✗"} {pathTestResult.message}
+                  </span>
+                )}
+              </div>
+              {settings.mediaDir && settings.mediaDir !== effectiveMediaDir && (
+                <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                  Changing the storage path takes effect after restarting the server. If running in Docker, ensure the new path is mounted as a volume, otherwise uploaded files will be lost on container restart.
+                </div>
+              )}
+            </div>
+          )}
+
+          {settings.storageDriver === "s3" && (
+            <div className="rounded-lg border border-neutral-200 p-4 space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-neutral-700">Bucket name</label>
+                  <input
+                    type="text"
+                    value={settings.awsS3Bucket ?? ""}
+                    onChange={(e) => setSettings({ ...settings, awsS3Bucket: e.target.value })}
+                    className={inputClass}
+                    placeholder="my-carbon-media"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-neutral-700">Region</label>
+                  <input
+                    type="text"
+                    value={settings.awsRegion ?? ""}
+                    onChange={(e) => setSettings({ ...settings, awsRegion: e.target.value })}
+                    className={inputClass}
+                    placeholder="us-east-1"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-neutral-700">Access key ID</label>
+                  <input
+                    type="text"
+                    value={settings.awsAccessKeyId ?? ""}
+                    onChange={(e) => setSettings({ ...settings, awsAccessKeyId: e.target.value })}
+                    className={inputClass}
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-neutral-700">Secret access key</label>
+                  <div className="relative">
+                    <input
+                      type={showAwsSecret ? "text" : "password"}
+                      value={settings.awsSecretAccessKey ?? ""}
+                      onChange={(e) => setSettings({ ...settings, awsSecretAccessKey: e.target.value })}
+                      className={inputClass + " pr-16"}
+                      autoComplete="off"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAwsSecret((v) => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-700"
+                    >
+                      {showAwsSecret ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700">
+                  Custom CDN URL <span className="text-neutral-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="url"
+                  value={settings.awsS3UrlBase ?? ""}
+                  onChange={(e) => setSettings({ ...settings, awsS3UrlBase: e.target.value })}
+                  className={inputClass}
+                  placeholder="https://media.yourdomain.com"
+                />
+                <p className="text-xs text-neutral-400">
+                  If set, media URLs will use this base instead of the S3 bucket URL. Use this for CloudFront or Cloudflare CDN.
+                </p>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="space-y-4">

@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Upload, Trash2 } from "lucide-react";
-import Image from "next/image";
 
 interface MediaItem {
   id: string;
@@ -101,8 +100,8 @@ export function MediaGrid() {
           {items.map((item) => (
             <div key={item.id} className="group relative rounded-lg border border-neutral-200 bg-white overflow-hidden">
               {item.mimeType.startsWith("image/") ? (
-                <div className="relative aspect-square bg-neutral-100">
-                  <Image src={item.url} alt={item.altText ?? item.originalFilename} fill className="object-cover" sizes="200px" />
+                <div className="aspect-square bg-neutral-100 overflow-hidden">
+                  <img src={item.url} alt={item.altText ?? item.originalFilename} loading="lazy" className="h-full w-full object-cover" />
                 </div>
               ) : (
                 <div className="flex aspect-square items-center justify-center bg-neutral-100 text-xs text-neutral-500 font-mono uppercase p-2">

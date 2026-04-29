@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { ImageIcon, X, Clock, CheckCircle, XCircle } from "lucide-react";
 import { RichEditor } from "@/components/admin/rich-editor";
 import { ExcerptGenerator } from "@/components/admin/ai/excerpt-generator";
@@ -65,7 +64,7 @@ function FeaturedImagePicker({
     <div className="space-y-2">
       {previewUrl ? (
         <div className="relative rounded-md overflow-hidden border border-neutral-200 bg-neutral-50">
-          <Image src={previewUrl} alt="Featured image" width={800} height={400} className="w-full object-cover max-h-64" />
+          <img src={previewUrl} alt="Featured image" className="w-full object-cover max-h-64" />
           <button
             type="button"
             onClick={() => onChange(null, null)}
@@ -112,7 +111,7 @@ function FeaturedImagePicker({
                 <button key={img.id} type="button"
                   onClick={() => { onChange(img.id, img.url); setOpen(false); }}
                   className={`rounded-md overflow-hidden border-2 transition-colors ${value === img.id ? "border-neutral-900" : "border-transparent hover:border-neutral-300"}`}>
-                  <Image src={img.url} alt={img.altText ?? ""} width={300} height={200} className="w-full h-32 object-cover" />
+                  <img src={img.url} alt={img.altText ?? ""} loading="lazy" className="w-full h-32 object-cover" />
                 </button>
               ))}
               {images.length === 0 && !uploading && (

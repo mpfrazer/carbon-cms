@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { parseCorsOrigins, getCorsHeaders } from "@/lib/cors";
 
 const WINDOW_MS = 60_000;
 const LIMIT_GENERAL = 120;
@@ -19,6 +20,7 @@ const PUBLIC_GET_PREFIXES = [
   "/api/v1/tags",
   "/api/v1/settings",
   "/api/v1/comments",
+  "/api/v1/health",
 ];
 
 const PUBLIC_ANY_PATHS = [
@@ -41,12 +43,37 @@ function getIp(req: NextRequest): string {
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (!pathname.startsWith("/api/v1")) return NextResponse.next();
+  if (!pathname.startsWith("/api/v1") && !pathname.startsWith("/uploads")) {
+    return NextResponse.next();
+  }
+
+  const allowedOrigins = parseCorsOrigins(process.env.CARBON_ALLOWED_ORIGINS);
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin, allowedOrigins);
+
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new NextResponse(null, {
+      status: 204,
+      headers: corsHeaders as HeadersInit,
+    });
+  }
+
+  // Uploads are served directly by the route handler — just attach CORS headers
+  if (pathname.startsWith("/uploads")) {
+    const res = NextResponse.next();
+    Object.entries(corsHeaders).forEach(([k, v]) => res.headers.set(k, v));
+    return res;
+  }
 
   const bearer = req.headers.get("authorization") ?? "";
 
-  // Internal admin proxy — skip rate limiting and auth
-  if (bearer === `Bearer ${process.env.AUTH_SECRET}`) return NextResponse.next();
+  // Internal admin/frontend proxy — skip rate limiting and auth
+  if (bearer === `Bearer ${process.env.AUTH_SECRET}`) {
+    const res = NextResponse.next();
+    Object.entries(corsHeaders).forEach(([k, v]) => res.headers.set(k, v));
+    return res;
+  }
 
   // Rate limiting
   let rlKey: string;
@@ -63,22 +90,25 @@ export function proxy(req: NextRequest) {
   }
 
   const result = checkRateLimit(rlKey, limit, WINDOW_MS);
-  const rlHeaders = new Headers();
-  rlHeaders.set("X-RateLimit-Limit", String(result.limit));
-  rlHeaders.set("X-RateLimit-Remaining", String(result.remaining));
-  rlHeaders.set("X-RateLimit-Reset", String(result.resetAt));
+  const rlHeaders: Record<string, string> = {
+    "X-RateLimit-Limit": String(result.limit),
+    "X-RateLimit-Remaining": String(result.remaining),
+    "X-RateLimit-Reset": String(result.resetAt),
+    ...corsHeaders,
+  };
 
   if (!result.allowed) {
-    rlHeaders.set("Retry-After", String(result.resetAt - Math.floor(Date.now() / 1000)));
+    rlHeaders["Retry-After"] = String(result.resetAt - Math.floor(Date.now() / 1000));
     return NextResponse.json(
       { error: "Too many requests. Please slow down." },
-      { status: 429, headers: rlHeaders }
+      { status: 429, headers: rlHeaders },
     );
   }
 
   // Authorization
   const isPublicAny = PUBLIC_ANY_PATHS.includes(pathname);
-  const isPublicGet = req.method === "GET" && PUBLIC_GET_PREFIXES.some((p) => pathname.startsWith(p));
+  const isPublicGet =
+    req.method === "GET" && PUBLIC_GET_PREFIXES.some((p) => pathname.startsWith(p));
   const isApiKey = bearer.startsWith("Bearer csk_");
 
   if (!isPublicAny && !isPublicGet && !isApiKey) {
@@ -86,8 +116,8 @@ export function proxy(req: NextRequest) {
   }
 
   const res = NextResponse.next();
-  rlHeaders.forEach((value, name) => res.headers.set(name, value));
+  Object.entries(rlHeaders).forEach(([k, v]) => res.headers.set(k, v));
   return res;
 }
 
-export const config = { matcher: ["/api/v1/:path*"] };
+export const config = { matcher: ["/api/v1/:path*", "/uploads/:path*"] };

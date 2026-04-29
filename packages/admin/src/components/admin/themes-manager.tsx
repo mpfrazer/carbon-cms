@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { Palette, Check, Loader2, ImageIcon, X } from "lucide-react";
 
 // Minimal font registry for the admin UI — keep in sync with packages/frontend/src/lib/fonts.ts
@@ -160,7 +159,7 @@ function LogoPicker({ value, onChange }: { value: string; onChange: (url: string
       {value ? (
         <div className="flex items-center gap-3">
           <div className="relative h-10 w-40 rounded border border-neutral-200 bg-neutral-50 overflow-hidden">
-            <Image src={value} alt="Logo" fill className="object-contain p-1" />
+            <img src={value} alt="Logo" className="h-full w-full object-contain p-1" />
           </div>
           <button type="button" onClick={() => onChange("")} className="text-xs text-neutral-500 hover:text-red-600 transition-colors">Remove</button>
           <button type="button" onClick={() => setOpen(true)} className="text-xs text-neutral-500 hover:text-neutral-800 underline underline-offset-2 transition-colors">Change</button>
@@ -198,7 +197,7 @@ function LogoPicker({ value, onChange }: { value: string; onChange: (url: string
                 <button key={img.id} type="button"
                   onClick={() => { onChange(img.url); setOpen(false); }}
                   className="rounded-md overflow-hidden border-2 border-transparent hover:border-neutral-300 transition-colors">
-                  <Image src={img.url} alt={img.altText ?? ""} width={300} height={200} className="w-full h-24 object-contain bg-neutral-50 p-2" />
+                  <img src={img.url} alt={img.altText ?? ""} loading="lazy" className="w-full h-24 object-contain bg-neutral-50 p-2" />
                 </button>
               ))}
               {images.length === 0 && !uploading && (
