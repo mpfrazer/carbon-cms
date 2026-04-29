@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
 
 interface ProfileFormProps {
   user: {
@@ -131,7 +130,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 mb-4">Avatar</h2>
         <div className="flex items-center gap-4">
           {avatarUrl ? (
-            <Image src={avatarUrl} alt="Avatar" width={64} height={64} className="h-16 w-16 rounded-full object-cover" />
+            <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
           ) : (
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-200 text-xl font-semibold text-neutral-600 select-none">
               {user.name.charAt(0).toUpperCase()}

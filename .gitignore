@@ -39,6 +39,7 @@ yarn-error.log*
 
 # uploaded media (local dev only — use object storage in production)
 /public/uploads/
+**/.media/
 
 # typescript
 *.tsbuildinfo

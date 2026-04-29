@@ -8,7 +8,6 @@ import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
 import ImageExt from "@tiptap/extension-image";
-import Image from "next/image";
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   List, ListOrdered, Quote, Code, Link as LinkIcon, Unlink,
@@ -121,7 +120,7 @@ function ImagePickerModal({ onInsert, onClose }: { onInsert: (url: string, alt: 
                   className="group relative aspect-square overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 hover:border-neutral-900 transition-colors"
                   title={item.originalFilename}
                 >
-                  <Image src={item.url} alt={item.altText ?? item.originalFilename} fill className="object-cover" sizes="140px" />
+                  <img src={item.url} alt={item.altText ?? item.originalFilename} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                 </button>
               ))}

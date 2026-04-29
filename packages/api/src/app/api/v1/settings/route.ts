@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { settings } from "@/lib/db/schema";
 import { ok, badRequest, serverError } from "@/lib/api/response";
+import { resetStorageDriver, STORAGE_SETTING_KEYS } from "@/lib/storage";
 
 const updateSettingsSchema = z.record(z.string(), z.unknown());
 
@@ -57,6 +58,11 @@ export async function PUT(req: NextRequest) {
         target: settings.key,
         set: { value: sql`excluded.value`, updatedAt: now },
       });
+
+    const storageKeys = new Set<string>(STORAGE_SETTING_KEYS);
+    if (Object.keys(parsed.data).some((k) => storageKeys.has(k))) {
+      resetStorageDriver();
+    }
 
     return ok({ updated: upserts.length });
   } catch (e) {
