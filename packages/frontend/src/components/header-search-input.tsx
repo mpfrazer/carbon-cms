@@ -50,11 +50,7 @@ export function HeaderSearchInput({ inputMode, variant }: HeaderSearchInputProps
   }, []);
 
   useEffect(() => {
-    if (inputMode !== "instant" || !query.trim()) {
-      setResults([]);
-      setOpen(false);
-      return;
-    }
+    if (inputMode !== "instant" || !query.trim()) return;
     const t = setTimeout(async () => {
       try {
         const res = await fetch(`/api/v1/search?q=${encodeURIComponent(query.trim())}&pageSize=5`);
@@ -97,7 +93,11 @@ export function HeaderSearchInput({ inputMode, variant }: HeaderSearchInputProps
       <input
         type="search"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => {
+          const val = e.target.value;
+          setQuery(val);
+          if (!val.trim()) { setResults([]); setOpen(false); }
+        }}
         onKeyDown={handleKeyDown}
         placeholder="Search…"
         className={inputClass}
