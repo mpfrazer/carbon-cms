@@ -3,7 +3,7 @@ import { apiGet } from "@/lib/api/client";
 import type { PageBlock } from "@/lib/blocks";
 
 export interface ThemeComponents {
-  SiteLayout: ComponentType<{ siteTitle: string; navPages: { slug: string; title: string }[]; children: React.ReactNode }>;
+  SiteLayout: ComponentType<{ siteTitle: string; navPages: { label: string; href: string }[]; children: React.ReactNode }>;
   BlogIndex: ComponentType<any>;
   BlogPost: ComponentType<any>;
   PageContent: ComponentType<{ title: string; content: string; updatedAt: Date }>;

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { UserMenu } from "./user-menu";
 
-interface NavPage { slug: string; title: string; }
+interface NavPage { label: string; href: string; }
 
 interface SiteLayoutProps {
   siteTitle: string;
@@ -33,11 +33,11 @@ export function SiteLayout({ siteTitle, navPages, children, user, logoUrl, foote
           <nav className="flex items-center gap-1">
             {navPages.map((p) => (
               <Link
-                key={p.slug}
-                href={`/${p.slug === "home" ? "" : p.slug}`}
+                key={p.href}
+                href={p.href}
                 className="rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors"
               >
-                {p.title}
+                {p.label}
               </Link>
             ))}
             <Link href="/blog" className="rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors">

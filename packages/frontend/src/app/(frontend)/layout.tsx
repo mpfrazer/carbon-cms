@@ -15,7 +15,26 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   ]);
 
   const Layout = SiteLayout as typeof SiteLayoutType;
-  const navPages = (pagesRes as { data: { slug: string; title: string }[] }).data.filter((p) => p.slug !== "home");
+  const allPages = (pagesRes as { data: { id: string; slug: string; title: string }[] }).data;
+  const pageById = Object.fromEntries(allPages.map((p) => [p.id, p]));
+
+  // Build nav from saved navMenu setting; fall back to all published pages (minus home) for
+  // installs that haven't configured the nav editor yet.
+  let navPages: { label: string; href: string }[];
+  if (settings.navMenu && settings.navMenu.length > 0) {
+    navPages = settings.navMenu.flatMap((item) => {
+      if (item.type === "page") {
+        const page = pageById[item.pageId];
+        if (!page) return []; // deleted page — skip
+        return [{ label: item.label || page.title, href: page.slug === "home" ? "/" : `/${page.slug}` }];
+      }
+      return [{ label: item.label, href: item.url }];
+    });
+  } else {
+    navPages = allPages
+      .filter((p) => p.slug !== "home")
+      .map((p) => ({ label: p.title, href: `/${p.slug}` }));
+  }
   const cssVars = buildCssVars(settings.appearance);
   const googleFontsUrl = buildGoogleFontsUrl([
     settings.appearance.themeFontBody,

@@ -20,6 +20,7 @@ import {
   Palette,
   KeyRound,
   Webhook,
+  Menu,
 } from "lucide-react";
 
 interface NavItem {
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/posts", label: "Posts", icon: FileText },
   { href: "/admin/pages", label: "Pages", icon: File },
+  { href: "/admin/nav", label: "Nav Menu", icon: Menu },
   { href: "/admin/categories", label: "Categories", icon: FolderOpen },
   { href: "/admin/tags", label: "Tags", icon: Tag },
   { href: "/admin/media", label: "Media", icon: Image },
