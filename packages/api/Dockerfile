@@ -9,6 +9,9 @@ COPY packages/frontend/package.json ./packages/frontend/
 RUN npm ci
 COPY packages/api ./packages/api
 ENV NEXT_TELEMETRY_DISABLED=1
+# Dummy value so the module-level DATABASE_URL guard passes at build time.
+# The real value is supplied at container runtime via the environment.
+ENV DATABASE_URL=postgresql://build:build@localhost/placeholder
 RUN npm run build -w packages/api
 
 FROM base AS runner
