@@ -5,6 +5,19 @@ export type NavItem =
   | { id: string; type: "page"; pageId: string; label: string }
   | { id: string; type: "link"; label: string; url: string };
 
+export type SearchMode = "none" | "header" | "page";
+export type SearchInputMode = "submit" | "instant";
+
+export function parseSearchMode(raw: unknown): SearchMode {
+  if (raw === "header" || raw === "page") return raw;
+  return "none";
+}
+
+export function parseSearchInputMode(raw: unknown): SearchInputMode {
+  if (raw === "instant") return "instant";
+  return "submit";
+}
+
 export interface SiteSettings {
   siteTitle: string;
   siteDescription: string;
@@ -14,6 +27,8 @@ export interface SiteSettings {
   requireLoginToComment: boolean;
   appearance: ThemeAppearance;
   navMenu: NavItem[] | null;
+  searchMode: SearchMode;
+  searchInputMode: SearchInputMode;
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
@@ -36,5 +51,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     requireLoginToComment: raw.requireLoginToComment === true || raw.requireLoginToComment === "true",
     appearance: parseThemeAppearance(raw),
     navMenu,
+    searchMode: parseSearchMode(raw.searchMode),
+    searchInputMode: parseSearchInputMode(raw.searchInputMode),
   };
 }

@@ -8,6 +8,8 @@ interface Settings {
   siteUrl?: string;
   adminEmail?: string;
   postsPerPage?: number;
+  searchMode?: "none" | "header" | "page";
+  searchInputMode?: "submit" | "instant";
   renderMode?: "ssr" | "csr";
   allowComments?: boolean;
   commentModeration?: boolean;
@@ -198,6 +200,71 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
               onChange={(e) => setSettings({ ...settings, postsPerPage: parseInt(e.target.value) })}
               className="w-32 rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
           </div>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Search</h2>
+            <p className="mt-1 text-xs text-neutral-500">Control how visitors search your site.</p>
+          </div>
+          <div className="space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input type="radio" name="searchMode" value="none"
+                checked={(settings.searchMode ?? "none") === "none"}
+                onChange={() => setSettings({ ...settings, searchMode: "none" })}
+                className="mt-0.5 h-4 w-4 border-neutral-300" />
+              <div>
+                <span className="block text-sm font-medium text-neutral-700">No search</span>
+                <span className="block text-xs text-neutral-500 mt-0.5">Search is disabled. No search UI is shown to visitors.</span>
+              </div>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input type="radio" name="searchMode" value="header"
+                checked={settings.searchMode === "header"}
+                onChange={() => setSettings({ ...settings, searchMode: "header" })}
+                className="mt-0.5 h-4 w-4 border-neutral-300" />
+              <div>
+                <span className="block text-sm font-medium text-neutral-700">Search bar in header</span>
+                <span className="block text-xs text-neutral-500 mt-0.5">A compact search input appears in the site navigation bar.</span>
+              </div>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input type="radio" name="searchMode" value="page"
+                checked={settings.searchMode === "page"}
+                onChange={() => setSettings({ ...settings, searchMode: "page" })}
+                className="mt-0.5 h-4 w-4 border-neutral-300" />
+              <div>
+                <span className="block text-sm font-medium text-neutral-700">Search page</span>
+                <span className="block text-xs text-neutral-500 mt-0.5">A &ldquo;Search&rdquo; link appears in the nav and leads to a dedicated search page.</span>
+              </div>
+            </label>
+          </div>
+
+          {(settings.searchMode ?? "none") !== "none" && (
+            <div className="rounded-lg border border-neutral-200 p-4 space-y-3">
+              <p className="text-sm font-medium text-neutral-700">Input behaviour</p>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="radio" name="searchInputMode" value="submit"
+                  checked={(settings.searchInputMode ?? "submit") === "submit"}
+                  onChange={() => setSettings({ ...settings, searchInputMode: "submit" })}
+                  className="mt-0.5 h-4 w-4 border-neutral-300" />
+                <div>
+                  <span className="block text-sm font-medium text-neutral-700">Search on submit</span>
+                  <span className="block text-xs text-neutral-500 mt-0.5">Results appear after the visitor presses Enter or clicks Search. Fewer API calls — better for tight budgets.</span>
+                </div>
+              </label>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="radio" name="searchInputMode" value="instant"
+                  checked={settings.searchInputMode === "instant"}
+                  onChange={() => setSettings({ ...settings, searchInputMode: "instant" })}
+                  className="mt-0.5 h-4 w-4 border-neutral-300" />
+                <div>
+                  <span className="block text-sm font-medium text-neutral-700">Instant search</span>
+                  <span className="block text-xs text-neutral-500 mt-0.5">Results update as the visitor types. Better usability but makes more API calls.</span>
+                </div>
+              </label>
+            </div>
+          )}
         </section>
 
         <section className="space-y-4">

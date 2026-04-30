@@ -65,6 +65,8 @@ export default async function FrontendLayout({ children }: { children: React.Rea
       <Layout
         siteTitle={settings.siteTitle}
         navPages={navPages}
+        searchMode={settings.searchMode}
+        searchInputMode={settings.searchInputMode}
         user={user}
         logoUrl={settings.appearance.themeLogoUrl}
         footerText={settings.appearance.themeFooterText}

@@ -1,18 +1,22 @@
 import Link from "next/link";
 import { UserMenu } from "./user-menu";
+import { HeaderSearchInput } from "@/components/header-search-input";
+import type { SearchMode, SearchInputMode } from "@/lib/site-settings";
 
 interface NavPage { label: string; href: string; }
 
 interface SiteLayoutProps {
   siteTitle: string;
   navPages: NavPage[];
+  searchMode: SearchMode;
+  searchInputMode: SearchInputMode;
   children: React.ReactNode;
   user?: { name: string; role: string; avatarUrl?: string | null } | null;
   logoUrl?: string | null;
   footerText?: string | null;
 }
 
-export function SiteLayout({ siteTitle, navPages, children, user, logoUrl, footerText }: SiteLayoutProps) {
+export function SiteLayout({ siteTitle, navPages, searchMode, searchInputMode, children, user, logoUrl, footerText }: SiteLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col bg-white text-neutral-900" style={{ fontFamily: "var(--carbon-font-body)" }}>
       <header className="border-b border-neutral-200 bg-white">
@@ -37,6 +41,14 @@ export function SiteLayout({ siteTitle, navPages, children, user, logoUrl, foote
             <Link href="/blog" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
               Blog
             </Link>
+            {searchMode === "page" && (
+              <Link href="/search" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
+                Search
+              </Link>
+            )}
+            {searchMode === "header" && (
+              <HeaderSearchInput inputMode={searchInputMode} variant="light" />
+            )}
             {user ? (
               <UserMenu name={user.name} role={user.role} avatarUrl={user.avatarUrl} />
             ) : (
