@@ -68,7 +68,8 @@ jobs:
             type=sha,prefix=sha-,format=short
       - uses: docker/build-push-action@v5
         with:
-          context: ./packages/api
+          context: .
+          file: ./packages/api/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -100,7 +101,8 @@ jobs:
             type=sha,prefix=sha-,format=short
       - uses: docker/build-push-action@v5
         with:
-          context: ./packages/admin
+          context: .
+          file: ./packages/admin/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -132,7 +134,8 @@ jobs:
             type=sha,prefix=sha-,format=short
       - uses: docker/build-push-action@v5
         with:
-          context: ./packages/frontend
+          context: .
+          file: ./packages/frontend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
