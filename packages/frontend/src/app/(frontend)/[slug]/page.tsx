@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { getThemeComponents } from "@/lib/theme-provider";
 import { getSiteSettings } from "@/lib/site-settings";
 import { apiGet } from "@/lib/api/client";
-import { BlockRenderer } from "@/components/block-renderer";
 import type { PageBlock } from "@/lib/blocks";
 import type { Metadata } from "next";
 
@@ -40,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function PageRoute({ params }: Props) {
   const { slug } = await params;
 
-  const [{ PageContent }, { siteTitle, siteDescription, siteUrl }, page] = await Promise.all([
+  const [{ PageContent, PageBlocks }, { siteTitle, siteDescription, siteUrl }, page] = await Promise.all([
     getThemeComponents(),
     getSiteSettings(),
     getPageBySlug(slug),
@@ -63,9 +62,7 @@ export default async function PageRoute({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {blocks ? (
-        <article className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-          <BlockRenderer blocks={blocks} />
-        </article>
+        <PageBlocks title={page.title} blocks={blocks} />
       ) : (
         <PageContent title={page.title} content={page.content} updatedAt={new Date(page.updatedAt)} />
       )}

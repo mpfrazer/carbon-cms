@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { CommentsSection } from "@/components/comments-section";
 import type { Comment } from "@/components/comments-section";
@@ -47,7 +46,8 @@ export function BlogPost({ title, content, publishedAt, createdAt, authorName, a
             <>
               <span className="text-neutral-300">·</span>
               {authorAvatarUrl ? (
-                <Image src={authorAvatarUrl} alt={authorName} width={20} height={20} className="h-5 w-5 rounded-full object-cover" />
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={authorAvatarUrl} alt={authorName} className="h-5 w-5 rounded-full object-cover" />
               ) : null}
               <span>{authorName}</span>
             </>
@@ -57,14 +57,8 @@ export function BlogPost({ title, content, publishedAt, createdAt, authorName, a
 
       {featuredImageUrl && (
         <div className="mb-10 -mx-4 sm:-mx-6">
-          <Image
-            src={featuredImageUrl}
-            alt={featuredImageAlt ?? ""}
-            width={1200}
-            height={630}
-            className="w-full object-cover"
-            priority
-          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={featuredImageUrl} alt={featuredImageAlt ?? ""} className="w-full object-cover" />
         </div>
       )}
 
