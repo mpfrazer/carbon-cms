@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { UserMenu } from "./user-menu";
 
-interface NavPage { slug: string; title: string; }
+interface NavPage { label: string; href: string; }
 
 interface SiteLayoutProps {
   siteTitle: string;
@@ -29,9 +29,9 @@ export function SiteLayout({ siteTitle, navPages, children, user, logoUrl, foote
           </Link>
           <nav className="flex items-center gap-6">
             {navPages.map((p) => (
-              <Link key={p.slug} href={`/${p.slug === "home" ? "" : p.slug}`}
+              <Link key={p.href} href={p.href}
                 className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
-                {p.title}
+                {p.label}
               </Link>
             ))}
             <Link href="/blog" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
