@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import { getThemeComponents } from "@/lib/theme-provider";
 import { getSiteSettings } from "@/lib/site-settings";
 import { apiGet } from "@/lib/api/client";
+import type { PageBlock } from "@/lib/blocks";
 import type { Metadata } from "next";
 
-interface Page { id: string; slug: string; title: string; content: string; status: string; metaTitle: string | null; metaDescription: string | null; updatedAt: string }
+interface Page { id: string; slug: string; title: string; content: string; blocks: string | null; status: string; metaTitle: string | null; metaDescription: string | null; updatedAt: string }
 
 export async function generateMetadata(): Promise<Metadata> {
   const [{ siteTitle, siteDescription, siteUrl }, pagesRes] = await Promise.all([
@@ -22,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [{ PageContent }, { siteTitle, siteDescription, siteUrl }, pagesRes] = await Promise.all([
+  const [{ PageContent, PageBlocks }, { siteTitle, siteDescription, siteUrl }, pagesRes] = await Promise.all([
     getThemeComponents(),
     getSiteSettings(),
     apiGet("/api/v1/pages?status=published&pageSize=50"),
@@ -31,6 +32,14 @@ export default async function HomePage() {
   const base = siteUrl || process.env.NEXTAUTH_URL || "";
   const page = pagesRes.data.find((p) => p.slug === "home");
   if (!page) notFound();
+
+  let blocks: PageBlock[] | null = null;
+  if (page.blocks) {
+    try {
+      const parsed = JSON.parse(page.blocks);
+      if (Array.isArray(parsed)) blocks = parsed as PageBlock[];
+    } catch { /* fall through to legacy renderer */ }
+  }
 
   const jsonLd = {
     "@context": "https://schema.org", "@type": "WebSite",
@@ -41,7 +50,11 @@ export default async function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <PageContent title={page.title} content={page.content} updatedAt={new Date(page.updatedAt)} />
+      {blocks ? (
+        <PageBlocks title={page.title} blocks={blocks} />
+      ) : (
+        <PageContent title={page.title} content={page.content} updatedAt={new Date(page.updatedAt)} />
+      )}
     </>
   );
 }
