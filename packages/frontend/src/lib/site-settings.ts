@@ -18,6 +18,10 @@ export function parseSearchInputMode(raw: unknown): SearchInputMode {
   return "submit";
 }
 
+export function parseShowBlogLink(raw: unknown): boolean {
+  return raw !== false && raw !== "false";
+}
+
 export interface SiteSettings {
   siteTitle: string;
   siteDescription: string;
@@ -25,6 +29,7 @@ export interface SiteSettings {
   postsPerPage: number;
   allowComments: boolean;
   requireLoginToComment: boolean;
+  showBlogLink: boolean;
   appearance: ThemeAppearance;
   navMenu: NavItem[] | null;
   searchMode: SearchMode;
@@ -49,6 +54,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     postsPerPage: Number(raw.postsPerPage) || 10,
     allowComments: raw.allowComments !== false && raw.allowComments !== "false",
     requireLoginToComment: raw.requireLoginToComment === true || raw.requireLoginToComment === "true",
+    showBlogLink: parseShowBlogLink(raw.showBlogLink),
     appearance: parseThemeAppearance(raw),
     navMenu,
     searchMode: parseSearchMode(raw.searchMode),

@@ -67,6 +67,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
         navPages={navPages}
         searchMode={settings.searchMode}
         searchInputMode={settings.searchInputMode}
+        showBlogLink={settings.showBlogLink}
         user={user}
         logoUrl={settings.appearance.themeLogoUrl}
         footerText={settings.appearance.themeFooterText}

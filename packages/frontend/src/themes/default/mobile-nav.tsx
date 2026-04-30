@@ -8,10 +8,11 @@ import type { SearchMode } from "@/lib/site-settings";
 interface MobileNavProps {
   navPages: { label: string; href: string }[];
   searchMode: SearchMode;
+  showBlogLink?: boolean;
   user?: { name: string; role: string; avatarUrl?: string | null } | null;
 }
 
-export function MobileNav({ navPages, searchMode, user }: MobileNavProps) {
+export function MobileNav({ navPages, searchMode, showBlogLink = true, user }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
@@ -32,30 +33,32 @@ export function MobileNav({ navPages, searchMode, user }: MobileNavProps) {
               key={p.href}
               href={p.href}
               onClick={close}
-              className="block px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+              className="block px-4 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors"
             >
               {p.label}
             </Link>
           ))}
-          <Link href="/blog" onClick={close} className="block px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors">
-            Blog
-          </Link>
+          {showBlogLink && (
+            <Link href="/blog" onClick={close} className="block px-4 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors">
+              Blog
+            </Link>
+          )}
           {searchMode === "page" && (
-            <Link href="/search" onClick={close} className="block px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors">
+            <Link href="/search" onClick={close} className="block px-4 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors">
               Search
             </Link>
           )}
           <div className="my-2 border-t border-neutral-100" />
           {user ? (
-            <Link href="/account" onClick={close} className="block px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors">
+            <Link href="/account" onClick={close} className="block px-4 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors">
               My Profile
             </Link>
           ) : (
             <>
-              <Link href="/login" onClick={close} className="block px-4 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors">
+              <Link href="/login" onClick={close} className="block px-4 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors">
                 Sign in
               </Link>
-              <Link href="/register" onClick={close} className="block px-4 py-2.5 text-sm font-medium text-neutral-900 hover:bg-neutral-50 transition-colors">
+              <Link href="/register" onClick={close} className="block px-4 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 transition-colors">
                 Register
               </Link>
             </>

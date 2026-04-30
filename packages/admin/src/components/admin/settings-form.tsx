@@ -8,6 +8,7 @@ interface Settings {
   siteUrl?: string;
   adminEmail?: string;
   postsPerPage?: number;
+  showBlogLink?: boolean;
   searchMode?: "none" | "header" | "page";
   searchInputMode?: "submit" | "instant";
   renderMode?: "ssr" | "csr";
@@ -199,6 +200,12 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
             <input type="number" min={1} max={100} value={settings.postsPerPage ?? 10}
               onChange={(e) => setSettings({ ...settings, postsPerPage: parseInt(e.target.value) })}
               className="w-32 rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+          </div>
+          <div className="flex items-center gap-3">
+            <input type="checkbox" id="showBlogLink" checked={settings.showBlogLink ?? true}
+              onChange={(e) => setSettings({ ...settings, showBlogLink: e.target.checked })}
+              className="h-4 w-4 rounded border-neutral-300" />
+            <label htmlFor="showBlogLink" className="text-sm text-neutral-700">Show blog link in navigation</label>
           </div>
         </section>
 

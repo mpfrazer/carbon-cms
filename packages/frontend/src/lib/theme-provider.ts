@@ -38,6 +38,7 @@ export interface ThemeComponents {
     logoUrl?: string | null;
     footerText?: string | null;
     simplified?: boolean;
+    showBlogLink?: boolean;
   }>;
   BlogIndex: ComponentType<any>;
   BlogPost: ComponentType<any>;

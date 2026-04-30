@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseSearchMode, parseSearchInputMode } from "../site-settings";
+import { parseSearchMode, parseSearchInputMode, parseShowBlogLink } from "../site-settings";
 
 describe("parseSearchMode", () => {
   it("returns 'none' for undefined", () => {
@@ -50,5 +50,35 @@ describe("parseSearchInputMode", () => {
 
   it("returns 'submit' for 'submit'", () => {
     expect(parseSearchInputMode("submit")).toBe("submit");
+  });
+});
+
+describe("parseShowBlogLink", () => {
+  it("returns true for undefined", () => {
+    expect(parseShowBlogLink(undefined)).toBe(true);
+  });
+
+  it("returns true for null", () => {
+    expect(parseShowBlogLink(null)).toBe(true);
+  });
+
+  it("returns true for true", () => {
+    expect(parseShowBlogLink(true)).toBe(true);
+  });
+
+  it("returns true for 'true'", () => {
+    expect(parseShowBlogLink("true")).toBe(true);
+  });
+
+  it("returns false for false", () => {
+    expect(parseShowBlogLink(false)).toBe(false);
+  });
+
+  it("returns false for 'false'", () => {
+    expect(parseShowBlogLink("false")).toBe(false);
+  });
+
+  it("returns true for an unrecognised value", () => {
+    expect(parseShowBlogLink("yes")).toBe(true);
   });
 });
