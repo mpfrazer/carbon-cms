@@ -1,9 +1,26 @@
 import type { ComponentType } from "react";
 import { apiGet } from "@/lib/api/client";
 import type { PageBlock } from "@/lib/blocks";
+import type { SearchMode, SearchInputMode } from "@/lib/site-settings";
+
+// TODO: Write theme-building documentation covering:
+//   - The ThemeComponents interface and required exports per theme
+//   - How themes consume SiteLayout props (navPages, searchMode, searchInputMode, etc.)
+//   - Theme directory structure (layout, blog-index, blog-post, page, globals.css)
+//   - How to use CSS variables (--carbon-accent, --carbon-font-body, etc.) from the appearance settings
+//   - The fallback chain: active theme → default theme
 
 export interface ThemeComponents {
-  SiteLayout: ComponentType<{ siteTitle: string; navPages: { label: string; href: string }[]; children: React.ReactNode }>;
+  SiteLayout: ComponentType<{
+    siteTitle: string;
+    navPages: { label: string; href: string }[];
+    searchMode: SearchMode;
+    searchInputMode: SearchInputMode;
+    children: React.ReactNode;
+    user?: { name: string; role: string; avatarUrl?: string | null } | null;
+    logoUrl?: string | null;
+    footerText?: string | null;
+  }>;
   BlogIndex: ComponentType<any>;
   BlogPost: ComponentType<any>;
   PageContent: ComponentType<{ title: string; content: string; updatedAt: Date }>;
