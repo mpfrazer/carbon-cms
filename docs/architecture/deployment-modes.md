@@ -100,7 +100,8 @@ The admin subdomain is generated automatically by the install script. Both requi
 The entire install is one command pasted into a terminal:
 
 ```bash
-curl -fsSL https://get.carbon-cms.io/install.sh | bash
+# TODO: replace with https://get.carbon-cms.io/install.sh once the domain is registered
+curl -fsSL https://raw.githubusercontent.com/mpfrazer/carbon-cms/main/scripts/install.sh | bash
 ```
 
 Or, for users who download the repo directly:
@@ -470,7 +471,7 @@ Delivers independently deployable packages with correct cross-origin wiring.
 |---|---|
 | 10 | `railway.json` / `render.yaml` for one-click deploy |
 | 11 | Published Docker images to GHCR (CI pipeline) |
-| 12 | `https://get.carbon-cms.io/install.sh` hosted install URL |
+| 12 | `https://get.carbon-cms.io/install.sh` hosted install URL — deferred until domain is registered; raw GitHub URL used in the interim |
 
 ---
 
