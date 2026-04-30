@@ -18,7 +18,7 @@
 #
 # services:
 #   api:
-#     image: ghcr.io/carbon-cms/api:latest
+#     image: ghcr.io/mpfrazer/carbon-cms-api:latest
 #     environment:
 #       DATABASE_URL: ${DATABASE_URL}               # required — postgres://user:pass@host/db
 #       AUTH_SECRET: ${AUTH_SECRET}                 # required — must match admin and frontend
@@ -48,7 +48,7 @@
 #
 # services:
 #   admin:
-#     image: ghcr.io/carbon-cms/admin:latest
+#     image: ghcr.io/mpfrazer/carbon-cms-admin:latest
 #     environment:
 #       CARBON_API_URL: ${API_PUBLIC_URL}           # required — full URL of the API (https://api.yourdomain.com)
 #       AUTH_SECRET: ${AUTH_SECRET}                 # required — must match api and frontend
@@ -65,7 +65,7 @@
 #
 # services:
 #   frontend:
-#     image: ghcr.io/carbon-cms/frontend:latest
+#     image: ghcr.io/mpfrazer/carbon-cms-frontend:latest
 #     environment:
 #       CARBON_API_URL: ${API_PUBLIC_URL}           # required — full URL of the API (https://api.yourdomain.com)
 #       NEXTAUTH_URL: ${FRONTEND_PUBLIC_URL}        # required — https://yourdomain.com
