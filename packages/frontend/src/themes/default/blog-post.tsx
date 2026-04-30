@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CommentsSection } from "@/components/comments-section";
 import type { Comment } from "@/components/comments-section";
+import { estimateReadTime } from "@/lib/read-time";
 
 interface BlogPostProps {
   title: string;
@@ -52,6 +53,8 @@ export function BlogPost({ title, content, publishedAt, createdAt, authorName, a
               <span>{authorName}</span>
             </>
           )}
+          <span className="text-neutral-300">·</span>
+          <span>{estimateReadTime(content)} min read</span>
         </div>
       </header>
 

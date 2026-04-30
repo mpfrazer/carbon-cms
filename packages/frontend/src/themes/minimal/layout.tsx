@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserMenu } from "./user-menu";
+import { MobileNav } from "./mobile-nav";
 import { HeaderSearchInput } from "@/components/header-search-input";
 import type { SearchMode, SearchInputMode } from "@/lib/site-settings";
 
@@ -14,65 +15,66 @@ interface SiteLayoutProps {
   user?: { name: string; role: string; avatarUrl?: string | null } | null;
   logoUrl?: string | null;
   footerText?: string | null;
+  simplified?: boolean;
 }
 
-export function SiteLayout({ siteTitle, navPages, searchMode, searchInputMode, children, user, logoUrl, footerText }: SiteLayoutProps) {
+export function SiteLayout({ siteTitle, navPages, searchMode, searchInputMode, children, user, logoUrl, footerText, simplified }: SiteLayoutProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-50 text-neutral-900" style={{ fontFamily: "var(--carbon-font-body)" }}>
-      <header className="bg-neutral-900 text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-          <Link href="/" className="hover:opacity-80 transition-opacity flex items-center gap-3">
+    <div className="flex min-h-screen flex-col bg-white text-neutral-900" style={{ fontFamily: "var(--carbon-font-body)" }}>
+      <header className="relative border-b border-neutral-200 bg-white">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
+          <Link href="/" className="hover:opacity-75 transition-opacity">
             {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt={siteTitle} className="h-8 w-auto object-contain brightness-0 invert" />
+              <img src={logoUrl} alt={siteTitle} className="h-8 w-auto object-contain" />
             ) : (
-              <span
-                className="text-xl font-bold tracking-tight text-white"
-                style={{ fontFamily: "var(--carbon-font-heading)" }}
-              >
+              <span className="text-xl font-semibold tracking-tight" style={{ fontFamily: "var(--carbon-font-heading)" }}>
                 {siteTitle}
               </span>
             )}
           </Link>
-          <nav className="flex items-center gap-1">
-            {navPages.map((p) => (
-              <Link
-                key={p.href}
-                href={p.href}
-                className="rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors"
-              >
-                {p.label}
-              </Link>
-            ))}
-            <Link href="/blog" className="rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors">
-              Blog
-            </Link>
-            {searchMode === "page" && (
-              <Link href="/search" className="rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors">
-                Search
-              </Link>
-            )}
-            {searchMode === "header" && (
-              <div className="ml-2">
-                <HeaderSearchInput inputMode={searchInputMode} variant="dark" />
-              </div>
-            )}
-            {user ? (
-              <UserMenu name={user.name} role={user.role} avatarUrl={user.avatarUrl} />
-            ) : (
-              <>
-                <Link href="/login" className="rounded-md px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors">
-                  Sign in
+
+          {!simplified && (
+            <>
+              <nav className="hidden md:flex items-center gap-6">
+                {navPages.map((p) => (
+                  <Link key={p.href} href={p.href}
+                    className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
+                    {p.label}
+                  </Link>
+                ))}
+                <Link href="/blog" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
+                  Blog
                 </Link>
-                <Link
-                  href="/register"
-                  className="ml-1 rounded-md px-4 py-2 text-sm font-semibold text-neutral-900 bg-white hover:bg-neutral-100 transition-colors"
-                >
-                  Register
-                </Link>
-              </>
-            )}
-          </nav>
+                {searchMode === "page" && (
+                  <Link href="/search" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
+                    Search
+                  </Link>
+                )}
+                {searchMode === "header" && (
+                  <HeaderSearchInput inputMode={searchInputMode} variant="light" />
+                )}
+                {user ? (
+                  <UserMenu name={user.name} role={user.role} avatarUrl={user.avatarUrl} />
+                ) : (
+                  <>
+                    <Link href="/login" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
+                      Sign in
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="rounded-md px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-80"
+                      style={{ backgroundColor: "var(--carbon-accent)" }}
+                    >
+                      Register
+                    </Link>
+                  </>
+                )}
+              </nav>
+
+              <MobileNav navPages={navPages} searchMode={searchMode} user={user} />
+            </>
+          )}
         </div>
       </header>
 
@@ -80,8 +82,8 @@ export function SiteLayout({ siteTitle, navPages, searchMode, searchInputMode, c
         {children}
       </main>
 
-      <footer className="border-t border-neutral-200 bg-white py-10">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <footer className="border-t border-neutral-200 bg-neutral-50 py-8">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <p className="text-sm text-neutral-400">
             {footerText ?? (
               <>
