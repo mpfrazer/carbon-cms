@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { UserMenu } from "./user-menu";
 
 interface NavPage { slug: string; title: string; }
@@ -20,7 +19,8 @@ export function SiteLayout({ siteTitle, navPages, children, user, logoUrl, foote
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
           <Link href="/" className="hover:opacity-75 transition-opacity">
             {logoUrl ? (
-              <Image src={logoUrl} alt={siteTitle} width={160} height={40} className="h-8 w-auto object-contain" />
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt={siteTitle} className="h-8 w-auto object-contain" />
             ) : (
               <span className="text-xl font-semibold tracking-tight" style={{ fontFamily: "var(--carbon-font-heading)" }}>
                 {siteTitle}

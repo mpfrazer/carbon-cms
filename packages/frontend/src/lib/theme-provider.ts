@@ -1,11 +1,13 @@
 import type { ComponentType } from "react";
 import { apiGet } from "@/lib/api/client";
+import type { PageBlock } from "@/lib/blocks";
 
 export interface ThemeComponents {
   SiteLayout: ComponentType<{ siteTitle: string; navPages: { slug: string; title: string }[]; children: React.ReactNode }>;
   BlogIndex: ComponentType<any>;
   BlogPost: ComponentType<any>;
   PageContent: ComponentType<{ title: string; content: string; updatedAt: Date }>;
+  PageBlocks: ComponentType<{ title: string; blocks: PageBlock[] }>;
 }
 
 export async function getActiveTheme(): Promise<string> {
@@ -32,6 +34,7 @@ export async function getThemeComponents(): Promise<ThemeComponents> {
       BlogIndex: blogIndex.BlogIndex,
       BlogPost: blogPost.BlogPost,
       PageContent: page.PageContent,
+      PageBlocks: page.PageBlocks,
     };
   } catch {
     const [layout, blogIndex, blogPost, page] = await Promise.all([
@@ -45,6 +48,7 @@ export async function getThemeComponents(): Promise<ThemeComponents> {
       BlogIndex: blogIndex.BlogIndex,
       BlogPost: blogPost.BlogPost,
       PageContent: page.PageContent,
+      PageBlocks: page.PageBlocks,
     };
   }
 }
