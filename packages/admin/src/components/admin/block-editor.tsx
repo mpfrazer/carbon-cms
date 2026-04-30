@@ -91,12 +91,38 @@ function HeroBlockForm({ block, onChange }: { block: HeroBlock; onChange: (b: He
 }
 
 function ImageBlockForm({ block, onChange }: { block: ImageBlock; onChange: (b: ImageBlock) => void }) {
+  const [showImagePicker, setShowImagePicker] = useState(false);
   const input = "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500";
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-neutral-600 mb-1">Image URL *</label>
-        <input type="url" value={block.url} onChange={(e) => onChange({ ...block, url: e.target.value })} placeholder="https://…" className={input} />
+        <label className="block text-xs font-medium text-neutral-600 mb-1">Image *</label>
+        {block.url ? (
+          <div className="flex items-center gap-2">
+            <div className="h-14 w-24 rounded overflow-hidden border border-neutral-200 bg-neutral-100 shrink-0">
+              <img src={block.url} alt="" className="h-full w-full object-cover" />
+            </div>
+            <button type="button" onClick={() => setShowImagePicker(true)} className="text-xs text-neutral-500 hover:text-neutral-800 underline underline-offset-2 transition-colors">Change</button>
+            <button type="button" onClick={() => onChange({ ...block, url: "" })} className="text-neutral-400 hover:text-red-500 transition-colors" title="Remove">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setShowImagePicker(true)}
+            className="flex items-center gap-2 rounded-md border border-dashed border-neutral-300 px-3 py-2 text-sm text-neutral-500 hover:border-neutral-400 hover:text-neutral-700 transition-colors">
+            <ImageIcon className="h-4 w-4" /> Choose image
+          </button>
+        )}
+        <MediaPickerModal
+          title="Choose image"
+          open={showImagePicker}
+          onClose={() => setShowImagePicker(false)}
+          onSelect={(item) => onChange({
+            ...block,
+            url: item.url,
+            alt: block.alt || item.altText || undefined,
+          })}
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
