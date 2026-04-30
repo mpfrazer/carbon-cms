@@ -17,9 +17,7 @@ async function getNavData() {
     } catch { /* start empty */ }
   }
 
-  const allPages: { id: string; title: string; slug: string }[] = (pages.data ?? []).filter(
-    (p: { slug: string }) => p.slug !== "home",
-  );
+  const allPages: { id: string; title: string; slug: string }[] = pages.data ?? [];
 
   return { navItems, allPages };
 }

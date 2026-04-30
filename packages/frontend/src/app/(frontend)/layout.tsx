@@ -26,7 +26,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
       if (item.type === "page") {
         const page = pageById[item.pageId];
         if (!page) return []; // deleted page — skip
-        return [{ label: item.label || page.title, href: `/${page.slug}` }];
+        return [{ label: item.label || page.title, href: page.slug === "home" ? "/" : `/${page.slug}` }];
       }
       return [{ label: item.label, href: item.url }];
     });
