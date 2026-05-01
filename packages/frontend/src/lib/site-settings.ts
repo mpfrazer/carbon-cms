@@ -29,6 +29,7 @@ export interface SiteSettings {
   postsPerPage: number;
   allowComments: boolean;
   requireLoginToComment: boolean;
+  commentModeration: boolean;
   showBlogLink: boolean;
   appearance: ThemeAppearance;
   navMenu: NavItem[] | null;
@@ -54,6 +55,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     postsPerPage: Number(raw.postsPerPage) || 10,
     allowComments: raw.allowComments !== false && raw.allowComments !== "false",
     requireLoginToComment: raw.requireLoginToComment === true || raw.requireLoginToComment === "true",
+    commentModeration: raw.commentModeration === true || raw.commentModeration === "true",
     showBlogLink: parseShowBlogLink(raw.showBlogLink),
     appearance: parseThemeAppearance(raw),
     navMenu,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Palette, Check, Loader2, ImageIcon } from "lucide-react";
+import { Palette, Check, Loader2, ImageIcon, Plus, Trash2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/media-picker-modal";
 
 // Minimal font registry for the admin UI — keep in sync with packages/frontend/src/lib/fonts.ts
@@ -66,31 +66,18 @@ function getStack(name: string): string {
   return ADMIN_FONTS.find((f) => f.name === name)?.stack ?? "system-ui, sans-serif";
 }
 
-function FontSelect({
-  value,
-  onChange,
-  filter,
-  label,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  filter: "body" | "heading";
-  label: string;
-}) {
+function FontSelect({ value, onChange, filter, label }: { value: string; onChange: (v: string) => void; filter: "body" | "heading"; label: string }) {
   const inputClass = "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500";
   const filtered = ADMIN_FONTS.filter((f) => (f.contexts as readonly string[]).includes(filter));
   const grouped = groupByCategory(filtered);
   const previewStack = getStack(value);
-
   return (
     <div>
       <label className="block text-sm font-medium text-neutral-700 mb-1.5">{label}</label>
       <select value={value} onChange={(e) => onChange(e.target.value)} className={inputClass}>
         {Array.from(grouped.entries()).map(([cat, fonts]) => (
           <optgroup key={cat} label={cat}>
-            {fonts.map((f) => (
-              <option key={f.name} value={f.name}>{f.label}</option>
-            ))}
+            {fonts.map((f) => <option key={f.name} value={f.name}>{f.label}</option>)}
           </optgroup>
         ))}
       </select>
@@ -101,12 +88,32 @@ function FontSelect({
   );
 }
 
+interface ThemeCapabilities {
+  blog: boolean;
+  search: { header: boolean; page: boolean };
+  pageBuilder: boolean;
+  comments: boolean;
+}
+
+interface ThemeOverrides {
+  searchMode?: "none" | "header" | "page";
+  searchInputMode?: "submit" | "instant";
+  showBlogLink?: boolean;
+  postsPerPage?: number;
+}
+
 interface Theme {
+  slug: string;
   name: string;
   active: boolean;
+  builtin: boolean;
+  compiled?: boolean | null;
+  compiledAt?: string | null;
   version?: string;
   author?: string;
   description?: string;
+  capabilities?: ThemeCapabilities;
+  overrides?: ThemeOverrides;
 }
 
 interface AppearanceState {
@@ -120,9 +127,7 @@ interface AppearanceState {
 
 function LogoPicker({ value, onChange }: { value: string; onChange: (url: string) => void }) {
   const [open, setOpen] = useState(false);
-
   const inputClass = "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500";
-
   return (
     <div className="space-y-2">
       {value ? (
@@ -142,30 +147,193 @@ function LogoPicker({ value, onChange }: { value: string; onChange: (url: string
           <span className="text-xs text-neutral-400">or leave blank to show site title</span>
         </div>
       )}
-      {/* Also allow pasting a URL directly */}
       <input type="url" value={value} onChange={(e) => onChange(e.target.value)} placeholder="Or paste an image URL…" className={inputClass} />
-
-      <MediaPickerModal
-        title="Choose logo"
-        open={open}
-        onClose={() => setOpen(false)}
-        onSelect={(item) => onChange(item.url)}
-      />
+      <MediaPickerModal title="Choose logo" open={open} onClose={() => setOpen(false)} onSelect={(item) => onChange(item.url)} />
     </div>
   );
 }
 
-export function ThemesManager({
-  themes: initial,
-  initialAppearance,
-}: {
-  themes: Theme[];
-  initialAppearance: Record<string, unknown>;
-}) {
+const defaultCapabilities: ThemeCapabilities = {
+  blog: true,
+  search: { header: true, page: true },
+  pageBuilder: true,
+  comments: true,
+};
+
+function ThemeConfigEditor({ theme, allThemeSlugs, onSaved }: { theme: Theme; allThemeSlugs: string[]; onSaved: (updated: Theme) => void }) {
+  const [caps, setCaps] = useState<ThemeCapabilities>({ ...defaultCapabilities, ...theme.capabilities, search: { ...defaultCapabilities.search, ...theme.capabilities?.search } });
+  const [overrides, setOverrides] = useState<ThemeOverrides>(theme.overrides ?? {});
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function save() {
+    setSaving(true);
+    setMessage(null);
+    const res = await fetch(`/api/v1/themes/${theme.slug}/config`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ capabilities: caps, overrides: Object.keys(overrides).length ? overrides : undefined }),
+    });
+    const json = await res.json().catch(() => ({}));
+    setSaving(false);
+    if (res.ok) {
+      setMessage("Saved.");
+      onSaved({ ...theme, capabilities: caps, overrides });
+    } else {
+      setMessage(json.error ?? "Failed to save.");
+    }
+  }
+
+  const checkboxClass = "h-4 w-4 rounded border-neutral-300";
+  const labelClass = "text-sm text-neutral-700";
+
+  return (
+    <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 space-y-5">
+      <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Theme Capabilities</p>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" className={checkboxClass} checked={caps.blog} onChange={(e) => setCaps({ ...caps, blog: e.target.checked })} />
+          <span className={labelClass}>Blog (index + post templates)</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" className={checkboxClass} checked={caps.pageBuilder} onChange={(e) => setCaps({ ...caps, pageBuilder: e.target.checked })} />
+          <span className={labelClass}>Page builder (block renderer)</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" className={checkboxClass} checked={caps.search.header} onChange={(e) => setCaps({ ...caps, search: { ...caps.search, header: e.target.checked } })} />
+          <span className={labelClass}>Search — header bar</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" className={checkboxClass} checked={caps.search.page} onChange={(e) => setCaps({ ...caps, search: { ...caps.search, page: e.target.checked } })} />
+          <span className={labelClass}>Search — dedicated page</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" className={checkboxClass} checked={caps.comments} onChange={(e) => setCaps({ ...caps, comments: e.target.checked })} />
+          <span className={labelClass}>Comments section</span>
+        </label>
+      </div>
+
+      <div className="border-t border-neutral-200 pt-4 space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Setting Overrides <span className="font-normal normal-case text-neutral-400">(optional — takes precedence over admin settings)</span></p>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-neutral-600">Force search mode</label>
+            <select value={overrides.searchMode ?? ""} onChange={(e) => setOverrides({ ...overrides, searchMode: e.target.value as ThemeOverrides["searchMode"] || undefined })}
+              className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-neutral-500 focus:outline-none">
+              <option value="">No override</option>
+              <option value="none">Disabled</option>
+              <option value="header">Header bar</option>
+              <option value="page">Search page</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-neutral-600">Force posts per page</label>
+            <input type="number" min={1} max={100} value={overrides.postsPerPage ?? ""}
+              onChange={(e) => setOverrides({ ...overrides, postsPerPage: e.target.value ? parseInt(e.target.value) : undefined })}
+              placeholder="No override"
+              className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-neutral-500 focus:outline-none" />
+          </div>
+        </div>
+        <div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <select value={overrides.showBlogLink === undefined ? "" : overrides.showBlogLink ? "true" : "false"}
+              onChange={(e) => setOverrides({ ...overrides, showBlogLink: e.target.value === "" ? undefined : e.target.value === "true" })}
+              className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-neutral-500 focus:outline-none">
+              <option value="">Blog link — no override</option>
+              <option value="true">Blog link — always show</option>
+              <option value="false">Blog link — always hide</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 pt-1">
+        <button type="button" onClick={save} disabled={saving}
+          className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
+          {saving ? "Saving…" : "Save config"}
+        </button>
+        {message && (
+          <span className={`text-sm ${message === "Saved." ? "text-green-700" : "text-red-600"}`}>{message}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CreateThemePanel({ allThemeSlugs, onCreated }: { allThemeSlugs: string[]; onCreated: (theme: Theme) => void }) {
+  const [slug, setSlug] = useState("");
+  const [base, setBase] = useState("minimal");
+  const [creating, setCreating] = useState(false);
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const slugError = slug && !/^[a-z0-9-]+$/.test(slug) ? "Lowercase letters, numbers, and hyphens only" : null;
+
+  async function create() {
+    if (!slug || slugError) return;
+    setCreating(true);
+    setMessage(null);
+    const res = await fetch("/api/v1/themes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, base }),
+    });
+    const json = await res.json().catch(() => ({}));
+    setCreating(false);
+    if (res.ok) {
+      setMessage({ text: json.data?.compiled ? "Theme created and compiled." : `Theme created but compilation had errors: ${json.data?.compileErrors?.join(", ")}`, ok: json.data?.compiled });
+      onCreated(json.data as Theme);
+      setSlug("");
+    } else {
+      setMessage({ text: json.error ?? "Failed to create theme.", ok: false });
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-white p-5 space-y-4 max-w-lg">
+      <p className="text-xs text-neutral-500 leading-relaxed">
+        Creates a new theme by copying an existing theme&apos;s source files. Custom themes are compiled on the server — no build step needed on your end.
+        You can only import <code className="font-mono bg-neutral-100 px-1 rounded">react</code>, <code className="font-mono bg-neutral-100 px-1 rounded">next/link</code>, <code className="font-mono bg-neutral-100 px-1 rounded">next/navigation</code>, and <code className="font-mono bg-neutral-100 px-1 rounded">lucide-react</code> in custom theme files.
+      </p>
+      <div className="flex gap-3">
+        <div className="flex-1 space-y-1">
+          <label className="block text-xs font-medium text-neutral-600">Theme slug</label>
+          <input type="text" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase())}
+            placeholder="my-theme"
+            className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none" />
+          {slugError && <p className="text-xs text-red-600">{slugError}</p>}
+        </div>
+        <div className="space-y-1">
+          <label className="block text-xs font-medium text-neutral-600">Copy from</label>
+          <select value={base} onChange={(e) => setBase(e.target.value)}
+            className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none">
+            {allThemeSlugs.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <button type="button" onClick={create} disabled={creating || !slug || !!slugError}
+          className="inline-flex items-center gap-2 rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
+          <Plus className="h-4 w-4" /> {creating ? "Creating…" : "Create theme"}
+        </button>
+        {message && (
+          <span className={`text-sm ${message.ok ? "text-green-700" : "text-red-600"}`}>{message.text}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ThemesManager({ themes: initial, initialAppearance }: { themes: Theme[]; initialAppearance: Record<string, unknown> }) {
   const [themes, setThemes] = useState(initial);
   const [activating, setActivating] = useState<string | null>(null);
   const [buildStatus, setBuildStatus] = useState<"idle" | "building" | "done" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const [editingConfig, setEditingConfig] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [compiling, setCompiling] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const [appearance, setAppearance] = useState<AppearanceState>({
     themeAccentColor: (initialAppearance.themeAccentColor as string) || "#171717",
@@ -178,7 +346,6 @@ export function ThemesManager({
   const [appearanceSaving, setAppearanceSaving] = useState(false);
   const [appearanceMessage, setAppearanceMessage] = useState<string | null>(null);
 
-  // Inject Google Fonts into the admin page for live preview
   useEffect(() => {
     const url = buildAdminGoogleFontsUrl([appearance.themeFontBody, appearance.themeFontHeading]);
     if (!url) return;
@@ -195,30 +362,25 @@ export function ThemesManager({
     setAppearance((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function activate(name: string) {
-    setActivating(name);
+  async function activate(slug: string) {
+    setActivating(slug);
     setBuildStatus("idle");
     setMessage(null);
-
     const res = await fetch("/api/v1/themes", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ theme: name }),
+      body: JSON.stringify({ theme: slug }),
     });
-
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
       setMessage(json.error ?? "Failed to activate theme.");
       setActivating(null);
       return;
     }
-
-    setThemes((prev) => prev.map((t) => ({ ...t, active: t.name === name })));
-
+    setThemes((prev) => prev.map((t) => ({ ...t, active: t.slug === slug })));
     const renderModeRes = await fetch("/api/v1/settings?keys=renderMode");
     const renderJson = await renderModeRes.json().catch(() => ({}));
     const renderMode = renderJson.data?.renderMode ?? "ssr";
-
     if (renderMode === "csr") {
       setBuildStatus("building");
       setMessage("Theme activated. Rebuilding frontend — this takes 15–60 seconds…");
@@ -226,23 +388,41 @@ export function ThemesManager({
         const statusRes = await fetch("/api/v1/settings?keys=buildStatus");
         const statusJson = await statusRes.json().catch(() => ({}));
         const status = statusJson.data?.buildStatus;
-        if (status === "done") {
-          clearInterval(poll);
-          setBuildStatus("done");
-          setMessage("Rebuild complete. The new theme is live.");
-        } else if (status === "error") {
-          clearInterval(poll);
-          setBuildStatus("error");
-          setMessage("Rebuild failed. Check server logs.");
-        }
+        if (status === "done") { clearInterval(poll); setBuildStatus("done"); setMessage("Rebuild complete. The new theme is live."); }
+        else if (status === "error") { clearInterval(poll); setBuildStatus("error"); setMessage("Rebuild failed. Check server logs."); }
       }, 5000);
       setTimeout(() => clearInterval(poll), 120_000);
     } else {
       setBuildStatus("done");
       setMessage("Theme activated. Changes are live.");
     }
-
     setActivating(null);
+  }
+
+  async function recompile(slug: string) {
+    setCompiling(slug);
+    const res = await fetch(`/api/v1/themes/${slug}/compile`, { method: "POST" });
+    const json = await res.json().catch(() => ({}));
+    setCompiling(null);
+    if (res.ok && json.data?.compiled) {
+      setThemes((prev) => prev.map((t) => t.slug === slug ? { ...t, compiled: true } : t));
+    } else {
+      alert(json.data?.errors?.join("\n") ?? json.error ?? "Compilation failed.");
+    }
+  }
+
+  async function deleteTheme(slug: string) {
+    if (!confirm(`Delete theme "${slug}"? This cannot be undone.`)) return;
+    setDeleting(slug);
+    const res = await fetch(`/api/v1/themes/${slug}`, { method: "DELETE" });
+    setDeleting(null);
+    if (res.ok) {
+      setThemes((prev) => prev.filter((t) => t.slug !== slug));
+      if (editingConfig === slug) setEditingConfig(null);
+    } else {
+      const json = await res.json().catch(() => ({}));
+      alert(json.error ?? "Failed to delete theme.");
+    }
   }
 
   async function saveAppearance(e: React.FormEvent) {
@@ -265,6 +445,7 @@ export function ThemesManager({
     setAppearanceMessage(res.ok ? "Appearance saved." : "Failed to save.");
   }
 
+  const allThemeSlugs = themes.map((t) => t.slug);
   const inputClass = "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500";
   const labelClass = "block text-sm font-medium text-neutral-700 mb-1.5";
 
@@ -272,35 +453,109 @@ export function ThemesManager({
     <div className="p-6 space-y-8">
       {/* Theme picker */}
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-neutral-800">Active theme</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-neutral-800">Installed themes</h2>
+          <button
+            onClick={() => setShowCreate((v) => !v)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            New theme
+          </button>
+        </div>
+
+        {showCreate && (
+          <CreateThemePanel
+            allThemeSlugs={allThemeSlugs}
+            onCreated={(theme) => {
+              setThemes((prev) => [...prev, theme]);
+              setShowCreate(false);
+            }}
+          />
+        )}
+
         {message && (
           <div className={`rounded-md border px-4 py-3 text-sm flex items-center gap-2 ${buildStatus === "error" ? "bg-red-50 border-red-200 text-red-700" : buildStatus === "building" ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-green-50 border-green-200 text-green-700"}`}>
             {buildStatus === "building" && <Loader2 className="h-4 w-4 animate-spin" />}
             {message}
           </div>
         )}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+        <div className="space-y-3">
           {themes.map((theme) => (
-            <div key={theme.name} className={`rounded-lg border bg-white p-5 transition-shadow ${theme.active ? "border-neutral-900 shadow-sm" : "border-neutral-200 hover:shadow-sm"}`}>
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <div className="flex items-center gap-2">
-                  <Palette className="h-4 w-4 text-neutral-400 shrink-0" />
-                  <span className="font-medium text-neutral-900 text-sm">{theme.name}</span>
+            <div key={theme.slug}>
+              <div className={`rounded-lg border bg-white p-5 transition-shadow ${theme.active ? "border-neutral-900 shadow-sm" : "border-neutral-200 hover:shadow-sm"}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2 min-w-0">
+                    <Palette className="h-4 w-4 text-neutral-400 shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-neutral-900 text-sm">{theme.name}</span>
+                        <span className="text-xs text-neutral-400 font-mono">{theme.slug}</span>
+                        {theme.active && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-2 py-0.5 text-xs font-medium text-white">
+                            <Check className="h-3 w-3" /> Active
+                          </span>
+                        )}
+                        {!theme.builtin && (
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${theme.compiled ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
+                            {theme.compiled ? "Compiled" : "Not compiled"}
+                          </span>
+                        )}
+                      </div>
+                      {theme.description && <p className="text-xs text-neutral-500 mt-1 leading-relaxed">{theme.description}</p>}
+                      <p className="text-xs text-neutral-400 mt-0.5">{theme.version ? `v${theme.version}` : ""}{theme.author ? ` · ${theme.author}` : ""}{theme.builtin ? " · Built-in" : " · Custom"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                    {!theme.builtin && (
+                      <>
+                        <button
+                          onClick={() => recompile(theme.slug)}
+                          disabled={compiling === theme.slug}
+                          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+                          title="Recompile theme"
+                        >
+                          <RefreshCw className={`h-3.5 w-3.5 ${compiling === theme.slug ? "animate-spin" : ""}`} />
+                          Recompile
+                        </button>
+                        <button
+                          onClick={() => deleteTheme(theme.slug)}
+                          disabled={theme.active || deleting === theme.slug}
+                          className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                          title={theme.active ? "Cannot delete the active theme" : "Delete theme"}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => setEditingConfig((v) => v === theme.slug ? null : theme.slug)}
+                      className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                    >
+                      {editingConfig === theme.slug ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      Config
+                    </button>
+                    {!theme.active && (
+                      <button
+                        onClick={() => activate(theme.slug)}
+                        disabled={activating === theme.slug || (!theme.builtin && !theme.compiled)}
+                        className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors"
+                        title={!theme.builtin && !theme.compiled ? "Compile the theme before activating" : undefined}
+                      >
+                        {activating === theme.slug ? "Activating…" : "Activate"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {theme.active && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-2 py-0.5 text-xs font-medium text-white">
-                    <Check className="h-3 w-3" /> Active
-                  </span>
-                )}
-              </div>
-              {theme.description && <p className="text-xs text-neutral-500 mb-3 leading-relaxed">{theme.description}</p>}
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-neutral-400">{theme.version ? `v${theme.version}` : ""}{theme.author ? ` · ${theme.author}` : ""}</span>
-                {!theme.active && (
-                  <button onClick={() => activate(theme.name)} disabled={activating === theme.name}
-                    className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
-                    {activating === theme.name ? "Activating…" : "Activate"}
-                  </button>
+
+                {editingConfig === theme.slug && (
+                  <ThemeConfigEditor
+                    theme={theme}
+                    allThemeSlugs={allThemeSlugs}
+                    onSaved={(updated) => setThemes((prev) => prev.map((t) => t.slug === updated.slug ? updated : t))}
+                  />
                 )}
               </div>
             </div>
@@ -312,43 +567,16 @@ export function ThemesManager({
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-neutral-800">Appearance</h2>
         <form onSubmit={saveAppearance} className="rounded-lg border border-neutral-200 bg-white p-5 space-y-5 max-w-xl">
-          {/* Accent color */}
           <div>
             <label className={labelClass}>Accent color</label>
             <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={appearance.themeAccentColor}
-                onChange={(e) => setField("themeAccentColor", e.target.value)}
-                className="h-9 w-14 cursor-pointer rounded border border-neutral-300 p-0.5"
-              />
-              <input
-                type="text"
-                value={appearance.themeAccentColor}
-                onChange={(e) => setField("themeAccentColor", e.target.value)}
-                placeholder="#171717"
-                className="w-32 rounded-md border border-neutral-300 px-3 py-2 font-mono text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-              />
+              <input type="color" value={appearance.themeAccentColor} onChange={(e) => setField("themeAccentColor", e.target.value)} className="h-9 w-14 cursor-pointer rounded border border-neutral-300 p-0.5" />
+              <input type="text" value={appearance.themeAccentColor} onChange={(e) => setField("themeAccentColor", e.target.value)} placeholder="#171717" className="w-32 rounded-md border border-neutral-300 px-3 py-2 font-mono text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
               <span className="text-xs text-neutral-400">Used for buttons and links</span>
             </div>
           </div>
-
-          {/* Body font */}
-          <FontSelect
-            value={appearance.themeFontBody}
-            onChange={(v) => setField("themeFontBody", v)}
-            filter="body"
-            label="Body font"
-          />
-
-          {/* Heading font + weight */}
-          <FontSelect
-            value={appearance.themeFontHeading}
-            onChange={(v) => setField("themeFontHeading", v)}
-            filter="heading"
-            label="Heading font"
-          />
-
+          <FontSelect value={appearance.themeFontBody} onChange={(v) => setField("themeFontBody", v)} filter="body" label="Body font" />
+          <FontSelect value={appearance.themeFontHeading} onChange={(v) => setField("themeFontHeading", v)} filter="heading" label="Heading font" />
           <div>
             <label className={labelClass}>Heading weight</label>
             <select value={appearance.themeHeadingWeight} onChange={(e) => setField("themeHeadingWeight", e.target.value)} className={inputClass}>
@@ -356,35 +584,22 @@ export function ThemesManager({
             </select>
             <p className="mt-2 text-neutral-400 text-xs">Controls h1–h6 weight across the frontend.</p>
           </div>
-
-          {/* Logo */}
           <div>
             <label className={labelClass}>Logo</label>
             <LogoPicker value={appearance.themeLogoUrl} onChange={(url) => setField("themeLogoUrl", url)} />
           </div>
-
-          {/* Footer text */}
           <div>
             <label className={labelClass}>Footer text</label>
-            <textarea
-              value={appearance.themeFooterText}
-              onChange={(e) => setField("themeFooterText", e.target.value)}
-              rows={2}
-              placeholder={`© ${new Date().getFullYear()} Your Site. Powered by Carbon CMS.`}
-              className={inputClass}
-            />
+            <textarea value={appearance.themeFooterText} onChange={(e) => setField("themeFooterText", e.target.value)} rows={2}
+              placeholder={`© ${new Date().getFullYear()} Your Site. Powered by Carbon CMS.`} className={inputClass} />
             <p className="mt-1 text-xs text-neutral-400">Leave blank to use the default footer.</p>
           </div>
-
           <div className="flex items-center gap-3 pt-1">
-            <button type="submit" disabled={appearanceSaving}
-              className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
+            <button type="submit" disabled={appearanceSaving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
               {appearanceSaving ? "Saving…" : "Save appearance"}
             </button>
             {appearanceMessage && (
-              <span className={`text-sm ${appearanceMessage.includes("Failed") ? "text-red-600" : "text-green-700"}`}>
-                {appearanceMessage}
-              </span>
+              <span className={`text-sm ${appearanceMessage.includes("Failed") ? "text-red-600" : "text-green-700"}`}>{appearanceMessage}</span>
             )}
           </div>
         </form>

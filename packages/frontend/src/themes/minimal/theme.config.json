@@ -1,0 +1,12 @@
+{
+  "name": "Minimal",
+  "version": "1.0.0",
+  "author": "Carbon CMS",
+  "description": "A clean, minimal theme focused on readability.",
+  "capabilities": {
+    "blog": true,
+    "search": { "header": true, "page": true },
+    "pageBuilder": true,
+    "comments": true
+  }
+}

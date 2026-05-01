@@ -1,6 +1,37 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Info } from "lucide-react";
+
+interface ThemeCapabilities {
+  blog: boolean;
+  search: { header: boolean; page: boolean };
+  pageBuilder: boolean;
+  comments: boolean;
+}
+
+function InfoTooltip({ children }: { children: React.ReactNode }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="relative inline-flex shrink-0">
+      <button
+        type="button"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={() => setShow((v) => !v)}
+        className="flex items-center justify-center text-neutral-400 hover:text-neutral-600 transition-colors"
+        aria-label="More information"
+      >
+        <Info className="h-3.5 w-3.5" />
+      </button>
+      {show && (
+        <span className="absolute left-5 top-1/2 -translate-y-1/2 z-50 w-60 rounded-md bg-neutral-900 px-3 py-2 text-xs text-white shadow-lg leading-relaxed">
+          {children}
+        </span>
+      )}
+    </span>
+  );
+}
 
 const NAV_SECTIONS = [
   { id: "general", label: "General" },
@@ -56,7 +87,8 @@ const AI_PROVIDERS = [
   { value: "custom", label: "Custom / LiteLLM proxy", baseUrl: "", modelHint: "" },
 ];
 
-export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePublicUrl }: { initialSettings: Settings; effectiveMediaDir: string; effectivePublicUrl: string }) {
+export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePublicUrl, themeCapabilities }: { initialSettings: Settings; effectiveMediaDir: string; effectivePublicUrl: string; themeCapabilities?: ThemeCapabilities | null }) {
+  const caps = themeCapabilities;
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -251,11 +283,17 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                   onChange={(e) => setSettings({ ...settings, postsPerPage: parseInt(e.target.value) })}
                   className="w-32 rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <input type="checkbox" id="showBlogLink" checked={settings.showBlogLink ?? true}
                   onChange={(e) => setSettings({ ...settings, showBlogLink: e.target.checked })}
-                  className="h-4 w-4 rounded border-neutral-300" />
-                <label htmlFor="showBlogLink" className="text-sm text-neutral-700">Show blog link in navigation</label>
+                  className="h-4 w-4 rounded border-neutral-300 disabled:opacity-50"
+                  disabled={caps?.blog === false} />
+                <label htmlFor="showBlogLink" className={`text-sm ${caps?.blog === false ? "text-neutral-400" : "text-neutral-700"}`}>
+                  Show blog link in navigation
+                </label>
+                {caps?.blog === false && (
+                  <InfoTooltip>The active theme does not include blog templates. This setting has no effect.</InfoTooltip>
+                )}
               </div>
             </section>
 
@@ -275,25 +313,33 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                     <span className="block text-xs text-neutral-500 mt-0.5">Search is disabled. No search UI is shown to visitors.</span>
                   </div>
                 </label>
-                <label className="flex items-start gap-3 cursor-pointer">
+                <label className={`flex items-start gap-3 ${caps?.search.header === false ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
                   <input type="radio" name="searchMode" value="header"
                     checked={settings.searchMode === "header"}
                     onChange={() => setSettings({ ...settings, searchMode: "header" })}
-                    className="mt-0.5 h-4 w-4 border-neutral-300" />
-                  <div>
+                    className="mt-0.5 h-4 w-4 border-neutral-300 disabled:cursor-not-allowed"
+                    disabled={caps?.search.header === false} />
+                  <div className="flex-1">
                     <span className="block text-sm font-medium text-neutral-700">Search bar in header</span>
                     <span className="block text-xs text-neutral-500 mt-0.5">A compact search input appears in the site navigation bar.</span>
                   </div>
+                  {caps?.search.header === false && (
+                    <InfoTooltip>The active theme does not support a header search bar.</InfoTooltip>
+                  )}
                 </label>
-                <label className="flex items-start gap-3 cursor-pointer">
+                <label className={`flex items-start gap-3 ${caps?.search.page === false ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
                   <input type="radio" name="searchMode" value="page"
                     checked={settings.searchMode === "page"}
                     onChange={() => setSettings({ ...settings, searchMode: "page" })}
-                    className="mt-0.5 h-4 w-4 border-neutral-300" />
-                  <div>
+                    className="mt-0.5 h-4 w-4 border-neutral-300 disabled:cursor-not-allowed"
+                    disabled={caps?.search.page === false} />
+                  <div className="flex-1">
                     <span className="block text-sm font-medium text-neutral-700">Search page</span>
                     <span className="block text-xs text-neutral-500 mt-0.5">A &ldquo;Search&rdquo; link appears in the nav and leads to a dedicated search page.</span>
                   </div>
+                  {caps?.search.page === false && (
+                    <InfoTooltip>The active theme does not include a search page.</InfoTooltip>
+                  )}
                 </label>
               </div>
 
@@ -326,23 +372,32 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
 
             <section id="comments" className="scroll-mt-8 space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Comments</h2>
-              <div className="flex items-center gap-3">
+              {caps?.comments === false && (
+                <div className="flex items-center gap-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                  <Info className="h-3.5 w-3.5 shrink-0" />
+                  The active theme does not render a comments section. These settings have no effect.
+                </div>
+              )}
+              <div className="flex items-center gap-2">
                 <input type="checkbox" id="allowComments" checked={settings.allowComments ?? true}
                   onChange={(e) => setSettings({ ...settings, allowComments: e.target.checked })}
-                  className="h-4 w-4 rounded border-neutral-300" />
-                <label htmlFor="allowComments" className="text-sm text-neutral-700">Allow comments on posts</label>
+                  className="h-4 w-4 rounded border-neutral-300 disabled:opacity-50"
+                  disabled={caps?.comments === false} />
+                <label htmlFor="allowComments" className={`text-sm ${caps?.comments === false ? "text-neutral-400" : "text-neutral-700"}`}>Allow comments on posts</label>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <input type="checkbox" id="commentModeration" checked={settings.commentModeration ?? true}
                   onChange={(e) => setSettings({ ...settings, commentModeration: e.target.checked })}
-                  className="h-4 w-4 rounded border-neutral-300" />
-                <label htmlFor="commentModeration" className="text-sm text-neutral-700">Hold comments for moderation</label>
+                  className="h-4 w-4 rounded border-neutral-300 disabled:opacity-50"
+                  disabled={caps?.comments === false} />
+                <label htmlFor="commentModeration" className={`text-sm ${caps?.comments === false ? "text-neutral-400" : "text-neutral-700"}`}>Hold comments for moderation</label>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <input type="checkbox" id="requireLoginToComment" checked={settings.requireLoginToComment ?? false}
                   onChange={(e) => setSettings({ ...settings, requireLoginToComment: e.target.checked })}
-                  className="h-4 w-4 rounded border-neutral-300" />
-                <label htmlFor="requireLoginToComment" className="text-sm text-neutral-700">Require login to comment</label>
+                  className="h-4 w-4 rounded border-neutral-300 disabled:opacity-50"
+                  disabled={caps?.comments === false} />
+                <label htmlFor="requireLoginToComment" className={`text-sm ${caps?.comments === false ? "text-neutral-400" : "text-neutral-700"}`}>Require login to comment</label>
               </div>
             </section>
 

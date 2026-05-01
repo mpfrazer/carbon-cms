@@ -1,0 +1,12 @@
+{
+  "name": "Default",
+  "version": "1.0.0",
+  "author": "Carbon CMS",
+  "description": "The default Carbon CMS theme.",
+  "capabilities": {
+    "blog": true,
+    "search": { "header": true, "page": true },
+    "pageBuilder": true,
+    "comments": true
+  }
+}
