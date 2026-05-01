@@ -1,6 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const NAV_SECTIONS = [
+  { id: "general", label: "General" },
+  { id: "reading", label: "Reading" },
+  { id: "search", label: "Search" },
+  { id: "comments", label: "Comments" },
+  { id: "users", label: "User Registration" },
+  { id: "email", label: "Email" },
+  { id: "media", label: "Media Storage" },
+  { id: "ai", label: "AI Writing Tools" },
+  { id: "performance", label: "Performance" },
+] as const;
 
 interface Settings {
   siteTitle?: string;
@@ -57,6 +69,21 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
   const [emailTestResult, setEmailTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [testingPath, setTestingPath] = useState(false);
   const [pathTestResult, setPathTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [activeSection, setActiveSection] = useState<string>("general");
+
+  useEffect(() => {
+    function onScroll() {
+      const positions = NAV_SECTIONS.map((s) => ({
+        id: s.id,
+        top: document.getElementById(s.id)?.getBoundingClientRect().top ?? Infinity,
+      }));
+      const active = positions.filter((s) => s.top <= 120).at(-1);
+      if (active) setActiveSection(active.id);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -164,510 +191,536 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
 
   return (
     <div className="p-6">
-      <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
-        {saved && (
-          <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
-            Settings saved.
-          </div>
-        )}
+      {saved && (
+        <div className="mb-6 rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+          Settings saved.
+        </div>
+      )}
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">General</h2>
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Site title</label>
-            <input type="text" value={settings.siteTitle ?? ""} onChange={(e) => setSettings({ ...settings, siteTitle: e.target.value })} className={inputClass} />
-          </div>
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Site description</label>
-            <textarea value={settings.siteDescription ?? ""} onChange={(e) => setSettings({ ...settings, siteDescription: e.target.value })}
-              rows={2} className={inputClass} />
-          </div>
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Site URL</label>
-            <input type="url" value={settings.siteUrl ?? ""} onChange={(e) => setSettings({ ...settings, siteUrl: e.target.value })}
-              className={inputClass} placeholder="https://example.com" />
-          </div>
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Admin email</label>
-            <input type="email" value={settings.adminEmail ?? ""} onChange={(e) => setSettings({ ...settings, adminEmail: e.target.value })} className={inputClass} />
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Reading</h2>
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Posts per page</label>
-            <input type="number" min={1} max={100} value={settings.postsPerPage ?? 10}
-              onChange={(e) => setSettings({ ...settings, postsPerPage: parseInt(e.target.value) })}
-              className="w-32 rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
-          </div>
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="showBlogLink" checked={settings.showBlogLink ?? true}
-              onChange={(e) => setSettings({ ...settings, showBlogLink: e.target.checked })}
-              className="h-4 w-4 rounded border-neutral-300" />
-            <label htmlFor="showBlogLink" className="text-sm text-neutral-700">Show blog link in navigation</label>
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Search</h2>
-            <p className="mt-1 text-xs text-neutral-500">Control how visitors search your site.</p>
-          </div>
-          <div className="space-y-3">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input type="radio" name="searchMode" value="none"
-                checked={(settings.searchMode ?? "none") === "none"}
-                onChange={() => setSettings({ ...settings, searchMode: "none" })}
-                className="mt-0.5 h-4 w-4 border-neutral-300" />
-              <div>
-                <span className="block text-sm font-medium text-neutral-700">No search</span>
-                <span className="block text-xs text-neutral-500 mt-0.5">Search is disabled. No search UI is shown to visitors.</span>
-              </div>
-            </label>
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input type="radio" name="searchMode" value="header"
-                checked={settings.searchMode === "header"}
-                onChange={() => setSettings({ ...settings, searchMode: "header" })}
-                className="mt-0.5 h-4 w-4 border-neutral-300" />
-              <div>
-                <span className="block text-sm font-medium text-neutral-700">Search bar in header</span>
-                <span className="block text-xs text-neutral-500 mt-0.5">A compact search input appears in the site navigation bar.</span>
-              </div>
-            </label>
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input type="radio" name="searchMode" value="page"
-                checked={settings.searchMode === "page"}
-                onChange={() => setSettings({ ...settings, searchMode: "page" })}
-                className="mt-0.5 h-4 w-4 border-neutral-300" />
-              <div>
-                <span className="block text-sm font-medium text-neutral-700">Search page</span>
-                <span className="block text-xs text-neutral-500 mt-0.5">A &ldquo;Search&rdquo; link appears in the nav and leads to a dedicated search page.</span>
-              </div>
-            </label>
-          </div>
-
-          {(settings.searchMode ?? "none") !== "none" && (
-            <div className="rounded-lg border border-neutral-200 p-4 space-y-3">
-              <p className="text-sm font-medium text-neutral-700">Input behaviour</p>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input type="radio" name="searchInputMode" value="submit"
-                  checked={(settings.searchInputMode ?? "submit") === "submit"}
-                  onChange={() => setSettings({ ...settings, searchInputMode: "submit" })}
-                  className="mt-0.5 h-4 w-4 border-neutral-300" />
-                <div>
-                  <span className="block text-sm font-medium text-neutral-700">Search on submit</span>
-                  <span className="block text-xs text-neutral-500 mt-0.5">Results appear after the visitor presses Enter or clicks Search. Fewer API calls — better for tight budgets.</span>
-                </div>
-              </label>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input type="radio" name="searchInputMode" value="instant"
-                  checked={settings.searchInputMode === "instant"}
-                  onChange={() => setSettings({ ...settings, searchInputMode: "instant" })}
-                  className="mt-0.5 h-4 w-4 border-neutral-300" />
-                <div>
-                  <span className="block text-sm font-medium text-neutral-700">Instant search</span>
-                  <span className="block text-xs text-neutral-500 mt-0.5">Results update as the visitor types. Better usability but makes more API calls.</span>
-                </div>
-              </label>
+      <form onSubmit={handleSubmit}>
+        <div className="flex gap-12">
+          {/* Sticky sidebar nav */}
+          <nav className="hidden lg:block w-40 shrink-0">
+            <div className="sticky top-8 space-y-0.5">
+              {NAV_SECTIONS.map((s) => (
+                <a
+                  key={s.id}
+                  href={`#${s.id}`}
+                  className={`block rounded px-2 py-1.5 text-sm transition-colors ${
+                    activeSection === s.id
+                      ? "font-medium text-neutral-900 bg-neutral-100"
+                      : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50"
+                  }`}
+                >
+                  {s.label}
+                </a>
+              ))}
             </div>
-          )}
-        </section>
+          </nav>
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Comments</h2>
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="allowComments" checked={settings.allowComments ?? true}
-              onChange={(e) => setSettings({ ...settings, allowComments: e.target.checked })}
-              className="h-4 w-4 rounded border-neutral-300" />
-            <label htmlFor="allowComments" className="text-sm text-neutral-700">Allow comments on posts</label>
-          </div>
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="commentModeration" checked={settings.commentModeration ?? true}
-              onChange={(e) => setSettings({ ...settings, commentModeration: e.target.checked })}
-              className="h-4 w-4 rounded border-neutral-300" />
-            <label htmlFor="commentModeration" className="text-sm text-neutral-700">Hold comments for moderation</label>
-          </div>
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="requireLoginToComment" checked={settings.requireLoginToComment ?? false}
-              onChange={(e) => setSettings({ ...settings, requireLoginToComment: e.target.checked })}
-              className="h-4 w-4 rounded border-neutral-300" />
-            <label htmlFor="requireLoginToComment" className="text-sm text-neutral-700">Require login to comment</label>
-          </div>
-        </section>
+          {/* Settings content */}
+          <div className="flex-1 min-w-0 max-w-xl space-y-10">
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">User Registration</h2>
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="requireEmailVerification"
-              checked={settings.requireEmailVerification ?? false}
-              onChange={(e) => setSettings({ ...settings, requireEmailVerification: e.target.checked })}
-              className="h-4 w-4 rounded border-neutral-300" />
-            <label htmlFor="requireEmailVerification" className="text-sm text-neutral-700">
-              Require email verification before login
-            </label>
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Email (SMTP)</h2>
-            <p className="mt-1 text-xs text-neutral-500">Used for verification emails and notifications. Leave blank to disable outbound email.</p>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700">SMTP host</label>
-              <input type="text" value={settings.smtpHost ?? ""}
-                onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
-                className={inputClass} placeholder="smtp.example.com" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700">Port</label>
-              <input type="number" value={settings.smtpPort ?? "587"}
-                onChange={(e) => setSettings({ ...settings, smtpPort: e.target.value })}
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700">Username</label>
-              <input type="text" value={settings.smtpUser ?? ""}
-                onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
-                className={inputClass} autoComplete="off" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700">Password</label>
-              <div className="relative">
-                <input type={showSmtpPass ? "text" : "password"} value={settings.smtpPass ?? ""}
-                  onChange={(e) => setSettings({ ...settings, smtpPass: e.target.value })}
-                  className={inputClass + " pr-16"} autoComplete="off" />
-                <button type="button" onClick={() => setShowSmtpPass((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-700">
-                  {showSmtpPass ? "Hide" : "Show"}
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">From address</label>
-            <input type="email" value={settings.smtpFrom ?? ""}
-              onChange={(e) => setSettings({ ...settings, smtpFrom: e.target.value })}
-              className={inputClass} placeholder="no-reply@example.com" />
-          </div>
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="smtpSecure"
-              checked={settings.smtpSecure ?? false}
-              onChange={(e) => setSettings({ ...settings, smtpSecure: e.target.checked })}
-              className="h-4 w-4 rounded border-neutral-300" />
-            <label htmlFor="smtpSecure" className="text-sm text-neutral-700">Use TLS (port 465)</label>
-          </div>
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={testEmailConnection} disabled={testingEmail || !settings.smtpHost}
-              className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors">
-              {testingEmail ? "Sending…" : "Send test email"}
-            </button>
-            {emailTestResult && (
-              <span className={`text-sm ${emailTestResult.ok ? "text-green-700" : "text-red-600"}`}>
-                {emailTestResult.ok ? "✓" : "✗"} {emailTestResult.message}
-              </span>
-            )}
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Media Storage</h2>
-            <p className="mt-1 text-xs text-neutral-500">
-              Where uploaded files are stored. Local stores files on this server. S3 stores them in an S3-compatible bucket.
-            </p>
-          </div>
-          <div className="space-y-3">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="storageDriver"
-                value="local"
-                checked={(settings.storageDriver ?? "local") === "local"}
-                onChange={() => setSettings({ ...settings, storageDriver: "local" })}
-                className="mt-0.5 h-4 w-4 border-neutral-300"
-              />
-              <div>
-                <span className="block text-sm font-medium text-neutral-700">Local storage (default)</span>
-                <span className="block text-xs text-neutral-500 mt-0.5">
-                  Files are saved on this server. Simple and self-contained — no external accounts needed.
-                </span>
-              </div>
-            </label>
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="storageDriver"
-                value="s3"
-                checked={settings.storageDriver === "s3"}
-                onChange={() => setSettings({ ...settings, storageDriver: "s3" })}
-                className="mt-0.5 h-4 w-4 border-neutral-300"
-              />
-              <div>
-                <span className="block text-sm font-medium text-neutral-700">S3-compatible storage</span>
-                <span className="block text-xs text-neutral-500 mt-0.5">
-                  Files are stored in an S3 bucket. Works with AWS S3, Cloudflare R2, MinIO, and others.
-                </span>
-              </div>
-            </label>
-          </div>
-
-          {(settings.storageDriver ?? "local") === "local" && (
-            <div className="rounded-lg border border-neutral-200 p-4 space-y-3">
-              <div className="rounded-md bg-neutral-50 border border-neutral-200 px-3 py-2 text-xs text-neutral-600">
-                Uploaded files are served at{" "}
-                <code className="font-mono">{effectivePublicUrl}/uploads/…</code>
-                {". "}
-                To change this base URL, set the <code className="font-mono">CARBON_PUBLIC_URL</code> environment variable.
+            <section id="general" className="scroll-mt-8 space-y-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">General</h2>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700">Site title</label>
+                <input type="text" value={settings.siteTitle ?? ""} onChange={(e) => setSettings({ ...settings, siteTitle: e.target.value })} className={inputClass} />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-700">Storage path</label>
-                <input
-                  type="text"
-                  value={settings.mediaDir ?? ""}
-                  onChange={(e) => { setSettings({ ...settings, mediaDir: e.target.value }); setPathTestResult(null); }}
-                  className={inputClass}
-                  placeholder={effectiveMediaDir}
-                />
-                <p className="text-xs text-neutral-400">
-                  Absolute path on the server where uploaded files are stored. Currently active:{" "}
-                  <code className="font-mono">{effectiveMediaDir}</code>
-                </p>
+                <label className="block text-sm font-medium text-neutral-700">Site description</label>
+                <textarea value={settings.siteDescription ?? ""} onChange={(e) => setSettings({ ...settings, siteDescription: e.target.value })}
+                  rows={2} className={inputClass} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700">Site URL</label>
+                <input type="url" value={settings.siteUrl ?? ""} onChange={(e) => setSettings({ ...settings, siteUrl: e.target.value })}
+                  className={inputClass} placeholder="https://example.com" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700">Admin email</label>
+                <input type="email" value={settings.adminEmail ?? ""} onChange={(e) => setSettings({ ...settings, adminEmail: e.target.value })} className={inputClass} />
+              </div>
+            </section>
+
+            <section id="reading" className="scroll-mt-8 space-y-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Reading</h2>
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700">Posts per page</label>
+                <input type="number" min={1} max={100} value={settings.postsPerPage ?? 10}
+                  onChange={(e) => setSettings({ ...settings, postsPerPage: parseInt(e.target.value) })}
+                  className="w-32 rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
               </div>
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={testStoragePath}
-                  disabled={testingPath}
-                  className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
-                >
-                  {testingPath ? "Testing…" : "Test path"}
-                </button>
-                {pathTestResult && (
-                  <span className={`text-sm ${pathTestResult.ok ? "text-green-700" : "text-red-600"}`}>
-                    {pathTestResult.ok ? "✓" : "✗"} {pathTestResult.message}
-                  </span>
-                )}
+                <input type="checkbox" id="showBlogLink" checked={settings.showBlogLink ?? true}
+                  onChange={(e) => setSettings({ ...settings, showBlogLink: e.target.checked })}
+                  className="h-4 w-4 rounded border-neutral-300" />
+                <label htmlFor="showBlogLink" className="text-sm text-neutral-700">Show blog link in navigation</label>
               </div>
-              {settings.mediaDir && settings.mediaDir !== effectiveMediaDir && (
-                <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
-                  Changing the storage path takes effect after restarting the server. If running in Docker, ensure the new path is mounted as a volume, otherwise uploaded files will be lost on container restart.
+            </section>
+
+            <section id="search" className="scroll-mt-8 space-y-4">
+              <div>
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Search</h2>
+                <p className="mt-1 text-xs text-neutral-500">Control how visitors search your site.</p>
+              </div>
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="radio" name="searchMode" value="none"
+                    checked={(settings.searchMode ?? "none") === "none"}
+                    onChange={() => setSettings({ ...settings, searchMode: "none" })}
+                    className="mt-0.5 h-4 w-4 border-neutral-300" />
+                  <div>
+                    <span className="block text-sm font-medium text-neutral-700">No search</span>
+                    <span className="block text-xs text-neutral-500 mt-0.5">Search is disabled. No search UI is shown to visitors.</span>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="radio" name="searchMode" value="header"
+                    checked={settings.searchMode === "header"}
+                    onChange={() => setSettings({ ...settings, searchMode: "header" })}
+                    className="mt-0.5 h-4 w-4 border-neutral-300" />
+                  <div>
+                    <span className="block text-sm font-medium text-neutral-700">Search bar in header</span>
+                    <span className="block text-xs text-neutral-500 mt-0.5">A compact search input appears in the site navigation bar.</span>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="radio" name="searchMode" value="page"
+                    checked={settings.searchMode === "page"}
+                    onChange={() => setSettings({ ...settings, searchMode: "page" })}
+                    className="mt-0.5 h-4 w-4 border-neutral-300" />
+                  <div>
+                    <span className="block text-sm font-medium text-neutral-700">Search page</span>
+                    <span className="block text-xs text-neutral-500 mt-0.5">A &ldquo;Search&rdquo; link appears in the nav and leads to a dedicated search page.</span>
+                  </div>
+                </label>
+              </div>
+
+              {(settings.searchMode ?? "none") !== "none" && (
+                <div className="rounded-lg border border-neutral-200 p-4 space-y-3">
+                  <p className="text-sm font-medium text-neutral-700">Input behaviour</p>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="radio" name="searchInputMode" value="submit"
+                      checked={(settings.searchInputMode ?? "submit") === "submit"}
+                      onChange={() => setSettings({ ...settings, searchInputMode: "submit" })}
+                      className="mt-0.5 h-4 w-4 border-neutral-300" />
+                    <div>
+                      <span className="block text-sm font-medium text-neutral-700">Search on submit</span>
+                      <span className="block text-xs text-neutral-500 mt-0.5">Results appear after the visitor presses Enter or clicks Search. Fewer API calls — better for tight budgets.</span>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="radio" name="searchInputMode" value="instant"
+                      checked={settings.searchInputMode === "instant"}
+                      onChange={() => setSettings({ ...settings, searchInputMode: "instant" })}
+                      className="mt-0.5 h-4 w-4 border-neutral-300" />
+                    <div>
+                      <span className="block text-sm font-medium text-neutral-700">Instant search</span>
+                      <span className="block text-xs text-neutral-500 mt-0.5">Results update as the visitor types. Better usability but makes more API calls.</span>
+                    </div>
+                  </label>
                 </div>
               )}
-            </div>
-          )}
+            </section>
 
-          {settings.storageDriver === "s3" && (
-            <div className="rounded-lg border border-neutral-200 p-4 space-y-4">
+            <section id="comments" className="scroll-mt-8 space-y-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Comments</h2>
+              <div className="flex items-center gap-3">
+                <input type="checkbox" id="allowComments" checked={settings.allowComments ?? true}
+                  onChange={(e) => setSettings({ ...settings, allowComments: e.target.checked })}
+                  className="h-4 w-4 rounded border-neutral-300" />
+                <label htmlFor="allowComments" className="text-sm text-neutral-700">Allow comments on posts</label>
+              </div>
+              <div className="flex items-center gap-3">
+                <input type="checkbox" id="commentModeration" checked={settings.commentModeration ?? true}
+                  onChange={(e) => setSettings({ ...settings, commentModeration: e.target.checked })}
+                  className="h-4 w-4 rounded border-neutral-300" />
+                <label htmlFor="commentModeration" className="text-sm text-neutral-700">Hold comments for moderation</label>
+              </div>
+              <div className="flex items-center gap-3">
+                <input type="checkbox" id="requireLoginToComment" checked={settings.requireLoginToComment ?? false}
+                  onChange={(e) => setSettings({ ...settings, requireLoginToComment: e.target.checked })}
+                  className="h-4 w-4 rounded border-neutral-300" />
+                <label htmlFor="requireLoginToComment" className="text-sm text-neutral-700">Require login to comment</label>
+              </div>
+            </section>
+
+            <section id="users" className="scroll-mt-8 space-y-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">User Registration</h2>
+              <div className="flex items-center gap-3">
+                <input type="checkbox" id="requireEmailVerification"
+                  checked={settings.requireEmailVerification ?? false}
+                  onChange={(e) => setSettings({ ...settings, requireEmailVerification: e.target.checked })}
+                  className="h-4 w-4 rounded border-neutral-300" />
+                <label htmlFor="requireEmailVerification" className="text-sm text-neutral-700">
+                  Require email verification before login
+                </label>
+              </div>
+            </section>
+
+            <section id="email" className="scroll-mt-8 space-y-4">
+              <div>
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Email (SMTP)</h2>
+                <p className="mt-1 text-xs text-neutral-500">Used for verification emails and notifications. Leave blank to disable outbound email.</p>
+              </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-neutral-700">Bucket name</label>
-                  <input
-                    type="text"
-                    value={settings.awsS3Bucket ?? ""}
-                    onChange={(e) => setSettings({ ...settings, awsS3Bucket: e.target.value })}
-                    className={inputClass}
-                    placeholder="my-carbon-media"
-                  />
+                  <label className="block text-sm font-medium text-neutral-700">SMTP host</label>
+                  <input type="text" value={settings.smtpHost ?? ""}
+                    onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
+                    className={inputClass} placeholder="smtp.example.com" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-neutral-700">Region</label>
-                  <input
-                    type="text"
-                    value={settings.awsRegion ?? ""}
-                    onChange={(e) => setSettings({ ...settings, awsRegion: e.target.value })}
-                    className={inputClass}
-                    placeholder="us-east-1"
-                  />
+                  <label className="block text-sm font-medium text-neutral-700">Port</label>
+                  <input type="number" value={settings.smtpPort ?? "587"}
+                    onChange={(e) => setSettings({ ...settings, smtpPort: e.target.value })}
+                    className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-neutral-700">Access key ID</label>
-                  <input
-                    type="text"
-                    value={settings.awsAccessKeyId ?? ""}
-                    onChange={(e) => setSettings({ ...settings, awsAccessKeyId: e.target.value })}
-                    className={inputClass}
-                    autoComplete="off"
-                  />
+                  <label className="block text-sm font-medium text-neutral-700">Username</label>
+                  <input type="text" value={settings.smtpUser ?? ""}
+                    onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
+                    className={inputClass} autoComplete="off" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-neutral-700">Secret access key</label>
+                  <label className="block text-sm font-medium text-neutral-700">Password</label>
                   <div className="relative">
-                    <input
-                      type={showAwsSecret ? "text" : "password"}
-                      value={settings.awsSecretAccessKey ?? ""}
-                      onChange={(e) => setSettings({ ...settings, awsSecretAccessKey: e.target.value })}
-                      className={inputClass + " pr-16"}
-                      autoComplete="off"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowAwsSecret((v) => !v)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-700"
-                    >
-                      {showAwsSecret ? "Hide" : "Show"}
+                    <input type={showSmtpPass ? "text" : "password"} value={settings.smtpPass ?? ""}
+                      onChange={(e) => setSettings({ ...settings, smtpPass: e.target.value })}
+                      className={inputClass + " pr-16"} autoComplete="off" />
+                    <button type="button" onClick={() => setShowSmtpPass((v) => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-700">
+                      {showSmtpPass ? "Hide" : "Show"}
                     </button>
                   </div>
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-700">
-                  Custom CDN URL <span className="text-neutral-400 font-normal">(optional)</span>
-                </label>
-                <input
-                  type="url"
-                  value={settings.awsS3UrlBase ?? ""}
-                  onChange={(e) => setSettings({ ...settings, awsS3UrlBase: e.target.value })}
-                  className={inputClass}
-                  placeholder="https://media.yourdomain.com"
-                />
-                <p className="text-xs text-neutral-400">
-                  If set, media URLs will use this base instead of the S3 bucket URL. Use this for CloudFront or Cloudflare CDN.
+                <label className="block text-sm font-medium text-neutral-700">From address</label>
+                <input type="email" value={settings.smtpFrom ?? ""}
+                  onChange={(e) => setSettings({ ...settings, smtpFrom: e.target.value })}
+                  className={inputClass} placeholder="no-reply@example.com" />
+              </div>
+              <div className="flex items-center gap-3">
+                <input type="checkbox" id="smtpSecure"
+                  checked={settings.smtpSecure ?? false}
+                  onChange={(e) => setSettings({ ...settings, smtpSecure: e.target.checked })}
+                  className="h-4 w-4 rounded border-neutral-300" />
+                <label htmlFor="smtpSecure" className="text-sm text-neutral-700">Use TLS (port 465)</label>
+              </div>
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={testEmailConnection} disabled={testingEmail || !settings.smtpHost}
+                  className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors">
+                  {testingEmail ? "Sending…" : "Send test email"}
+                </button>
+                {emailTestResult && (
+                  <span className={`text-sm ${emailTestResult.ok ? "text-green-700" : "text-red-600"}`}>
+                    {emailTestResult.ok ? "✓" : "✗"} {emailTestResult.message}
+                  </span>
+                )}
+              </div>
+            </section>
+
+            <section id="media" className="scroll-mt-8 space-y-4">
+              <div>
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Media Storage</h2>
+                <p className="mt-1 text-xs text-neutral-500">
+                  Where uploaded files are stored. Local stores files on this server. S3 stores them in an S3-compatible bucket.
                 </p>
               </div>
-            </div>
-          )}
-        </section>
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="storageDriver"
+                    value="local"
+                    checked={(settings.storageDriver ?? "local") === "local"}
+                    onChange={() => setSettings({ ...settings, storageDriver: "local" })}
+                    className="mt-0.5 h-4 w-4 border-neutral-300"
+                  />
+                  <div>
+                    <span className="block text-sm font-medium text-neutral-700">Local storage (default)</span>
+                    <span className="block text-xs text-neutral-500 mt-0.5">
+                      Files are saved on this server. Simple and self-contained — no external accounts needed.
+                    </span>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="storageDriver"
+                    value="s3"
+                    checked={settings.storageDriver === "s3"}
+                    onChange={() => setSettings({ ...settings, storageDriver: "s3" })}
+                    className="mt-0.5 h-4 w-4 border-neutral-300"
+                  />
+                  <div>
+                    <span className="block text-sm font-medium text-neutral-700">S3-compatible storage</span>
+                    <span className="block text-xs text-neutral-500 mt-0.5">
+                      Files are stored in an S3 bucket. Works with AWS S3, Cloudflare R2, MinIO, and others.
+                    </span>
+                  </div>
+                </label>
+              </div>
 
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">AI Writing Tools</h2>
-            <p className="mt-1 text-xs text-neutral-500">
-              Connect your own AI provider. Works with OpenAI, Anthropic, Groq, Ollama, or any OpenAI-compatible API.
-            </p>
-          </div>
+              {(settings.storageDriver ?? "local") === "local" && (
+                <div className="rounded-lg border border-neutral-200 p-4 space-y-3">
+                  <div className="rounded-md bg-neutral-50 border border-neutral-200 px-3 py-2 text-xs text-neutral-600">
+                    Uploaded files are served at{" "}
+                    <code className="font-mono">{effectivePublicUrl}/uploads/…</code>
+                    {". "}
+                    To change this base URL, set the <code className="font-mono">CARBON_PUBLIC_URL</code> environment variable.
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-neutral-700">Storage path</label>
+                    <input
+                      type="text"
+                      value={settings.mediaDir ?? ""}
+                      onChange={(e) => { setSettings({ ...settings, mediaDir: e.target.value }); setPathTestResult(null); }}
+                      className={inputClass}
+                      placeholder={effectiveMediaDir}
+                    />
+                    <p className="text-xs text-neutral-400">
+                      Absolute path on the server where uploaded files are stored. Currently active:{" "}
+                      <code className="font-mono">{effectiveMediaDir}</code>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={testStoragePath}
+                      disabled={testingPath}
+                      className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+                    >
+                      {testingPath ? "Testing…" : "Test path"}
+                    </button>
+                    {pathTestResult && (
+                      <span className={`text-sm ${pathTestResult.ok ? "text-green-700" : "text-red-600"}`}>
+                        {pathTestResult.ok ? "✓" : "✗"} {pathTestResult.message}
+                      </span>
+                    )}
+                  </div>
+                  {settings.mediaDir && settings.mediaDir !== effectiveMediaDir && (
+                    <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                      Changing the storage path takes effect after restarting the server. If running in Docker, ensure the new path is mounted as a volume, otherwise uploaded files will be lost on container restart.
+                    </div>
+                  )}
+                </div>
+              )}
 
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Provider</label>
-            <select
-              value={settings.aiProvider ?? ""}
-              onChange={(e) => handleProviderChange(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
-            >
-              <option value="">— Select a provider —</option>
-              {AI_PROVIDERS.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
-          </div>
+              {settings.storageDriver === "s3" && (
+                <div className="rounded-lg border border-neutral-200 p-4 space-y-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-medium text-neutral-700">Bucket name</label>
+                      <input
+                        type="text"
+                        value={settings.awsS3Bucket ?? ""}
+                        onChange={(e) => setSettings({ ...settings, awsS3Bucket: e.target.value })}
+                        className={inputClass}
+                        placeholder="my-carbon-media"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-medium text-neutral-700">Region</label>
+                      <input
+                        type="text"
+                        value={settings.awsRegion ?? ""}
+                        onChange={(e) => setSettings({ ...settings, awsRegion: e.target.value })}
+                        className={inputClass}
+                        placeholder="us-east-1"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-medium text-neutral-700">Access key ID</label>
+                      <input
+                        type="text"
+                        value={settings.awsAccessKeyId ?? ""}
+                        onChange={(e) => setSettings({ ...settings, awsAccessKeyId: e.target.value })}
+                        className={inputClass}
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-sm font-medium text-neutral-700">Secret access key</label>
+                      <div className="relative">
+                        <input
+                          type={showAwsSecret ? "text" : "password"}
+                          value={settings.awsSecretAccessKey ?? ""}
+                          onChange={(e) => setSettings({ ...settings, awsSecretAccessKey: e.target.value })}
+                          className={inputClass + " pr-16"}
+                          autoComplete="off"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowAwsSecret((v) => !v)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-700"
+                        >
+                          {showAwsSecret ? "Hide" : "Show"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-neutral-700">
+                      Custom CDN URL <span className="text-neutral-400 font-normal">(optional)</span>
+                    </label>
+                    <input
+                      type="url"
+                      value={settings.awsS3UrlBase ?? ""}
+                      onChange={(e) => setSettings({ ...settings, awsS3UrlBase: e.target.value })}
+                      className={inputClass}
+                      placeholder="https://media.yourdomain.com"
+                    />
+                    <p className="text-xs text-neutral-400">
+                      If set, media URLs will use this base instead of the S3 bucket URL. Use this for CloudFront or Cloudflare CDN.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </section>
 
-          {needsApiKey && (
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700">API key</label>
-              <div className="relative">
+            <section id="ai" className="scroll-mt-8 space-y-4">
+              <div>
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">AI Writing Tools</h2>
+                <p className="mt-1 text-xs text-neutral-500">
+                  Connect your own AI provider. Works with OpenAI, Anthropic, Groq, Ollama, or any OpenAI-compatible API.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700">Provider</label>
+                <select
+                  value={settings.aiProvider ?? ""}
+                  onChange={(e) => handleProviderChange(e.target.value)}
+                  className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                >
+                  <option value="">— Select a provider —</option>
+                  {AI_PROVIDERS.map((p) => (
+                    <option key={p.value} value={p.value}>{p.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {needsApiKey && (
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-neutral-700">API key</label>
+                  <div className="relative">
+                    <input
+                      type={showApiKey ? "text" : "password"}
+                      value={settings.aiApiKey ?? ""}
+                      onChange={(e) => setSettings({ ...settings, aiApiKey: e.target.value })}
+                      className={inputClass + " pr-16"}
+                      placeholder="sk-…"
+                      autoComplete="off"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey((v) => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-700"
+                    >
+                      {showApiKey ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700">Model</label>
                 <input
-                  type={showApiKey ? "text" : "password"}
-                  value={settings.aiApiKey ?? ""}
-                  onChange={(e) => setSettings({ ...settings, aiApiKey: e.target.value })}
-                  className={inputClass + " pr-16"}
-                  placeholder="sk-…"
-                  autoComplete="off"
+                  type="text"
+                  value={settings.aiModel ?? ""}
+                  onChange={(e) => setSettings({ ...settings, aiModel: e.target.value })}
+                  className={inputClass}
+                  placeholder={selectedProvider?.modelHint ?? "e.g. gpt-4o"}
                 />
+              </div>
+
+              {(settings.aiProvider === "custom" || settings.aiProvider === "ollama" || settings.aiProvider === "openrouter" || settings.aiProvider === "groq") && (
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-neutral-700">Base URL</label>
+                  <input
+                    type="url"
+                    value={settings.aiBaseUrl ?? ""}
+                    onChange={(e) => setSettings({ ...settings, aiBaseUrl: e.target.value })}
+                    className={inputClass}
+                    placeholder="https://…"
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowApiKey((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-700"
+                  onClick={testAiConnection}
+                  disabled={aiTesting || !settings.aiProvider || !settings.aiModel}
+                  className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
                 >
-                  {showApiKey ? "Hide" : "Show"}
+                  {aiTesting ? "Testing…" : "Test connection"}
                 </button>
+                {aiTestResult && (
+                  <span className={`text-sm ${aiTestResult.ok ? "text-green-700" : "text-red-600"}`}>
+                    {aiTestResult.ok ? "✓" : "✗"} {aiTestResult.message}
+                  </span>
+                )}
               </div>
-            </div>
-          )}
+            </section>
 
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Model</label>
-            <input
-              type="text"
-              value={settings.aiModel ?? ""}
-              onChange={(e) => setSettings({ ...settings, aiModel: e.target.value })}
-              className={inputClass}
-              placeholder={selectedProvider?.modelHint ?? "e.g. gpt-4o"}
-            />
-          </div>
-
-          {(settings.aiProvider === "custom" || settings.aiProvider === "ollama" || settings.aiProvider === "openrouter" || settings.aiProvider === "groq") && (
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700">Base URL</label>
-              <input
-                type="url"
-                value={settings.aiBaseUrl ?? ""}
-                onChange={(e) => setSettings({ ...settings, aiBaseUrl: e.target.value })}
-                className={inputClass}
-                placeholder="https://…"
-              />
-            </div>
-          )}
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={testAiConnection}
-              disabled={aiTesting || !settings.aiProvider || !settings.aiModel}
-              className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
-            >
-              {aiTesting ? "Testing…" : "Test connection"}
-            </button>
-            {aiTestResult && (
-              <span className={`text-sm ${aiTestResult.ok ? "text-green-700" : "text-red-600"}`}>
-                {aiTestResult.ok ? "✓" : "✗"} {aiTestResult.message}
-              </span>
-            )}
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Performance</h2>
-            <p className="mt-1 text-xs text-neutral-500">Controls how your public site renders pages to visitors.</p>
-          </div>
-          <div className="space-y-3">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="renderMode"
-                value="ssr"
-                checked={(settings.renderMode ?? "ssr") === "ssr"}
-                onChange={() => setSettings({ ...settings, renderMode: "ssr" })}
-                className="mt-0.5 h-4 w-4 border-neutral-300"
-              />
+            <section id="performance" className="scroll-mt-8 space-y-4">
               <div>
-                <span className="block text-sm font-medium text-neutral-700">Server-Side Rendering (SSR)</span>
-                <span className="block text-xs text-neutral-500 mt-0.5">
-                  Pages are built on the server each time a visitor loads them. Theme changes go live immediately without a rebuild.
-                  Uses more server resources and pages are not cached at the edge.
-                </span>
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Performance</h2>
+                <p className="mt-1 text-xs text-neutral-500">Controls how your public site renders pages to visitors.</p>
               </div>
-            </label>
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="renderMode"
-                value="csr"
-                checked={settings.renderMode === "csr"}
-                onChange={() => setSettings({ ...settings, renderMode: "csr" })}
-                className="mt-0.5 h-4 w-4 border-neutral-300"
-              />
-              <div>
-                <span className="block text-sm font-medium text-neutral-700">Static / Client-Side Rendering (CSR)</span>
-                <span className="block text-xs text-neutral-500 mt-0.5">
-                  Pages are pre-built and served as static files from a CDN. Faster page loads and lower server load,
-                  but theme changes require a rebuild (typically 15–60 seconds) before they appear.
-                </span>
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="renderMode"
+                    value="ssr"
+                    checked={(settings.renderMode ?? "ssr") === "ssr"}
+                    onChange={() => setSettings({ ...settings, renderMode: "ssr" })}
+                    className="mt-0.5 h-4 w-4 border-neutral-300"
+                  />
+                  <div>
+                    <span className="block text-sm font-medium text-neutral-700">Server-Side Rendering (SSR)</span>
+                    <span className="block text-xs text-neutral-500 mt-0.5">
+                      Pages are built on the server each time a visitor loads them. Theme changes go live immediately without a rebuild.
+                      Uses more server resources and pages are not cached at the edge.
+                    </span>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="renderMode"
+                    value="csr"
+                    checked={settings.renderMode === "csr"}
+                    onChange={() => setSettings({ ...settings, renderMode: "csr" })}
+                    className="mt-0.5 h-4 w-4 border-neutral-300"
+                  />
+                  <div>
+                    <span className="block text-sm font-medium text-neutral-700">Static / Client-Side Rendering (CSR)</span>
+                    <span className="block text-xs text-neutral-500 mt-0.5">
+                      Pages are pre-built and served as static files from a CDN. Faster page loads and lower server load,
+                      but theme changes require a rebuild (typically 15–60 seconds) before they appear.
+                    </span>
+                  </div>
+                </label>
+                <p className="text-xs text-neutral-400">
+                  If you are unsure, start with SSR. You can switch to CSR later when you are ready to optimise for performance.
+                </p>
               </div>
-            </label>
-            <p className="text-xs text-neutral-400">
-              If you are unsure, start with SSR. You can switch to CSR later when you are ready to optimise for performance.
-            </p>
-          </div>
-        </section>
+            </section>
 
-        <div className="pt-2">
-          <button type="submit" disabled={saving}
-            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
-            {saving ? "Saving…" : "Save settings"}
-          </button>
+            <div className="pt-2">
+              <button type="submit" disabled={saving}
+                className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
+                {saving ? "Saving…" : "Save settings"}
+              </button>
+            </div>
+
+          </div>
         </div>
       </form>
     </div>
