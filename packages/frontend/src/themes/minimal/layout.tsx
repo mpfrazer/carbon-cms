@@ -16,9 +16,10 @@ interface SiteLayoutProps {
   logoUrl?: string | null;
   footerText?: string | null;
   simplified?: boolean;
+  showBlogLink?: boolean;
 }
 
-export function SiteLayout({ siteTitle, navPages, searchMode, searchInputMode, children, user, logoUrl, footerText, simplified }: SiteLayoutProps) {
+export function SiteLayout({ siteTitle, navPages, searchMode, searchInputMode, children, user, logoUrl, footerText, simplified, showBlogLink = true }: SiteLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col bg-white text-neutral-900" style={{ fontFamily: "var(--carbon-font-body)" }}>
       <header className="relative border-b border-neutral-200 bg-white">
@@ -43,9 +44,11 @@ export function SiteLayout({ siteTitle, navPages, searchMode, searchInputMode, c
                     {p.label}
                   </Link>
                 ))}
-                <Link href="/blog" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
-                  Blog
-                </Link>
+                {showBlogLink && (
+                  <Link href="/blog" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
+                    Blog
+                  </Link>
+                )}
                 {searchMode === "page" && (
                   <Link href="/search" className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors">
                     Search
@@ -72,7 +75,7 @@ export function SiteLayout({ siteTitle, navPages, searchMode, searchInputMode, c
                 )}
               </nav>
 
-              <MobileNav navPages={navPages} searchMode={searchMode} user={user} />
+              <MobileNav navPages={navPages} searchMode={searchMode} showBlogLink={showBlogLink} user={user} />
             </>
           )}
         </div>
