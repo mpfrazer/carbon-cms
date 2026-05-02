@@ -1,5 +1,6 @@
 import { getThemeComponents } from "@/lib/theme-provider";
 import { getSiteSettings } from "@/lib/site-settings";
+import { getEffectiveSiteSettings } from "@/lib/theme-config";
 import { buildCssVars } from "@/lib/theme";
 import { buildGoogleFontsUrl } from "@/lib/fonts";
 import { apiGet } from "@/lib/api/client";
@@ -7,7 +8,7 @@ import { auth } from "@/lib/auth";
 import type { SiteLayout as SiteLayoutType } from "@/themes/default/layout";
 
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
-  const [{ SiteLayout }, settings, pagesRes, session] = await Promise.all([
+  const [{ SiteLayout }, rawSettings, pagesRes, session] = await Promise.all([
     getThemeComponents(),
     getSiteSettings(),
     apiGet("/api/v1/pages?status=published&pageSize=50") as Promise<{ data: { slug: string; title: string }[] }>,
@@ -21,8 +22,8 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   // Build nav from saved navMenu setting; fall back to all published pages (minus home) for
   // installs that haven't configured the nav editor yet.
   let navPages: { label: string; href: string }[];
-  if (settings.navMenu && settings.navMenu.length > 0) {
-    navPages = settings.navMenu.flatMap((item) => {
+  if (rawSettings.navMenu && rawSettings.navMenu.length > 0) {
+    navPages = rawSettings.navMenu.flatMap((item) => {
       if (item.type === "page") {
         const page = pageById[item.pageId];
         if (!page) return []; // deleted page — skip
@@ -35,10 +36,11 @@ export default async function FrontendLayout({ children }: { children: React.Rea
       .filter((p) => p.slug !== "home")
       .map((p) => ({ label: p.title, href: `/${p.slug}` }));
   }
-  const cssVars = buildCssVars(settings.appearance);
+  const settings = await getEffectiveSiteSettings(rawSettings);
+  const cssVars = buildCssVars(rawSettings.appearance);
   const googleFontsUrl = buildGoogleFontsUrl([
-    settings.appearance.themeFontBody,
-    settings.appearance.themeFontHeading,
+    rawSettings.appearance.themeFontBody,
+    rawSettings.appearance.themeFontHeading,
   ]);
 
   let user: { name: string; role: string; avatarUrl?: string | null } | null = null;

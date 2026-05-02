@@ -3,8 +3,11 @@ import { ThemesManager } from "@/components/admin/themes-manager";
 import { serverGet } from "@/lib/api/server";
 
 interface Theme {
+  slug: string;
   name: string;
   active: boolean;
+  builtin: boolean;
+  compiled: boolean | null;
   version?: string;
   author?: string;
   description?: string;
