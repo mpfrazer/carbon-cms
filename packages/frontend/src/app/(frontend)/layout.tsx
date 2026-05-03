@@ -3,7 +3,7 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { getEffectiveSiteSettings, getThemeVars, buildThemeVarsCss } from "@/lib/theme-config";
 import { buildCssVars } from "@/lib/theme";
 import { buildGoogleFontsUrl } from "@/lib/fonts";
-import { apiGet } from "@/lib/api/client";
+import { apiGet, serverApiGet } from "@/lib/api/client";
 import { auth } from "@/lib/auth";
 import type { SiteLayout as SiteLayoutType } from "@/themes/default/layout";
 
@@ -53,7 +53,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
   if (session?.user?.id && session.user.name) {
     let avatarUrl: string | null = null;
     try {
-      const { data: userData } = await apiGet(`/api/v1/users/${session.user.id}`) as { data: { avatarUrl?: string | null } };
+      const { data: userData } = await serverApiGet(`/api/v1/users/${session.user.id}`) as { data: { avatarUrl?: string | null } };
       avatarUrl = userData.avatarUrl ?? null;
     } catch { /* non-critical */ }
     user = { name: session.user.name, role: (session.user as { role?: string }).role ?? "subscriber", avatarUrl };
