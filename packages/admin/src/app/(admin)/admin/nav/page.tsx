@@ -28,8 +28,8 @@ export default async function NavPage() {
   return (
     <div className="p-6 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-neutral-900">Navigation menu</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Navigation menu</h1>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
           Drag pages into the menu or add custom links. Changes apply to the frontend nav after saving.
         </p>
       </div>

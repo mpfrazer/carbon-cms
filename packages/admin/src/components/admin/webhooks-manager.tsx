@@ -46,7 +46,7 @@ function CopyButton({ text }: { text: string }) {
   }
   return (
     <button type="button" onClick={handleCopy} title="Copy"
-      className="ml-1 rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors">
+      className="ml-1 rounded p-1 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors">
       {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
     </button>
   );
@@ -261,7 +261,7 @@ export function WebhooksManager() {
         ) : webhooks.length === 0 ? (
           <p className="text-sm text-neutral-400">No webhooks configured.</p>
         ) : (
-          <div className="divide-y divide-neutral-100 rounded-md border border-neutral-200">
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-700/50 rounded-md border border-neutral-200 dark:border-neutral-700 dark:bg-neutral-800">
             {webhooks.map((w) => (
               <div key={w.id} className="px-4 py-4 space-y-3">
                 {editingId === w.id ? (
@@ -288,11 +288,11 @@ export function WebhooksManager() {
                   <>
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-0.5 min-w-0">
-                        <p className="text-sm font-medium text-neutral-800">{w.name}</p>
+                        <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{w.name}</p>
                         <p className="text-xs font-mono text-neutral-400 truncate">{w.url}</p>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {w.events.map((ev) => (
-                            <span key={ev} className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">{ev}</span>
+                            <span key={ev} className="rounded-full bg-neutral-100 dark:bg-neutral-700 px-2 py-0.5 text-xs text-neutral-600 dark:text-neutral-300">{ev}</span>
                           ))}
                         </div>
                       </div>
@@ -300,7 +300,7 @@ export function WebhooksManager() {
                         {/* Active toggle */}
                         <button type="button" onClick={() => handleToggleActive(w)}
                           className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
-                            w.active ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"
+                            w.active ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50" : "bg-neutral-100 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-600"
                           }`}>
                           {w.active ? "Active" : "Paused"}
                         </button>
@@ -308,20 +308,20 @@ export function WebhooksManager() {
                         <button type="button" onClick={() => handleTest(w)} disabled={!!testing}
                           title="Send test ping"
                           className={`rounded p-1.5 transition-colors ${
-                            testResult[w.id] === "ok" ? "text-green-600" :
+                            testResult[w.id] === "ok" ? "text-green-600 dark:text-green-400" :
                             testResult[w.id] === "fail" ? "text-red-500" :
-                            "text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+                            "text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200"
                           }`}>
                           <Zap className="h-4 w-4" />
                         </button>
                         {/* Edit */}
                         <button type="button" onClick={() => startEdit(w)} title="Edit"
-                          className="rounded p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors">
+                          className="rounded p-1.5 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors">
                           <Edit2 className="h-4 w-4" />
                         </button>
                         {/* Delete */}
                         <button type="button" onClick={() => handleDelete(w)} title="Delete"
-                          className="rounded p-1.5 text-neutral-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                          className="rounded p-1.5 text-neutral-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500 transition-colors">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -335,7 +335,7 @@ export function WebhooksManager() {
                       Delivery log
                     </button>
                     {expandedLog === w.id && (
-                      <div className="border-t border-neutral-100 pt-2">
+                      <div className="border-t border-neutral-100 dark:border-neutral-700 pt-2">
                         <DeliveryLog webhookId={w.id} />
                       </div>
                     )}

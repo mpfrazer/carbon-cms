@@ -271,8 +271,8 @@ function ThemeVarsEditor({ theme, onSchemaSaved }: { theme: Theme; onSchemaSaved
           )}
 
           {defs.map((d) => (
-            <div key={d.key} className="flex items-center gap-2 text-xs bg-white border border-neutral-200 rounded-md px-3 py-2">
-              <code className="font-mono text-neutral-700 shrink-0">--{d.key}</code>
+            <div key={d.key} className="flex items-center gap-2 text-xs bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md px-3 py-2">
+              <code className="font-mono text-neutral-700 dark:text-neutral-300 shrink-0">--{d.key}</code>
               <span className="text-neutral-500 truncate flex-1">{d.label}</span>
               <span className="text-neutral-400 shrink-0">{d.type}</span>
               {d.options && <span className="text-neutral-400 shrink-0 hidden sm:block">[{d.options.join(", ")}]</span>}
@@ -284,7 +284,7 @@ function ThemeVarsEditor({ theme, onSchemaSaved }: { theme: Theme; onSchemaSaved
           ))}
 
           {showAdd && (
-            <div className="rounded-md border border-neutral-200 bg-white p-3 space-y-2">
+            <div className="rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-3 space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs text-neutral-500 mb-1">Key (no --)</label>
@@ -337,7 +337,7 @@ function ThemeVarsEditor({ theme, onSchemaSaved }: { theme: Theme; onSchemaSaved
 
       {defs.length > 0 && (
         <div className="space-y-3">
-          {!theme.builtin && <div className="border-t border-neutral-200 pt-3" />}
+          {!theme.builtin && <div className="border-t border-neutral-200 dark:border-neutral-700 pt-3" />}
           <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Variable Values</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {defs.map((d) => (
@@ -418,10 +418,10 @@ function ThemeConfigEditor({ theme, allThemeSlugs, onSaved }: { theme: Theme; al
   }
 
   const checkboxClass = "h-4 w-4 rounded border-neutral-300";
-  const labelClass = "text-sm text-neutral-700";
+  const labelClass = "text-sm text-neutral-700 dark:text-neutral-300";
 
   return (
-    <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 space-y-5">
+    <div className="mt-4 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 p-4 space-y-5">
       <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Theme Capabilities</p>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -447,7 +447,7 @@ function ThemeConfigEditor({ theme, allThemeSlugs, onSaved }: { theme: Theme; al
         </label>
       </div>
 
-      <div className="border-t border-neutral-200 pt-4 space-y-3">
+      <div className="border-t border-neutral-200 dark:border-neutral-700 pt-4 space-y-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Setting Overrides <span className="font-normal normal-case text-neutral-400">(optional — takes precedence over admin settings)</span></p>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -494,7 +494,7 @@ function ThemeConfigEditor({ theme, allThemeSlugs, onSaved }: { theme: Theme; al
         )}
       </div>
 
-      <div className="border-t border-neutral-200 pt-4 space-y-3">
+      <div className="border-t border-neutral-200 dark:border-neutral-700 pt-4 space-y-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Variables <span className="font-normal normal-case text-neutral-400">(CSS custom properties injected on the frontend)</span></p>
         <ThemeVarsEditor
           theme={theme}
@@ -534,7 +534,7 @@ function CreateThemePanel({ allThemeSlugs, onCreated }: { allThemeSlugs: string[
   }
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-5 space-y-4 max-w-lg">
+    <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-5 space-y-4 max-w-lg">
       <p className="text-xs text-neutral-500 leading-relaxed">
         Creates a new theme by copying an existing theme&apos;s source files. Custom themes are compiled on the server — no build step needed on your end.
         You can only import <code className="font-mono bg-neutral-100 px-1 rounded">react</code>, <code className="font-mono bg-neutral-100 px-1 rounded">next/link</code>, <code className="font-mono bg-neutral-100 px-1 rounded">next/navigation</code>, and <code className="font-mono bg-neutral-100 px-1 rounded">lucide-react</code> in custom theme files.
@@ -700,17 +700,17 @@ export function ThemesManager({ themes: initial, initialAppearance }: { themes: 
 
   const allThemeSlugs = themes.map((t) => t.slug);
   const inputClass = "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500";
-  const labelClass = "block text-sm font-medium text-neutral-700 mb-1.5";
+  const labelClass = "block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5";
 
   return (
     <div className="p-6 space-y-8">
       {/* Theme picker */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-neutral-800">Installed themes</h2>
+          <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Installed themes</h2>
           <button
             onClick={() => setShowCreate((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-600 transition-colors"
           >
             <Plus className="h-4 w-4" />
             New theme
@@ -737,13 +737,13 @@ export function ThemesManager({ themes: initial, initialAppearance }: { themes: 
         <div className="space-y-3">
           {themes.map((theme) => (
             <div key={theme.slug}>
-              <div className={`rounded-lg border bg-white p-5 transition-shadow ${theme.active ? "border-neutral-900 shadow-sm" : "border-neutral-200 hover:shadow-sm"}`}>
+              <div className={`rounded-lg border bg-white dark:bg-neutral-800 p-5 transition-shadow ${theme.active ? "border-neutral-900 dark:border-neutral-100 shadow-sm" : "border-neutral-200 dark:border-neutral-700 hover:shadow-sm"}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2 min-w-0">
                     <Palette className="h-4 w-4 text-neutral-400 shrink-0 mt-0.5" />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-neutral-900 text-sm">{theme.name}</span>
+                        <span className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">{theme.name}</span>
                         <span className="text-xs text-neutral-400 font-mono">{theme.slug}</span>
                         {theme.active && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-neutral-900 px-2 py-0.5 text-xs font-medium text-white">
@@ -767,7 +767,7 @@ export function ThemesManager({ themes: initial, initialAppearance }: { themes: 
                         <button
                           onClick={() => recompile(theme.slug)}
                           disabled={compiling === theme.slug}
-                          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+                          className="inline-flex items-center gap-1 rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 px-2.5 py-1.5 text-xs font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-600 disabled:opacity-50 transition-colors"
                           title="Recompile theme"
                         >
                           <RefreshCw className={`h-3.5 w-3.5 ${compiling === theme.slug ? "animate-spin" : ""}`} />
@@ -785,7 +785,7 @@ export function ThemesManager({ themes: initial, initialAppearance }: { themes: 
                     )}
                     <button
                       onClick={() => setEditingConfig((v) => v === theme.slug ? null : theme.slug)}
-                      className="inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-2.5 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                      className="inline-flex items-center gap-1 rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 px-2.5 py-1.5 text-xs font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-600 transition-colors"
                     >
                       {editingConfig === theme.slug ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                       Config
@@ -818,8 +818,8 @@ export function ThemesManager({ themes: initial, initialAppearance }: { themes: 
 
       {/* Appearance customization */}
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-neutral-800">Appearance</h2>
-        <form onSubmit={saveAppearance} className="rounded-lg border border-neutral-200 bg-white p-5 space-y-5 max-w-xl">
+        <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Appearance</h2>
+        <form onSubmit={saveAppearance} className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-5 space-y-5 max-w-xl">
           <div>
             <label className={labelClass}>Accent color</label>
             <div className="flex items-center gap-3">

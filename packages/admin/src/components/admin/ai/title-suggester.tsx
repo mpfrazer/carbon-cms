@@ -30,13 +30,13 @@ export function TitleSuggester({ currentTitle, content, onSelected }: TitleSugge
       <AiButton onClick={suggest} loading={loading} label="Suggest titles" />
       {error && <span className="text-xs text-red-600">{error}</span>}
       {suggestions.length > 0 && (
-        <ul className="rounded-md border border-neutral-200 divide-y divide-neutral-100 text-sm">
+        <ul className="rounded-md border border-neutral-200 dark:border-neutral-700 divide-y divide-neutral-100 dark:divide-neutral-700/50 text-sm">
           {suggestions.map((t, i) => (
             <li key={i}>
               <button
                 type="button"
                 onClick={() => pick(t)}
-                className="w-full px-3 py-2 text-left hover:bg-violet-50 hover:text-violet-900 transition-colors"
+                className="w-full px-3 py-2 text-left text-neutral-800 dark:text-neutral-200 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-900 dark:hover:text-violet-300 transition-colors"
               >
                 {t}
               </button>

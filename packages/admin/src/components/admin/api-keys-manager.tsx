@@ -25,7 +25,7 @@ function CopyButton({ text }: { text: string }) {
       type="button"
       onClick={handleCopy}
       title="Copy to clipboard"
-      className="ml-1 rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
+      className="ml-1 rounded p-1 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
     >
       {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
     </button>
@@ -95,8 +95,8 @@ export function ApiKeysManager() {
       {/* Create */}
       <section className="space-y-4">
         <div>
-          <h2 className="text-sm font-semibold text-neutral-800">Create new key</h2>
-          <p className="mt-1 text-xs text-neutral-500">Give the key a name that identifies its consumer (e.g. &ldquo;Personal brand site&rdquo;). The key is shown only once — copy it before leaving.</p>
+          <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Create new key</h2>
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Give the key a name that identifies its consumer (e.g. &ldquo;Personal brand site&rdquo;). The key is shown only once — copy it before leaving.</p>
         </div>
 
         <form onSubmit={handleCreate} className="flex gap-3">
@@ -134,18 +134,18 @@ export function ApiKeysManager() {
 
       {/* List */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-neutral-800">Active keys</h2>
+        <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Active keys</h2>
 
         {loading ? (
           <p className="text-sm text-neutral-400">Loading…</p>
         ) : keys.length === 0 ? (
           <p className="text-sm text-neutral-400">No active API keys.</p>
         ) : (
-          <div className="divide-y divide-neutral-100 rounded-md border border-neutral-200">
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-700/50 rounded-md border border-neutral-200 dark:border-neutral-700 dark:bg-neutral-800">
             {keys.map((k) => (
               <div key={k.id} className="flex items-center justify-between px-4 py-3">
                 <div className="space-y-0.5">
-                  <p className="text-sm font-medium text-neutral-800">{k.name}</p>
+                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{k.name}</p>
                   <p className="font-mono text-xs text-neutral-400">{k.keyPrefix}••••••••••••••••••••••••••••••••••</p>
                   <p className="text-xs text-neutral-400">
                     Created {new Date(k.createdAt).toLocaleDateString()}
@@ -156,7 +156,7 @@ export function ApiKeysManager() {
                   type="button"
                   onClick={() => handleRevoke(k.id, k.name)}
                   title="Revoke key"
-                  className="rounded p-1.5 text-neutral-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  className="rounded p-1.5 text-neutral-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-500 transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -166,10 +166,10 @@ export function ApiKeysManager() {
         )}
       </section>
 
-      <section className="rounded-md border border-neutral-200 bg-neutral-50 p-4 text-xs text-neutral-600 space-y-1">
-        <p className="font-medium text-neutral-700">Using an API key</p>
-        <p>Pass the key in the <code className="font-mono bg-neutral-100 px-1 rounded">Authorization</code> header on requests to the Carbon API:</p>
-        <pre className="mt-1 rounded bg-neutral-100 p-2 font-mono text-xs overflow-x-auto">{"Authorization: Bearer <your-key>"}</pre>
+      <section className="rounded-md border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 p-4 text-xs text-neutral-600 dark:text-neutral-400 space-y-1">
+        <p className="font-medium text-neutral-700 dark:text-neutral-300">Using an API key</p>
+        <p>Pass the key in the <code className="font-mono bg-neutral-100 dark:bg-neutral-700 px-1 rounded">Authorization</code> header on requests to the Carbon API:</p>
+        <pre className="mt-1 rounded bg-neutral-100 dark:bg-neutral-700 p-2 font-mono text-xs overflow-x-auto">{"Authorization: Bearer <your-key>"}</pre>
       </section>
     </div>
   );

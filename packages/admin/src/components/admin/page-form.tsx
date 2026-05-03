@@ -139,31 +139,31 @@ export function PageForm({ page, allPages }: PageFormProps) {
       {error && <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-neutral-700">Title</label>
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Title</label>
         <input type="text" value={title} onChange={(e) => handleTitleChange(e.target.value)} required className={inputClass} placeholder="Page title" />
       </div>
 
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-neutral-700">Slug</label>
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Slug</label>
         <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} required className={inputClass + " font-mono"} />
       </div>
 
       {/* Editor mode toggle */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-neutral-700">Content</label>
-          <div className="flex rounded-md border border-neutral-200 overflow-hidden text-xs font-medium">
+          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Content</label>
+          <div className="flex rounded-md border border-neutral-200 dark:border-neutral-700 overflow-hidden text-xs font-medium">
             <button
               type="button"
               onClick={switchToRichText}
-              className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${editorMode === "richtext" ? "bg-neutral-900 text-white" : "text-neutral-500 hover:bg-neutral-50"}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${editorMode === "richtext" ? "bg-neutral-900 text-white" : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700/50"}`}
             >
               <FileText className="h-3.5 w-3.5" /> Rich text
             </button>
             <button
               type="button"
               onClick={switchToBlocks}
-              className={`flex items-center gap-1.5 px-3 py-1.5 border-l border-neutral-200 transition-colors ${editorMode === "blocks" ? "bg-neutral-900 text-white" : "text-neutral-500 hover:bg-neutral-50"}`}
+              className={`flex items-center gap-1.5 px-3 py-1.5 border-l border-neutral-200 dark:border-neutral-700 transition-colors ${editorMode === "blocks" ? "bg-neutral-900 text-white" : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700/50"}`}
             >
               <LayoutTemplate className="h-3.5 w-3.5" /> Page builder
             </button>
@@ -179,7 +179,7 @@ export function PageForm({ page, allPages }: PageFormProps) {
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-neutral-700">Status</label>
+          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Status</label>
           <select value={status} onChange={(e) => setStatus(e.target.value)} className={inputClass}>
             <option value="draft">Draft</option>
             <option value="published">Published</option>
@@ -187,13 +187,13 @@ export function PageForm({ page, allPages }: PageFormProps) {
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-neutral-700">Menu order</label>
+          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Menu order</label>
           <input type="number" value={menuOrder} onChange={(e) => setMenuOrder(e.target.value)} min={0} className={inputClass} />
         </div>
 
         {parentOptions.length > 0 && (
           <div className="space-y-1.5 sm:col-span-2">
-            <label className="block text-sm font-medium text-neutral-700">Parent page</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Parent page</label>
             <select value={parentId} onChange={(e) => setParentId(e.target.value)} className={inputClass}>
               <option value="">None (top-level)</option>
               {parentOptions.map((p) => (
@@ -204,15 +204,15 @@ export function PageForm({ page, allPages }: PageFormProps) {
         )}
       </div>
 
-      <details className="rounded-md border border-neutral-200 p-4">
-        <summary className="cursor-pointer text-sm font-medium text-neutral-700">SEO</summary>
+      <details className="rounded-md border border-neutral-200 dark:border-neutral-700 p-4">
+        <summary className="cursor-pointer text-sm font-medium text-neutral-700 dark:text-neutral-300">SEO</summary>
         <div className="mt-4 space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Meta title</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Meta title</label>
             <input type="text" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className={inputClass} />
           </div>
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Meta description</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Meta description</label>
             <textarea value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} rows={2} className={inputClass} />
           </div>
         </div>
@@ -232,10 +232,10 @@ export function PageForm({ page, allPages }: PageFormProps) {
         ) : <span />}
         <div className="flex gap-3">
           <button type="button" onClick={() => router.back()}
-            className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">Cancel</button>
+            className="rounded-md border border-neutral-300 dark:border-neutral-600 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">Cancel</button>
           {isEditing && (
             <button type="button" onClick={handlePreview} disabled={previewing}
-              className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors">
+              className="rounded-md border border-neutral-300 dark:border-neutral-600 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 disabled:opacity-50 transition-colors">
               {previewing ? "Opening…" : "Preview"}
             </button>
           )}

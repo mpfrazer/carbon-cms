@@ -57,15 +57,15 @@ export function MediaPickerModal({ title, open, onClose, onSelect, selectedId }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div ref={modalRef} className="w-full max-w-2xl rounded-xl bg-white shadow-xl flex flex-col max-h-[80vh]">
-        <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
-          <span className="text-sm font-semibold text-neutral-800">{title}</span>
+      <div ref={modalRef} className="w-full max-w-2xl rounded-xl bg-white dark:bg-neutral-800 shadow-xl flex flex-col max-h-[80vh]">
+        <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-700 px-5 py-4">
+          <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">{title}</span>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => uploadRef.current?.click()}
               disabled={uploading}
-              className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+              className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 px-3 py-1.5 text-xs font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-600 disabled:opacity-50 transition-colors"
             >
               {uploading ? "Uploading…" : "Upload new"}
             </button>

@@ -44,28 +44,28 @@ function HeroBlockForm({ block, onChange }: { block: HeroBlock; onChange: (b: He
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-neutral-600 mb-1">Heading *</label>
+        <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Heading *</label>
         <input type="text" value={block.heading} onChange={(e) => onChange({ ...block, heading: e.target.value })} placeholder="Page hero heading" className={input} />
       </div>
       <div>
-        <label className="block text-xs font-medium text-neutral-600 mb-1">Subheading</label>
+        <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Subheading</label>
         <input type="text" value={block.subheading ?? ""} onChange={(e) => onChange({ ...block, subheading: e.target.value || undefined })} placeholder="Optional subheading" className={input} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-neutral-600 mb-1">CTA button text</label>
+          <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">CTA button text</label>
           <input type="text" value={block.ctaText ?? ""} onChange={(e) => onChange({ ...block, ctaText: e.target.value || undefined })} placeholder="Get started" className={input} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-600 mb-1">CTA URL</label>
+          <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">CTA URL</label>
           <input type="text" value={block.ctaUrl ?? ""} onChange={(e) => onChange({ ...block, ctaUrl: e.target.value || undefined })} placeholder="/contact" className={input} />
         </div>
       </div>
       <div>
-        <label className="block text-xs font-medium text-neutral-600 mb-1">Background image</label>
+        <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Background image</label>
         {block.backgroundImageUrl ? (
           <div className="flex items-center gap-2">
-            <div className="h-10 w-20 rounded overflow-hidden border border-neutral-200 bg-neutral-100 shrink-0">
+            <div className="h-10 w-20 rounded overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-700 shrink-0">
               <img src={block.backgroundImageUrl} alt="" className="h-full w-full object-cover" />
             </div>
             <button type="button" onClick={() => setShowImagePicker(true)} className="text-xs text-neutral-500 hover:text-neutral-800 underline underline-offset-2 transition-colors">Change</button>
@@ -96,10 +96,10 @@ function ImageBlockForm({ block, onChange }: { block: ImageBlock; onChange: (b: 
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-neutral-600 mb-1">Image *</label>
+        <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Image *</label>
         {block.url ? (
           <div className="flex items-center gap-2">
-            <div className="h-14 w-24 rounded overflow-hidden border border-neutral-200 bg-neutral-100 shrink-0">
+            <div className="h-14 w-24 rounded overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-700 shrink-0">
               <img src={block.url} alt="" className="h-full w-full object-cover" />
             </div>
             <button type="button" onClick={() => setShowImagePicker(true)} className="text-xs text-neutral-500 hover:text-neutral-800 underline underline-offset-2 transition-colors">Change</button>
@@ -126,15 +126,15 @@ function ImageBlockForm({ block, onChange }: { block: ImageBlock; onChange: (b: 
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-neutral-600 mb-1">Alt text</label>
+          <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Alt text</label>
           <input type="text" value={block.alt ?? ""} onChange={(e) => onChange({ ...block, alt: e.target.value || undefined })} className={input} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-600 mb-1">Caption</label>
+          <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Caption</label>
           <input type="text" value={block.caption ?? ""} onChange={(e) => onChange({ ...block, caption: e.target.value || undefined })} className={input} />
         </div>
       </div>
-      <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
+      <label className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer">
         <input type="checkbox" checked={block.fullWidth ?? false} onChange={(e) => onChange({ ...block, fullWidth: e.target.checked })} className="h-4 w-4 rounded border-neutral-300" />
         Full width (edge-to-edge)
       </label>
@@ -154,10 +154,10 @@ function ColumnsBlockForm({ block, onChange }: { block: ColumnsBlock; onChange: 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <span className="text-xs font-medium text-neutral-600">Columns:</span>
+        <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400">Columns:</span>
         {([2, 3] as const).map((n) => (
           <button key={n} type="button" onClick={() => setCount(n)}
-            className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${block.columns.length === n ? "bg-neutral-900 text-white" : "border border-neutral-300 text-neutral-600 hover:bg-neutral-50"}`}>
+            className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${block.columns.length === n ? "bg-neutral-900 text-white" : "border border-neutral-300 dark:border-neutral-600 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700/50"}`}>
             {n}
           </button>
         ))}
@@ -165,7 +165,7 @@ function ColumnsBlockForm({ block, onChange }: { block: ColumnsBlock; onChange: 
       <div className={`grid gap-4 ${block.columns.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
         {block.columns.map((col, i) => (
           <div key={i}>
-            <label className="block text-xs font-medium text-neutral-500 mb-1">Column {i + 1}</label>
+            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">Column {i + 1}</label>
             <RichEditor value={col.content} onChange={(v) => updateCol(i, v)} />
           </div>
         ))}
@@ -179,20 +179,20 @@ function CtaBlockForm({ block, onChange }: { block: CtaBlock; onChange: (b: CtaB
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-neutral-600 mb-1">Heading *</label>
+        <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Heading *</label>
         <input type="text" value={block.heading} onChange={(e) => onChange({ ...block, heading: e.target.value })} className={input} />
       </div>
       <div>
-        <label className="block text-xs font-medium text-neutral-600 mb-1">Body text</label>
+        <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Body text</label>
         <textarea value={block.body ?? ""} onChange={(e) => onChange({ ...block, body: e.target.value || undefined })} rows={2} className={input} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-neutral-600 mb-1">Button text *</label>
+          <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Button text *</label>
           <input type="text" value={block.buttonText} onChange={(e) => onChange({ ...block, buttonText: e.target.value })} className={input} />
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-600 mb-1">Button URL *</label>
+          <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Button URL *</label>
           <input type="text" value={block.buttonUrl} onChange={(e) => onChange({ ...block, buttonUrl: e.target.value })} className={input} />
         </div>
       </div>
@@ -223,21 +223,21 @@ const BLOCK_LABELS: Record<PageBlock["type"], string> = {
 function BlockPicker({ onPick, onClose }: { onPick: (type: PageBlock["type"]) => void; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-xl bg-white shadow-xl p-5">
-        <p className="text-sm font-semibold text-neutral-800 mb-4">Add a block</p>
+      <div className="w-full max-w-sm rounded-xl bg-white dark:bg-neutral-800 shadow-xl p-5">
+        <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-4">Add a block</p>
         <div className="space-y-2">
           {BLOCK_TYPES.map((bt) => (
             <button key={bt.type} type="button" onClick={() => { onPick(bt.type); onClose(); }}
-              className="w-full flex items-center gap-3 rounded-lg border border-neutral-200 px-4 py-3 text-left hover:border-neutral-400 hover:bg-neutral-50 transition-colors">
+              className="w-full flex items-center gap-3 rounded-lg border border-neutral-200 dark:border-neutral-700 px-4 py-3 text-left hover:border-neutral-400 dark:hover:border-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
               <span className="text-neutral-400">{bt.icon}</span>
               <div>
-                <p className="text-sm font-medium text-neutral-800">{bt.label}</p>
+                <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{bt.label}</p>
                 <p className="text-xs text-neutral-400">{bt.description}</p>
               </div>
             </button>
           ))}
         </div>
-        <button type="button" onClick={onClose} className="mt-4 w-full rounded-md border border-neutral-200 py-2 text-sm text-neutral-500 hover:bg-neutral-50 transition-colors">Cancel</button>
+        <button type="button" onClick={onClose} className="mt-4 w-full rounded-md border border-neutral-200 dark:border-neutral-700 py-2 text-sm text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">Cancel</button>
       </div>
     </div>
   );
@@ -292,7 +292,7 @@ export function BlockEditor({ value, onChange }: BlockEditorProps) {
   return (
     <div className="space-y-3">
       {value.length === 0 && (
-        <div className="rounded-lg border-2 border-dashed border-neutral-200 py-10 text-center text-sm text-neutral-400">
+        <div className="rounded-lg border-2 border-dashed border-neutral-200 dark:border-neutral-700 py-10 text-center text-sm text-neutral-400">
           No blocks yet. Add your first block below.
         </div>
       )}
@@ -300,12 +300,12 @@ export function BlockEditor({ value, onChange }: BlockEditorProps) {
       {value.map((block, i) => {
         const isCollapsed = collapsed.has(i);
         return (
-          <div key={i} className="rounded-lg border border-neutral-200 bg-white overflow-hidden">
+          <div key={i} className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 overflow-hidden">
             {/* Block header */}
-            <div className="flex items-center justify-between gap-2 border-b border-neutral-100 bg-neutral-50 px-3 py-2">
+            <div className="flex items-center justify-between gap-2 border-b border-neutral-100 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/30 px-3 py-2">
               <button type="button" onClick={() => toggleCollapse(i)}
-                className="flex items-center gap-2 text-xs font-semibold text-neutral-600 hover:text-neutral-900 transition-colors">
-                <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-neutral-600">{BLOCK_LABELS[block.type]}</span>
+                className="flex items-center gap-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
+                <span className="rounded bg-neutral-200 dark:bg-neutral-700 px-1.5 py-0.5 text-neutral-600 dark:text-neutral-300">{BLOCK_LABELS[block.type]}</span>
                 {isCollapsed && block.type === "text" && (
                   <span className="truncate max-w-xs text-neutral-400 font-normal">
                     {block.content.replace(/<[^>]+>/g, "").slice(0, 60) || "Empty"}
@@ -342,7 +342,7 @@ export function BlockEditor({ value, onChange }: BlockEditorProps) {
       })}
 
       <button type="button" onClick={() => setShowPicker(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-neutral-200 py-3 text-sm text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 transition-colors">
+        className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-neutral-200 dark:border-neutral-700 py-3 text-sm text-neutral-500 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-600 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors">
         <Plus className="h-4 w-4" /> Add block
       </button>
 

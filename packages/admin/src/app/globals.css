@@ -7,6 +7,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --input-fg: #171717;
+  --input-bg: transparent;
+  --input-border: initial;
 }
 
 @theme inline {
@@ -27,19 +30,24 @@ body {
   color: #f5f5f5;
 }
 
-input,
+.dark {
+  --input-fg: #f5f5f5;
+  --input-bg: #262626;
+  --input-border: #525252;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
 textarea,
 select {
-  color: #171717;
+  color: var(--input-fg);
 }
 
 /* Global dark mode for form elements — avoids repeating dark: on every input */
 .dark input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
 .dark textarea,
 .dark select {
-  background-color: #262626;
-  border-color: #525252;
-  color: #f5f5f5;
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
 }
 
 .dark input::placeholder,
