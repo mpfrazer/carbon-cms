@@ -1,3 +1,7 @@
+---
+draft: true
+---
+
 # Decoupled Theme Architecture
 
 ## Overview

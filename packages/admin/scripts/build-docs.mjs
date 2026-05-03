@@ -20,6 +20,22 @@ function toTitleCase(slug) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// Parses optional YAML-lite frontmatter (---\nkey: value\n---).
+// Returns { data, content } where content is the markdown with frontmatter stripped.
+function parseFrontmatter(markdown) {
+  if (!markdown.startsWith("---")) return { data: {}, content: markdown };
+  const end = markdown.indexOf("\n---", 3);
+  if (end === -1) return { data: {}, content: markdown };
+  const fm = markdown.slice(3, end).trim();
+  const data = {};
+  for (const line of fm.split("\n")) {
+    const colon = line.indexOf(":");
+    if (colon === -1) continue;
+    data[line.slice(0, colon).trim()] = line.slice(colon + 1).trim();
+  }
+  return { data, content: markdown.slice(end + 4).trimStart() };
+}
+
 function extractTitle(markdown) {
   const match = markdown.match(/^#\s+(.+)$/m);
   return match ? match[1].trim() : null;
@@ -74,7 +90,9 @@ async function main() {
         .join("/");
     }
 
-    const markdown = await readFile(filePath, "utf-8");
+    const raw = await readFile(filePath, "utf-8");
+    const { data: frontmatter, content: markdown } = parseFrontmatter(raw);
+    if (frontmatter.draft === "true") continue;
     const title = extractTitle(markdown) ?? toTitleCase(docSlug);
     const html = await marked.parse(markdown, { gfm: true });
 
