@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Class-based dark mode for Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -19,8 +22,33 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.dark body {
+  background: #0a0a0a;
+  color: #f5f5f5;
+}
+
 input,
 textarea,
 select {
   color: #171717;
+}
+
+/* Global dark mode for form elements — avoids repeating dark: on every input */
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
+.dark textarea,
+.dark select {
+  background-color: #262626;
+  border-color: #525252;
+  color: #f5f5f5;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #737373;
+}
+
+.dark input:focus:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #737373;
 }

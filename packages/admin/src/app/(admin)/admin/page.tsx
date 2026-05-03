@@ -46,7 +46,7 @@ export default async function DashboardPage() {
       <div>
         <Header title="Dashboard" />
         <div className="p-6">
-          <p className="text-sm text-neutral-500">Unable to reach the API server. Make sure it is running and try again.</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Unable to reach the API server. Make sure it is running and try again.</p>
         </div>
       </div>
     );
@@ -68,13 +68,13 @@ export default async function DashboardPage() {
       <div className="p-6 space-y-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {cards.map(({ label, value, sub, icon: Icon, href }) => (
-            <a key={href} href={href} className="group rounded-lg border border-neutral-200 bg-white p-5 transition-shadow hover:shadow-sm">
+            <a key={href} href={href} className="group rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-5 transition-shadow hover:shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-neutral-500">{label}</span>
-                <Icon className="h-4 w-4 text-neutral-400 group-hover:text-neutral-600 transition-colors" />
+                <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{label}</span>
+                <Icon className="h-4 w-4 text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors" />
               </div>
-              <p className="mt-2 text-3xl font-bold text-neutral-900">{value}</p>
-              <p className="mt-1 text-xs text-neutral-400">{sub}</p>
+              <p className="mt-2 text-3xl font-bold text-neutral-900 dark:text-neutral-100">{value}</p>
+              <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">{sub}</p>
             </a>
           ))}
         </div>
@@ -82,26 +82,26 @@ export default async function DashboardPage() {
         {scheduledPosts.length > 0 && (
           <section>
             <div className="mb-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-neutral-400" />
-              <h2 className="text-sm font-semibold text-neutral-700">Scheduled posts</h2>
+              <Clock className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+              <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Scheduled posts</h2>
             </div>
-            <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden">
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-neutral-200 bg-neutral-50">
-                    <th className="px-4 py-3 text-left font-medium text-neutral-600">Title</th>
-                    <th className="px-4 py-3 text-left font-medium text-neutral-600">Publishes at</th>
+                  <tr className="border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/50">
+                    <th className="px-4 py-3 text-left font-medium text-neutral-600 dark:text-neutral-400">Title</th>
+                    <th className="px-4 py-3 text-left font-medium text-neutral-600 dark:text-neutral-400">Publishes at</th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100">
+                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700">
                   {scheduledPosts.map((post) => (
-                    <tr key={post.id} className="hover:bg-neutral-50">
-                      <td className="px-4 py-3 font-medium text-neutral-900">{post.title}</td>
-                      <td className="px-4 py-3 text-neutral-500">{formatDateTime(post.scheduledAt)}</td>
+                    <tr key={post.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50">
+                      <td className="px-4 py-3 font-medium text-neutral-900 dark:text-neutral-100">{post.title}</td>
+                      <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400">{formatDateTime(post.scheduledAt)}</td>
                       <td className="px-4 py-3 text-right">
                         <Link href={`/admin/posts/${post.id}`}
-                          className="text-xs text-neutral-500 hover:text-neutral-900 underline underline-offset-2">
+                          className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 underline underline-offset-2">
                           Edit
                         </Link>
                       </td>
