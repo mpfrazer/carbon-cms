@@ -1,6 +1,6 @@
 import { getThemeComponents } from "@/lib/theme-provider";
 import { getSiteSettings } from "@/lib/site-settings";
-import { getEffectiveSiteSettings } from "@/lib/theme-config";
+import { getEffectiveSiteSettings, getThemeVars, buildThemeVarsCss } from "@/lib/theme-config";
 import { buildCssVars } from "@/lib/theme";
 import { buildGoogleFontsUrl } from "@/lib/fonts";
 import { apiGet } from "@/lib/api/client";
@@ -8,11 +8,12 @@ import { auth } from "@/lib/auth";
 import type { SiteLayout as SiteLayoutType } from "@/themes/default/layout";
 
 export default async function FrontendLayout({ children }: { children: React.ReactNode }) {
-  const [{ SiteLayout }, rawSettings, pagesRes, session] = await Promise.all([
+  const [{ SiteLayout }, rawSettings, pagesRes, session, themeVarsData] = await Promise.all([
     getThemeComponents(),
     getSiteSettings(),
     apiGet("/api/v1/pages?status=published&pageSize=50") as Promise<{ data: { slug: string; title: string }[] }>,
     auth(),
+    getThemeVars(),
   ]);
 
   const Layout = SiteLayout as typeof SiteLayoutType;
@@ -37,7 +38,12 @@ export default async function FrontendLayout({ children }: { children: React.Rea
       .map((p) => ({ label: p.title, href: `/${p.slug}` }));
   }
   const settings = await getEffectiveSiteSettings(rawSettings);
-  const cssVars = buildCssVars(rawSettings.appearance);
+
+  const appearanceVars = buildCssVars(rawSettings.appearance);
+  const themeVarsCss = buildThemeVarsCss(themeVarsData.values);
+  const customVarsCss = rawSettings.customCssVars ? buildThemeVarsCss(rawSettings.customCssVars) : "";
+  const allCssVars = [appearanceVars, themeVarsCss, customVarsCss].filter(Boolean).join(";");
+
   const googleFontsUrl = buildGoogleFontsUrl([
     rawSettings.appearance.themeFontBody,
     rawSettings.appearance.themeFontHeading,
@@ -63,7 +69,7 @@ export default async function FrontendLayout({ children }: { children: React.Rea
           <link rel="stylesheet" href={googleFontsUrl} />
         </>
       )}
-      <style dangerouslySetInnerHTML={{ __html: `:root{${cssVars}}h1,h2,h3,h4,h5,h6{font-weight:var(--carbon-font-heading-weight)}` }} />
+      <style dangerouslySetInnerHTML={{ __html: `:root{${allCssVars}}h1,h2,h3,h4,h5,h6{font-weight:var(--carbon-font-heading-weight)}` }} />
       <Layout
         siteTitle={settings.siteTitle}
         navPages={navPages}

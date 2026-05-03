@@ -15,6 +15,14 @@ const capabilitiesSchema = z.object({
   comments: z.boolean(),
 });
 
+const variableSchema = z.object({
+  key: z.string().min(1).max(64).regex(/^[a-zA-Z][a-zA-Z0-9_-]*$/, "Must start with a letter; only letters, numbers, hyphens, and underscores allowed"),
+  label: z.string().min(1).max(128),
+  type: z.enum(["color", "string", "number", "select"]),
+  default: z.union([z.string(), z.number()]),
+  options: z.array(z.string()).optional(),
+});
+
 const configSchema = z.object({
   name: z.string().optional(),
   version: z.string().optional(),
@@ -27,6 +35,7 @@ const configSchema = z.object({
     showBlogLink: z.boolean().optional(),
     postsPerPage: z.number().int().min(1).max(100).optional(),
   }).optional(),
+  variables: z.array(variableSchema).optional(),
 });
 
 async function resolveSlug(slug: string): Promise<string> {

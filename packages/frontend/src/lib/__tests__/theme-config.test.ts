@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { applyThemeConfig, defaultThemeConfig } from "../theme-config";
+import { applyThemeConfig, defaultThemeConfig, resolveThemeVars, buildThemeVarsCss } from "../theme-config";
+import type { ThemeVariableDefinition } from "../theme-config";
 import type { SiteSettings } from "../site-settings";
 
 const baseSettings: SiteSettings = {
@@ -122,5 +123,52 @@ describe("applyThemeConfig — overrides", () => {
     };
     const result = applyThemeConfig(baseSettings, config);
     expect(result.searchMode).toBe("header");
+  });
+});
+
+const colorVar: ThemeVariableDefinition = { key: "primaryColor", label: "Primary Color", type: "color", default: "#3b82f6" };
+const selectVar: ThemeVariableDefinition = { key: "layout", label: "Layout", type: "select", default: "centered", options: ["centered", "wide"] };
+const numVar: ThemeVariableDefinition = { key: "fontSize", label: "Font Size", type: "number", default: 16 };
+
+describe("resolveThemeVars", () => {
+  it("returns defaults when stored is empty", () => {
+    const result = resolveThemeVars([colorVar, selectVar], {});
+    expect(result).toEqual({ primaryColor: "#3b82f6", layout: "centered" });
+  });
+
+  it("uses stored value over default", () => {
+    const result = resolveThemeVars([colorVar], { primaryColor: "#ff0000" });
+    expect(result.primaryColor).toBe("#ff0000");
+  });
+
+  it("preserves stored false-y values (empty string, 0)", () => {
+    const result = resolveThemeVars([colorVar, numVar], { primaryColor: "", fontSize: 0 });
+    expect(result.primaryColor).toBe("");
+    expect(result.fontSize).toBe(0);
+  });
+
+  it("returns empty object for empty variable list", () => {
+    expect(resolveThemeVars([], { primaryColor: "#ff0000" })).toEqual({});
+  });
+
+  it("ignores stored keys not in variable definitions", () => {
+    const result = resolveThemeVars([colorVar], { primaryColor: "#ff0000", unknown: "ignored" });
+    expect(result).toEqual({ primaryColor: "#ff0000" });
+  });
+});
+
+describe("buildThemeVarsCss", () => {
+  it("builds CSS custom properties string", () => {
+    const css = buildThemeVarsCss({ primaryColor: "#3b82f6", layout: "centered" });
+    expect(css).toContain("--primaryColor:#3b82f6");
+    expect(css).toContain("--layout:centered");
+  });
+
+  it("returns empty string for empty object", () => {
+    expect(buildThemeVarsCss({})).toBe("");
+  });
+
+  it("converts numbers to string", () => {
+    expect(buildThemeVarsCss({ fontSize: 16 })).toBe("--fontSize:16");
   });
 });
