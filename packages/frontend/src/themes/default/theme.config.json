@@ -8,5 +8,12 @@
     "search": { "header": true, "page": true },
     "pageBuilder": true,
     "comments": true
-  }
+  },
+  "variables": [
+    { "key": "heroBackground", "label": "Hero background color", "type": "color", "default": "#f5f5f5" },
+    { "key": "heroText", "label": "Hero text color", "type": "color", "default": "#171717" },
+    { "key": "cardRadius", "label": "Card border radius", "type": "select", "default": "0.5rem", "options": ["0", "0.25rem", "0.5rem", "1rem"] },
+    { "key": "contentWidth", "label": "Max content width", "type": "select", "default": "768px", "options": ["640px", "768px", "900px", "1024px"] },
+    { "key": "postExcerptLines", "label": "Post excerpt lines (blog index)", "type": "number", "default": 3 }
+  ]
 }

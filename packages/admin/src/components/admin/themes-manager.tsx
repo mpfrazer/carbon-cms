@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Palette, Check, Loader2, ImageIcon, Plus, Trash2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { Palette, Check, Loader2, ImageIcon, Plus, Trash2, RefreshCw, ChevronDown, ChevronUp, X } from "lucide-react";
 import { MediaPickerModal } from "@/components/admin/media-picker-modal";
 
 // Minimal font registry for the admin UI — keep in sync with packages/frontend/src/lib/fonts.ts
@@ -102,6 +102,14 @@ interface ThemeOverrides {
   postsPerPage?: number;
 }
 
+interface ThemeVariableDefinition {
+  key: string;
+  label: string;
+  type: "color" | "string" | "number" | "select";
+  default: string | number;
+  options?: string[];
+}
+
 interface Theme {
   slug: string;
   name: string;
@@ -114,6 +122,7 @@ interface Theme {
   description?: string;
   capabilities?: ThemeCapabilities;
   overrides?: ThemeOverrides;
+  variables?: ThemeVariableDefinition[];
 }
 
 interface AppearanceState {
@@ -123,6 +132,7 @@ interface AppearanceState {
   themeHeadingWeight: string;
   themeLogoUrl: string;
   themeFooterText: string;
+  customCssVars: { key: string; value: string }[];
 }
 
 function LogoPicker({ value, onChange }: { value: string; onChange: (url: string) => void }) {
@@ -159,6 +169,229 @@ const defaultCapabilities: ThemeCapabilities = {
   pageBuilder: true,
   comments: true,
 };
+
+function ThemeVarsEditor({ theme, onSchemaSaved }: { theme: Theme; onSchemaSaved: (vars: ThemeVariableDefinition[]) => void }) {
+  const [defs, setDefs] = useState<ThemeVariableDefinition[]>(theme.variables ?? []);
+  const [values, setValues] = useState<Record<string, string | number>>({});
+  const [loadingVars, setLoadingVars] = useState(true);
+  const [savingVars, setSavingVars] = useState(false);
+  const [savingSchema, setSavingSchema] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [newDef, setNewDef] = useState<Partial<ThemeVariableDefinition> & { optionsRaw?: string }>({});
+  const [showAdd, setShowAdd] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/v1/themes/${theme.slug}/vars`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.data) {
+          setDefs(json.data.variables ?? []);
+          setValues(json.data.values ?? {});
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingVars(false));
+  }, [theme.slug]);
+
+  async function saveValues() {
+    setSavingVars(true);
+    setMessage(null);
+    const res = await fetch(`/api/v1/themes/${theme.slug}/vars`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+    setSavingVars(false);
+    setMessage(res.ok ? "Values saved." : "Failed to save values.");
+  }
+
+  async function saveSchema(updated: ThemeVariableDefinition[]) {
+    setSavingSchema(true);
+    setMessage(null);
+    const res = await fetch(`/api/v1/themes/${theme.slug}/config`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ variables: updated }),
+    });
+    setSavingSchema(false);
+    if (res.ok) {
+      setDefs(updated);
+      onSchemaSaved(updated);
+      setMessage("Schema saved.");
+    } else {
+      const json = await res.json().catch(() => ({}));
+      setMessage(json.error ?? "Failed to save schema.");
+    }
+  }
+
+  function removeDef(key: string) {
+    const updated = defs.filter((d) => d.key !== key);
+    saveSchema(updated);
+    setValues((prev) => { const next = { ...prev }; delete next[key]; return next; });
+  }
+
+  function addDef() {
+    if (!newDef.key || !newDef.label || !newDef.type) return;
+    const options = newDef.type === "select" && newDef.optionsRaw
+      ? newDef.optionsRaw.split(",").map((s) => s.trim()).filter(Boolean)
+      : undefined;
+    const def: ThemeVariableDefinition = {
+      key: newDef.key,
+      label: newDef.label,
+      type: newDef.type,
+      default: newDef.default ?? (newDef.type === "number" ? 0 : ""),
+      ...(options ? { options } : {}),
+    };
+    const updated = [...defs, def];
+    saveSchema(updated);
+    setNewDef({});
+    setShowAdd(false);
+  }
+
+  const inputCls = "w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-neutral-500 focus:outline-none";
+
+  if (loadingVars) {
+    return <p className="text-xs text-neutral-400 py-2">Loading variables…</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {!theme.builtin && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Variable Schema</p>
+            <button type="button" onClick={() => setShowAdd((v) => !v)}
+              className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900 border border-neutral-300 rounded px-2 py-1 transition-colors">
+              <Plus className="h-3 w-3" /> Add variable
+            </button>
+          </div>
+
+          {defs.length === 0 && !showAdd && (
+            <p className="text-xs text-neutral-400">No variables defined. Add one to make this theme customizable.</p>
+          )}
+
+          {defs.map((d) => (
+            <div key={d.key} className="flex items-center gap-2 text-xs bg-white border border-neutral-200 rounded-md px-3 py-2">
+              <code className="font-mono text-neutral-700 shrink-0">--{d.key}</code>
+              <span className="text-neutral-500 truncate flex-1">{d.label}</span>
+              <span className="text-neutral-400 shrink-0">{d.type}</span>
+              {d.options && <span className="text-neutral-400 shrink-0 hidden sm:block">[{d.options.join(", ")}]</span>}
+              <button type="button" onClick={() => removeDef(d.key)} disabled={savingSchema}
+                className="text-neutral-400 hover:text-red-600 transition-colors shrink-0 disabled:opacity-50">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+
+          {showAdd && (
+            <div className="rounded-md border border-neutral-200 bg-white p-3 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-neutral-500 mb-1">Key (no --)</label>
+                  <input value={newDef.key ?? ""} onChange={(e) => setNewDef({ ...newDef, key: e.target.value })}
+                    placeholder="primaryColor" className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs text-neutral-500 mb-1">Label</label>
+                  <input value={newDef.label ?? ""} onChange={(e) => setNewDef({ ...newDef, label: e.target.value })}
+                    placeholder="Primary Color" className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs text-neutral-500 mb-1">Type</label>
+                  <select value={newDef.type ?? ""} onChange={(e) => setNewDef({ ...newDef, type: e.target.value as ThemeVariableDefinition["type"] })}
+                    className={inputCls}>
+                    <option value="">— select —</option>
+                    <option value="color">Color</option>
+                    <option value="string">Text</option>
+                    <option value="number">Number</option>
+                    <option value="select">Select</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-neutral-500 mb-1">Default</label>
+                  <input value={String(newDef.default ?? "")} onChange={(e) => setNewDef({ ...newDef, default: newDef.type === "number" ? Number(e.target.value) : e.target.value })}
+                    placeholder={newDef.type === "color" ? "#3b82f6" : newDef.type === "number" ? "0" : "value"}
+                    className={inputCls} />
+                </div>
+                {newDef.type === "select" && (
+                  <div className="col-span-2">
+                    <label className="block text-xs text-neutral-500 mb-1">Options (comma-separated)</label>
+                    <input value={newDef.optionsRaw ?? ""} onChange={(e) => setNewDef({ ...newDef, optionsRaw: e.target.value })}
+                      placeholder="centered, wide, full" className={inputCls} />
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <button type="button" onClick={addDef}
+                  disabled={!newDef.key || !newDef.label || !newDef.type || savingSchema}
+                  className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
+                  {savingSchema ? "Saving…" : "Add"}
+                </button>
+                <button type="button" onClick={() => { setShowAdd(false); setNewDef({}); }}
+                  className="text-xs text-neutral-500 hover:text-neutral-800">Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {defs.length > 0 && (
+        <div className="space-y-3">
+          {!theme.builtin && <div className="border-t border-neutral-200 pt-3" />}
+          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Variable Values</p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {defs.map((d) => (
+              <div key={d.key} className="space-y-1">
+                <label className="block text-xs font-medium text-neutral-600">{d.label}</label>
+                {d.type === "color" && (
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={String(values[d.key] ?? d.default)}
+                      onChange={(e) => setValues({ ...values, [d.key]: e.target.value })}
+                      className="h-8 w-12 cursor-pointer rounded border border-neutral-300 p-0.5" />
+                    <input type="text" value={String(values[d.key] ?? d.default)}
+                      onChange={(e) => setValues({ ...values, [d.key]: e.target.value })}
+                      className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 font-mono text-xs focus:border-neutral-500 focus:outline-none" />
+                  </div>
+                )}
+                {d.type === "string" && (
+                  <input type="text" value={String(values[d.key] ?? d.default)}
+                    onChange={(e) => setValues({ ...values, [d.key]: e.target.value })}
+                    className={inputCls} />
+                )}
+                {d.type === "number" && (
+                  <input type="number" value={String(values[d.key] ?? d.default)}
+                    onChange={(e) => setValues({ ...values, [d.key]: parseFloat(e.target.value) || 0 })}
+                    className={inputCls} />
+                )}
+                {d.type === "select" && d.options && (
+                  <select value={String(values[d.key] ?? d.default)}
+                    onChange={(e) => setValues({ ...values, [d.key]: e.target.value })}
+                    className={inputCls}>
+                    {d.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                  </select>
+                )}
+                <p className="text-xs text-neutral-400 font-mono">--{d.key}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-3 pt-1">
+            <button type="button" onClick={saveValues} disabled={savingVars}
+              className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
+              {savingVars ? "Saving…" : "Save values"}
+            </button>
+            {message && (
+              <span className={`text-sm ${message.includes("Failed") ? "text-red-600" : "text-green-700"}`}>{message}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {defs.length === 0 && theme.builtin && (
+        <p className="text-xs text-neutral-400">This theme defines no variables.</p>
+      )}
+    </div>
+  );
+}
 
 function ThemeConfigEditor({ theme, allThemeSlugs, onSaved }: { theme: Theme; allThemeSlugs: string[]; onSaved: (updated: Theme) => void }) {
   const [caps, setCaps] = useState<ThemeCapabilities>({ ...defaultCapabilities, ...theme.capabilities, search: { ...defaultCapabilities.search, ...theme.capabilities?.search } });
@@ -250,13 +483,23 @@ function ThemeConfigEditor({ theme, allThemeSlugs, onSaved }: { theme: Theme; al
       </div>
 
       <div className="flex items-center gap-3 pt-1">
-        <button type="button" onClick={save} disabled={saving}
-          className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
+        <button type="button" onClick={save} disabled={saving || theme.builtin}
+          className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors"
+          title={theme.builtin ? "Built-in theme configs are read-only" : undefined}>
           {saving ? "Saving…" : "Save config"}
         </button>
+        {theme.builtin && <span className="text-xs text-neutral-400">Built-in themes are read-only</span>}
         {message && (
           <span className={`text-sm ${message === "Saved." ? "text-green-700" : "text-red-600"}`}>{message}</span>
         )}
+      </div>
+
+      <div className="border-t border-neutral-200 pt-4 space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Variables <span className="font-normal normal-case text-neutral-400">(CSS custom properties injected on the frontend)</span></p>
+        <ThemeVarsEditor
+          theme={theme}
+          onSchemaSaved={(vars) => onSaved({ ...theme, variables: vars })}
+        />
       </div>
     </div>
   );
@@ -342,6 +585,9 @@ export function ThemesManager({ themes: initial, initialAppearance }: { themes: 
     themeHeadingWeight: (initialAppearance.themeHeadingWeight as string) || "700",
     themeLogoUrl: (initialAppearance.themeLogoUrl as string) || "",
     themeFooterText: (initialAppearance.themeFooterText as string) || "",
+    customCssVars: initialAppearance.customCssVars && typeof initialAppearance.customCssVars === "object"
+      ? Object.entries(initialAppearance.customCssVars as Record<string, string>).map(([key, value]) => ({ key, value }))
+      : [],
   });
   const [appearanceSaving, setAppearanceSaving] = useState(false);
   const [appearanceMessage, setAppearanceMessage] = useState<string | null>(null);
@@ -439,6 +685,13 @@ export function ThemesManager({ themes: initial, initialAppearance }: { themes: 
         themeHeadingWeight: appearance.themeHeadingWeight,
         themeLogoUrl: appearance.themeLogoUrl || null,
         themeFooterText: appearance.themeFooterText || null,
+        customCssVars: appearance.customCssVars.length > 0
+          ? Object.fromEntries(
+              appearance.customCssVars
+                .filter((r) => r.key.trim())
+                .map((r) => [r.key.replace(/^--+/, "").trim(), r.value])
+            )
+          : null,
       }),
     });
     setAppearanceSaving(false);
@@ -593,6 +846,52 @@ export function ThemesManager({ themes: initial, initialAppearance }: { themes: 
             <textarea value={appearance.themeFooterText} onChange={(e) => setField("themeFooterText", e.target.value)} rows={2}
               placeholder={`© ${new Date().getFullYear()} Your Site. Powered by Carbon CMS.`} className={inputClass} />
             <p className="mt-1 text-xs text-neutral-400">Leave blank to use the default footer.</p>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className={labelClass + " mb-0"}>Custom CSS variables</label>
+              <button type="button"
+                onClick={() => setField("customCssVars", [...appearance.customCssVars, { key: "", value: "" }])}
+                className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-neutral-900 border border-neutral-300 rounded px-2 py-1 transition-colors">
+                <Plus className="h-3 w-3" /> Add
+              </button>
+            </div>
+            <p className="text-xs text-neutral-400">Site-level CSS custom properties injected on every page, after theme variables.</p>
+            {appearance.customCssVars.length === 0 && (
+              <p className="text-xs text-neutral-400 italic">No custom variables defined.</p>
+            )}
+            {appearance.customCssVars.map((row, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-sm text-neutral-400 shrink-0">--</span>
+                <input
+                  type="text"
+                  value={row.key}
+                  onChange={(e) => {
+                    const updated = [...appearance.customCssVars];
+                    updated[i] = { ...updated[i], key: e.target.value };
+                    setField("customCssVars", updated);
+                  }}
+                  placeholder="variable-name"
+                  className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 font-mono text-sm focus:border-neutral-500 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  value={row.value}
+                  onChange={(e) => {
+                    const updated = [...appearance.customCssVars];
+                    updated[i] = { ...updated[i], value: e.target.value };
+                    setField("customCssVars", updated);
+                  }}
+                  placeholder="value"
+                  className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 text-sm focus:border-neutral-500 focus:outline-none"
+                />
+                <button type="button"
+                  onClick={() => setField("customCssVars", appearance.customCssVars.filter((_, j) => j !== i))}
+                  className="text-neutral-400 hover:text-red-600 transition-colors shrink-0">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
           </div>
           <div className="flex items-center gap-3 pt-1">
             <button type="submit" disabled={appearanceSaving} className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">

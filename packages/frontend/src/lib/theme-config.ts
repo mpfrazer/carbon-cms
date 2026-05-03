@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import type { SiteSettings, SearchMode, SearchInputMode } from "@/lib/site-settings";
 import { getActiveTheme } from "@/lib/theme-provider";
+import { apiGet } from "@/lib/api/client";
 
 const THEMES_DIR = process.env.THEMES_DIR ?? path.join(process.cwd(), "src", "themes");
 const CUSTOM_THEMES_DIR = process.env.CUSTOM_THEMES_DIR ?? path.join(process.cwd(), "..", "..", "custom-themes");
@@ -20,6 +21,14 @@ export interface ThemeOverrides {
   postsPerPage?: number;
 }
 
+export interface ThemeVariableDefinition {
+  key: string;
+  label: string;
+  type: "color" | "string" | "number" | "select";
+  default: string | number;
+  options?: string[];
+}
+
 export interface ThemeConfig {
   name?: string;
   version?: string;
@@ -27,6 +36,7 @@ export interface ThemeConfig {
   description?: string;
   capabilities: ThemeCapabilities;
   overrides?: ThemeOverrides;
+  variables?: ThemeVariableDefinition[];
 }
 
 export const defaultThemeCapabilities: ThemeCapabilities = {
@@ -109,4 +119,30 @@ export function applyThemeConfig(settings: SiteSettings, config: ThemeConfig): S
 export async function getEffectiveSiteSettings(settings: SiteSettings): Promise<SiteSettings> {
   const config = await getThemeConfig();
   return applyThemeConfig(settings, config);
+}
+
+export function resolveThemeVars(
+  variables: ThemeVariableDefinition[],
+  stored: Record<string, unknown>,
+): Record<string, unknown> {
+  return Object.fromEntries(
+    variables.map((v) => [v.key, v.key in stored ? stored[v.key] : v.default]),
+  );
+}
+
+export function buildThemeVarsCss(vars: Record<string, unknown>): string {
+  return Object.entries(vars)
+    .map(([key, value]) => `--${key}:${String(value)}`)
+    .join(";");
+}
+
+export async function getThemeVars(): Promise<{ variables: ThemeVariableDefinition[]; values: Record<string, unknown> }> {
+  try {
+    const { data } = await apiGet("/api/v1/themes/active/vars") as {
+      data: { variables: ThemeVariableDefinition[]; values: Record<string, unknown> };
+    };
+    return data;
+  } catch {
+    return { variables: [], values: {} };
+  }
 }

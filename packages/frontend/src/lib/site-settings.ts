@@ -31,6 +31,7 @@ export interface SiteSettings {
   requireLoginToComment: boolean;
   commentModeration: boolean;
   showBlogLink: boolean;
+  customCssVars?: Record<string, string>;
   appearance: ThemeAppearance;
   navMenu: NavItem[] | null;
   searchMode: SearchMode;
@@ -56,6 +57,9 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     allowComments: raw.allowComments !== false && raw.allowComments !== "false",
     requireLoginToComment: raw.requireLoginToComment === true || raw.requireLoginToComment === "true",
     commentModeration: raw.commentModeration === true || raw.commentModeration === "true",
+    customCssVars: raw.customCssVars && typeof raw.customCssVars === "object" && !Array.isArray(raw.customCssVars)
+      ? raw.customCssVars as Record<string, string>
+      : undefined,
     showBlogLink: parseShowBlogLink(raw.showBlogLink),
     appearance: parseThemeAppearance(raw),
     navMenu,

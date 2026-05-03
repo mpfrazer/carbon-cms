@@ -1,6 +1,5 @@
 import fs from "fs/promises";
 import path from "path";
-import { createRequire } from "module";
 import type { ThemeComponents } from "@/lib/theme-provider";
 
 const CUSTOM_THEMES_DIR = process.env.CUSTOM_THEMES_DIR ?? path.join(process.cwd(), "..", "..", "custom-themes");
@@ -8,7 +7,10 @@ const THEME_CACHE_DIR = path.join(CUSTOM_THEMES_DIR, ".cache");
 
 const THEME_FILES = ["layout", "blog-index", "blog-post", "page", "search", "not-found"] as const;
 
-const _require = createRequire(import.meta.url);
+// eval("require") prevents webpack/turbopack from statically analyzing and
+// attempting to bundle the runtime-resolved custom theme paths.
+// eslint-disable-next-line no-eval
+const _require = eval("require") as NodeRequire;
 
 async function isCacheFresh(slug: string, file: string): Promise<boolean> {
   try {
@@ -24,7 +26,6 @@ async function isCacheFresh(slug: string, file: string): Promise<boolean> {
 
 function loadModule(slug: string, file: string): unknown {
   const modulePath = path.resolve(THEME_CACHE_DIR, slug, `${file}.js`);
-  // Clear cache so stale compiled output is not reused after recompile
   delete _require.cache[modulePath];
   return _require(modulePath);
 }

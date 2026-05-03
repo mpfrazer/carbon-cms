@@ -14,6 +14,14 @@ export function isBuiltIn(slug: string): boolean {
   return (BUILT_IN_THEMES as readonly string[]).includes(slug);
 }
 
+export interface ThemeVariableDefinition {
+  key: string;
+  label: string;
+  type: "color" | "string" | "number" | "select";
+  default: string | number;
+  options?: string[];
+}
+
 export interface CompileResult {
   ok: boolean;
   errors?: string[];

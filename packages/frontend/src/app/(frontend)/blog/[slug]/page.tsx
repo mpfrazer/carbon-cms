@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getThemeComponents } from "@/lib/theme-provider";
 import { getSiteSettings } from "@/lib/site-settings";
-import { apiGet } from "@/lib/api/client";
+import { apiGet, serverApiGet } from "@/lib/api/client";
 import { auth } from "@/lib/auth";
 import type { Metadata } from "next";
 import type { Comment } from "@/components/comments-section";
@@ -67,7 +67,7 @@ export default async function BlogPostPage({ params }: Props) {
 
   const [commentsRes, authorRes] = await Promise.all([
     apiGet(`/api/v1/comments?postId=${post.id}&pageSize=100`) as Promise<{ data: Comment[] }>,
-    apiGet(`/api/v1/users/${post.authorId}`) as Promise<{ data: Author }>,
+    serverApiGet(`/api/v1/users/${post.authorId}`) as Promise<{ data: Author }>,
   ]);
   const postComments = commentsRes.data ?? [];
   const author = authorRes.data ?? null;
