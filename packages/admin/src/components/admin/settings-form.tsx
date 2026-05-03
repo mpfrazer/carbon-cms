@@ -224,7 +224,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
   return (
     <div className="p-6">
       {saved && (
-        <div className="mb-6 rounded-md bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">
+        <div className="mb-6 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-400">
           Settings saved.
         </div>
       )}
@@ -240,8 +240,8 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                   href={`#${s.id}`}
                   className={`block rounded px-2 py-1.5 text-sm transition-colors ${
                     activeSection === s.id
-                      ? "font-medium text-neutral-900 bg-neutral-100"
-                      : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50"
+                      ? "font-medium text-neutral-900 dark:text-neutral-100 bg-neutral-100 dark:bg-neutral-700"
+                      : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-neutral-700/50"
                   }`}
                 >
                   {s.label}
@@ -256,21 +256,21 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
             <section id="general" className="scroll-mt-8 space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">General</h2>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-700">Site title</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Site title</label>
                 <input type="text" value={settings.siteTitle ?? ""} onChange={(e) => setSettings({ ...settings, siteTitle: e.target.value })} className={inputClass} />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-700">Site description</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Site description</label>
                 <textarea value={settings.siteDescription ?? ""} onChange={(e) => setSettings({ ...settings, siteDescription: e.target.value })}
                   rows={2} className={inputClass} />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-700">Site URL</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Site URL</label>
                 <input type="url" value={settings.siteUrl ?? ""} onChange={(e) => setSettings({ ...settings, siteUrl: e.target.value })}
                   className={inputClass} placeholder="https://example.com" />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-700">Admin email</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Admin email</label>
                 <input type="email" value={settings.adminEmail ?? ""} onChange={(e) => setSettings({ ...settings, adminEmail: e.target.value })} className={inputClass} />
               </div>
             </section>
@@ -278,7 +278,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
             <section id="reading" className="scroll-mt-8 space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Reading</h2>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-700">Posts per page</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Posts per page</label>
                 <input type="number" min={1} max={100} value={settings.postsPerPage ?? 10}
                   onChange={(e) => setSettings({ ...settings, postsPerPage: parseInt(e.target.value) })}
                   className="w-32 rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
@@ -288,12 +288,13 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                   onChange={(e) => setSettings({ ...settings, showBlogLink: e.target.checked })}
                   className="h-4 w-4 rounded border-neutral-300 disabled:opacity-50"
                   disabled={caps?.blog === false} />
-                <label htmlFor="showBlogLink" className={`text-sm ${caps?.blog === false ? "text-neutral-400" : "text-neutral-700"}`}>
+                <label htmlFor="showBlogLink" className={`text-sm ${caps?.blog === false ? "text-neutral-400" : "text-neutral-700 dark:text-neutral-300"}`}>
                   Show blog link in navigation
                 </label>
                 {caps?.blog === false && (
                   <InfoTooltip>The active theme does not include blog templates. This setting has no effect.</InfoTooltip>
                 )}
+
               </div>
             </section>
 
@@ -309,8 +310,8 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                     onChange={() => setSettings({ ...settings, searchMode: "none" })}
                     className="mt-0.5 h-4 w-4 border-neutral-300" />
                   <div>
-                    <span className="block text-sm font-medium text-neutral-700">No search</span>
-                    <span className="block text-xs text-neutral-500 mt-0.5">Search is disabled. No search UI is shown to visitors.</span>
+                    <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">No search</span>
+                    <span className="block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Search is disabled. No search UI is shown to visitors.</span>
                   </div>
                 </label>
                 <label className={`flex items-start gap-3 ${caps?.search.header === false ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
@@ -320,8 +321,8 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                     className="mt-0.5 h-4 w-4 border-neutral-300 disabled:cursor-not-allowed"
                     disabled={caps?.search.header === false} />
                   <div className="flex-1">
-                    <span className="block text-sm font-medium text-neutral-700">Search bar in header</span>
-                    <span className="block text-xs text-neutral-500 mt-0.5">A compact search input appears in the site navigation bar.</span>
+                    <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Search bar in header</span>
+                    <span className="block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">A compact search input appears in the site navigation bar.</span>
                   </div>
                   {caps?.search.header === false && (
                     <InfoTooltip>The active theme does not support a header search bar.</InfoTooltip>
@@ -334,8 +335,8 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                     className="mt-0.5 h-4 w-4 border-neutral-300 disabled:cursor-not-allowed"
                     disabled={caps?.search.page === false} />
                   <div className="flex-1">
-                    <span className="block text-sm font-medium text-neutral-700">Search page</span>
-                    <span className="block text-xs text-neutral-500 mt-0.5">A &ldquo;Search&rdquo; link appears in the nav and leads to a dedicated search page.</span>
+                    <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Search page</span>
+                    <span className="block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">A &ldquo;Search&rdquo; link appears in the nav and leads to a dedicated search page.</span>
                   </div>
                   {caps?.search.page === false && (
                     <InfoTooltip>The active theme does not include a search page.</InfoTooltip>
@@ -344,7 +345,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
               </div>
 
               {(settings.searchMode ?? "none") !== "none" && (
-                <div className="rounded-lg border border-neutral-200 p-4 space-y-3">
+                <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 space-y-3">
                   <p className="text-sm font-medium text-neutral-700">Input behaviour</p>
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input type="radio" name="searchInputMode" value="submit"
@@ -352,8 +353,8 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                       onChange={() => setSettings({ ...settings, searchInputMode: "submit" })}
                       className="mt-0.5 h-4 w-4 border-neutral-300" />
                     <div>
-                      <span className="block text-sm font-medium text-neutral-700">Search on submit</span>
-                      <span className="block text-xs text-neutral-500 mt-0.5">Results appear after the visitor presses Enter or clicks Search. Fewer API calls — better for tight budgets.</span>
+                      <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Search on submit</span>
+                      <span className="block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Results appear after the visitor presses Enter or clicks Search. Fewer API calls — better for tight budgets.</span>
                     </div>
                   </label>
                   <label className="flex items-start gap-3 cursor-pointer">
@@ -362,8 +363,8 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                       onChange={() => setSettings({ ...settings, searchInputMode: "instant" })}
                       className="mt-0.5 h-4 w-4 border-neutral-300" />
                     <div>
-                      <span className="block text-sm font-medium text-neutral-700">Instant search</span>
-                      <span className="block text-xs text-neutral-500 mt-0.5">Results update as the visitor types. Better usability but makes more API calls.</span>
+                      <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Instant search</span>
+                      <span className="block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Results update as the visitor types. Better usability but makes more API calls.</span>
                     </div>
                   </label>
                 </div>
@@ -373,7 +374,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
             <section id="comments" className="scroll-mt-8 space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500">Comments</h2>
               {caps?.comments === false && (
-                <div className="flex items-center gap-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                <div className="flex items-center gap-2 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 text-xs text-amber-800 dark:text-amber-400">
                   <Info className="h-3.5 w-3.5 shrink-0" />
                   The active theme does not render a comments section. These settings have no effect.
                 </div>
@@ -383,21 +384,21 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                   onChange={(e) => setSettings({ ...settings, allowComments: e.target.checked })}
                   className="h-4 w-4 rounded border-neutral-300 disabled:opacity-50"
                   disabled={caps?.comments === false} />
-                <label htmlFor="allowComments" className={`text-sm ${caps?.comments === false ? "text-neutral-400" : "text-neutral-700"}`}>Allow comments on posts</label>
+                <label htmlFor="allowComments" className={`text-sm ${caps?.comments === false ? "text-neutral-400" : "text-neutral-700 dark:text-neutral-300"}`}>Allow comments on posts</label>
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="commentModeration" checked={settings.commentModeration ?? true}
                   onChange={(e) => setSettings({ ...settings, commentModeration: e.target.checked })}
                   className="h-4 w-4 rounded border-neutral-300 disabled:opacity-50"
                   disabled={caps?.comments === false} />
-                <label htmlFor="commentModeration" className={`text-sm ${caps?.comments === false ? "text-neutral-400" : "text-neutral-700"}`}>Hold comments for moderation</label>
+                <label htmlFor="commentModeration" className={`text-sm ${caps?.comments === false ? "text-neutral-400" : "text-neutral-700 dark:text-neutral-300"}`}>Hold comments for moderation</label>
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="requireLoginToComment" checked={settings.requireLoginToComment ?? false}
                   onChange={(e) => setSettings({ ...settings, requireLoginToComment: e.target.checked })}
                   className="h-4 w-4 rounded border-neutral-300 disabled:opacity-50"
                   disabled={caps?.comments === false} />
-                <label htmlFor="requireLoginToComment" className={`text-sm ${caps?.comments === false ? "text-neutral-400" : "text-neutral-700"}`}>Require login to comment</label>
+                <label htmlFor="requireLoginToComment" className={`text-sm ${caps?.comments === false ? "text-neutral-400" : "text-neutral-700 dark:text-neutral-300"}`}>Require login to comment</label>
               </div>
             </section>
 
@@ -408,7 +409,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                   checked={settings.requireEmailVerification ?? false}
                   onChange={(e) => setSettings({ ...settings, requireEmailVerification: e.target.checked })}
                   className="h-4 w-4 rounded border-neutral-300" />
-                <label htmlFor="requireEmailVerification" className="text-sm text-neutral-700">
+                <label htmlFor="requireEmailVerification" className="text-sm text-neutral-700 dark:text-neutral-300">
                   Require email verification before login
                 </label>
               </div>
@@ -421,25 +422,25 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-neutral-700">SMTP host</label>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">SMTP host</label>
                   <input type="text" value={settings.smtpHost ?? ""}
                     onChange={(e) => setSettings({ ...settings, smtpHost: e.target.value })}
                     className={inputClass} placeholder="smtp.example.com" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-neutral-700">Port</label>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Port</label>
                   <input type="number" value={settings.smtpPort ?? "587"}
                     onChange={(e) => setSettings({ ...settings, smtpPort: e.target.value })}
                     className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-neutral-700">Username</label>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Username</label>
                   <input type="text" value={settings.smtpUser ?? ""}
                     onChange={(e) => setSettings({ ...settings, smtpUser: e.target.value })}
                     className={inputClass} autoComplete="off" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-neutral-700">Password</label>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Password</label>
                   <div className="relative">
                     <input type={showSmtpPass ? "text" : "password"} value={settings.smtpPass ?? ""}
                       onChange={(e) => setSettings({ ...settings, smtpPass: e.target.value })}
@@ -452,7 +453,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-700">From address</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">From address</label>
                 <input type="email" value={settings.smtpFrom ?? ""}
                   onChange={(e) => setSettings({ ...settings, smtpFrom: e.target.value })}
                   className={inputClass} placeholder="no-reply@example.com" />
@@ -462,11 +463,11 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                   checked={settings.smtpSecure ?? false}
                   onChange={(e) => setSettings({ ...settings, smtpSecure: e.target.checked })}
                   className="h-4 w-4 rounded border-neutral-300" />
-                <label htmlFor="smtpSecure" className="text-sm text-neutral-700">Use TLS (port 465)</label>
+                <label htmlFor="smtpSecure" className="text-sm text-neutral-700 dark:text-neutral-300">Use TLS (port 465)</label>
               </div>
               <div className="flex items-center gap-3">
                 <button type="button" onClick={testEmailConnection} disabled={testingEmail || !settings.smtpHost}
-                  className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors">
+                  className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-600 disabled:opacity-50 transition-colors">
                   {testingEmail ? "Sending…" : "Send test email"}
                 </button>
                 {emailTestResult && (
@@ -495,8 +496,8 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                     className="mt-0.5 h-4 w-4 border-neutral-300"
                   />
                   <div>
-                    <span className="block text-sm font-medium text-neutral-700">Local storage (default)</span>
-                    <span className="block text-xs text-neutral-500 mt-0.5">
+                    <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Local storage (default)</span>
+                    <span className="block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                       Files are saved on this server. Simple and self-contained — no external accounts needed.
                     </span>
                   </div>
@@ -511,8 +512,8 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                     className="mt-0.5 h-4 w-4 border-neutral-300"
                   />
                   <div>
-                    <span className="block text-sm font-medium text-neutral-700">S3-compatible storage</span>
-                    <span className="block text-xs text-neutral-500 mt-0.5">
+                    <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">S3-compatible storage</span>
+                    <span className="block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                       Files are stored in an S3 bucket. Works with AWS S3, Cloudflare R2, MinIO, and others.
                     </span>
                   </div>
@@ -520,15 +521,15 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
               </div>
 
               {(settings.storageDriver ?? "local") === "local" && (
-                <div className="rounded-lg border border-neutral-200 p-4 space-y-3">
-                  <div className="rounded-md bg-neutral-50 border border-neutral-200 px-3 py-2 text-xs text-neutral-600">
+                <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 space-y-3">
+                  <div className="rounded-md bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-xs text-neutral-600 dark:text-neutral-400">
                     Uploaded files are served at{" "}
                     <code className="font-mono">{effectivePublicUrl}/uploads/…</code>
                     {". "}
                     To change this base URL, set the <code className="font-mono">CARBON_PUBLIC_URL</code> environment variable.
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-neutral-700">Storage path</label>
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Storage path</label>
                     <input
                       type="text"
                       value={settings.mediaDir ?? ""}
@@ -546,7 +547,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                       type="button"
                       onClick={testStoragePath}
                       disabled={testingPath}
-                      className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+                      className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-600 disabled:opacity-50 transition-colors"
                     >
                       {testingPath ? "Testing…" : "Test path"}
                     </button>
@@ -557,7 +558,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                     )}
                   </div>
                   {settings.mediaDir && settings.mediaDir !== effectiveMediaDir && (
-                    <div className="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+                    <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 text-xs text-amber-800 dark:text-amber-400">
                       Changing the storage path takes effect after restarting the server. If running in Docker, ensure the new path is mounted as a volume, otherwise uploaded files will be lost on container restart.
                     </div>
                   )}
@@ -565,10 +566,10 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
               )}
 
               {settings.storageDriver === "s3" && (
-                <div className="rounded-lg border border-neutral-200 p-4 space-y-4">
+                <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 space-y-4">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <label className="block text-sm font-medium text-neutral-700">Bucket name</label>
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Bucket name</label>
                       <input
                         type="text"
                         value={settings.awsS3Bucket ?? ""}
@@ -578,7 +579,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-sm font-medium text-neutral-700">Region</label>
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Region</label>
                       <input
                         type="text"
                         value={settings.awsRegion ?? ""}
@@ -588,7 +589,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-sm font-medium text-neutral-700">Access key ID</label>
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Access key ID</label>
                       <input
                         type="text"
                         value={settings.awsAccessKeyId ?? ""}
@@ -598,7 +599,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-sm font-medium text-neutral-700">Secret access key</label>
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Secret access key</label>
                       <div className="relative">
                         <input
                           type={showAwsSecret ? "text" : "password"}
@@ -618,7 +619,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-neutral-700">
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                       Custom CDN URL <span className="text-neutral-400 font-normal">(optional)</span>
                     </label>
                     <input
@@ -645,7 +646,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-700">Provider</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Provider</label>
                 <select
                   value={settings.aiProvider ?? ""}
                   onChange={(e) => handleProviderChange(e.target.value)}
@@ -660,7 +661,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
 
               {needsApiKey && (
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-neutral-700">API key</label>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">API key</label>
                   <div className="relative">
                     <input
                       type={showApiKey ? "text" : "password"}
@@ -682,7 +683,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
               )}
 
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-neutral-700">Model</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Model</label>
                 <input
                   type="text"
                   value={settings.aiModel ?? ""}
@@ -694,7 +695,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
 
               {(settings.aiProvider === "custom" || settings.aiProvider === "ollama" || settings.aiProvider === "openrouter" || settings.aiProvider === "groq") && (
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-neutral-700">Base URL</label>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Base URL</label>
                   <input
                     type="url"
                     value={settings.aiBaseUrl ?? ""}
@@ -710,7 +711,7 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                   type="button"
                   onClick={testAiConnection}
                   disabled={aiTesting || !settings.aiProvider || !settings.aiModel}
-                  className="rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+                  className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-600 disabled:opacity-50 transition-colors"
                 >
                   {aiTesting ? "Testing…" : "Test connection"}
                 </button>
@@ -738,8 +739,8 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                     className="mt-0.5 h-4 w-4 border-neutral-300"
                   />
                   <div>
-                    <span className="block text-sm font-medium text-neutral-700">Server-Side Rendering (SSR)</span>
-                    <span className="block text-xs text-neutral-500 mt-0.5">
+                    <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Server-Side Rendering (SSR)</span>
+                    <span className="block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                       Pages are built on the server each time a visitor loads them. Theme changes go live immediately without a rebuild.
                       Uses more server resources and pages are not cached at the edge.
                     </span>
@@ -755,8 +756,8 @@ export function SettingsForm({ initialSettings, effectiveMediaDir, effectivePubl
                     className="mt-0.5 h-4 w-4 border-neutral-300"
                   />
                   <div>
-                    <span className="block text-sm font-medium text-neutral-700">Static / Client-Side Rendering (CSR)</span>
-                    <span className="block text-xs text-neutral-500 mt-0.5">
+                    <span className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Static / Client-Side Rendering (CSR)</span>
+                    <span className="block text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                       Pages are pre-built and served as static files from a CDN. Faster page loads and lower server load,
                       but theme changes require a rebuild (typically 15–60 seconds) before they appear.
                     </span>

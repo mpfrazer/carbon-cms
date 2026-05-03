@@ -82,8 +82,8 @@ export function CategoriesManager({ initial }: { initial: Category[] }) {
   return (
     <div className="p-6 space-y-6">
       {/* Add form */}
-      <div className="rounded-lg border border-neutral-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-neutral-700 mb-4">Add Category</h2>
+      <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+        <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Add Category</h2>
         {error && <div className="mb-3 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>}
         <form onSubmit={handleAdd} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1">
@@ -123,26 +123,26 @@ export function CategoriesManager({ initial }: { initial: Category[] }) {
       </div>
 
       {/* List */}
-      <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden">
+      <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 overflow-hidden">
         {categories.length === 0 ? (
           <div className="py-12 text-center text-sm text-neutral-400">No categories yet.</div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-neutral-200 bg-neutral-50">
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Name</th>
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Slug</th>
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Description</th>
+              <tr className="border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/50">
+                <th className="px-4 py-3 text-left font-medium text-neutral-600 dark:text-neutral-400">Name</th>
+                <th className="px-4 py-3 text-left font-medium text-neutral-600 dark:text-neutral-400">Slug</th>
+                <th className="px-4 py-3 text-left font-medium text-neutral-600 dark:text-neutral-400">Description</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700/50">
               {roots.map((cat) => (
                 <React.Fragment key={cat.id}>
-                  <tr className="hover:bg-neutral-50">
-                    <td className="px-4 py-3 font-medium text-neutral-900">{cat.name}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-neutral-500">{cat.slug}</td>
-                    <td className="px-4 py-3 text-neutral-500">{cat.description ?? "—"}</td>
+                  <tr className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50">
+                    <td className="px-4 py-3 font-medium text-neutral-900 dark:text-neutral-100">{cat.name}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-neutral-500 dark:text-neutral-400">{cat.slug}</td>
+                    <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400">{cat.description ?? "—"}</td>
                     <td className="px-4 py-3 text-right">
                       <button onClick={() => handleDelete(cat.id, cat.name)} className="p-1 text-neutral-400 hover:text-red-500 transition-colors">
                         <Trash2 className="h-4 w-4" />
@@ -150,15 +150,15 @@ export function CategoriesManager({ initial }: { initial: Category[] }) {
                     </td>
                   </tr>
                   {children.filter((c) => c.parentId === cat.id).map((child) => (
-                    <tr key={child.id} className="hover:bg-neutral-50 bg-neutral-50/50">
-                      <td className="px-4 py-3 text-neutral-700">
+                    <tr key={child.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50 bg-neutral-50/50 dark:bg-neutral-900/20">
+                      <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">
                         <span className="flex items-center gap-1.5 pl-4">
                           <ChevronRight className="h-3 w-3 text-neutral-400 shrink-0" />
                           {child.name}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-neutral-500">{child.slug}</td>
-                      <td className="px-4 py-3 text-neutral-500">{child.description ?? "—"}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-neutral-500 dark:text-neutral-400">{child.slug}</td>
+                      <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400">{child.description ?? "—"}</td>
                       <td className="px-4 py-3 text-right">
                         <button onClick={() => handleDelete(child.id, child.name)} className="p-1 text-neutral-400 hover:text-red-500 transition-colors">
                           <Trash2 className="h-4 w-4" />

@@ -29,7 +29,7 @@ function FeaturedImagePicker({
   return (
     <div className="space-y-2">
       {previewUrl ? (
-        <div className="relative rounded-md overflow-hidden border border-neutral-200 bg-neutral-50">
+        <div className="relative rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-700">
           <img src={previewUrl} alt="Featured image" className="w-full object-cover max-h-64" />
           <button
             type="button"
@@ -231,13 +231,13 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
 
       {/* Review workflow banner */}
       {isEditing && status === "in_review" && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-4 space-y-3">
-          <div className="flex items-center gap-2 text-amber-800">
+        <div className="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-4 py-4 space-y-3">
+          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400">
             <Clock className="h-4 w-4 shrink-0" />
             <span className="text-sm font-medium">Awaiting review</span>
           </div>
           {post.reviewNote && (
-            <p className="text-sm text-amber-700 italic">&ldquo;{post.reviewNote}&rdquo;</p>
+            <p className="text-sm text-amber-700 dark:text-amber-400 italic">&ldquo;{post.reviewNote}&rdquo;</p>
           )}
           {isReviewer && (
             <div className="space-y-2 pt-1">
@@ -246,7 +246,7 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
                 onChange={(e) => setReviewNote(e.target.value)}
                 placeholder="Add a note (required when rejecting)…"
                 rows={2}
-                className="w-full rounded-md border border-amber-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                className="w-full rounded-md border border-amber-300 dark:border-amber-700 bg-white dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
               />
               <div className="flex gap-2">
                 <button
@@ -262,7 +262,7 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
                   type="button"
                   disabled={approvingOrRejecting}
                   onClick={handleReject}
-                  className="flex items-center gap-1.5 rounded-md border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-1.5 rounded-md border border-red-300 dark:border-red-700 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 transition-colors"
                 >
                   <XCircle className="h-3.5 w-3.5" />
                   {approvingOrRejecting ? "Working…" : "Reject"}
@@ -275,25 +275,25 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
 
       {/* Prior review note shown after rejection */}
       {isEditing && status === "draft" && post.reviewNote && (
-        <div className="rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3">
-          <p className="text-xs font-medium text-neutral-500 mb-1">Reviewer note</p>
-          <p className="text-sm text-neutral-700 italic">&ldquo;{post.reviewNote}&rdquo;</p>
+        <div className="rounded-md border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800 px-4 py-3">
+          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">Reviewer note</p>
+          <p className="text-sm text-neutral-700 dark:text-neutral-300 italic">&ldquo;{post.reviewNote}&rdquo;</p>
         </div>
       )}
 
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-neutral-700">Title</label>
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Title</label>
         <input type="text" value={title} onChange={(e) => handleTitleChange(e.target.value)} required className={inputClass} placeholder="Post title" />
         <TitleSuggester currentTitle={title} content={content} onSelected={handleTitleChange} />
       </div>
 
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-neutral-700">Slug</label>
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Slug</label>
         <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} required className={inputClass + " font-mono"} />
       </div>
 
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-neutral-700">Content</label>
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Content</label>
         {!content && (
           <OutlineGenerator title={title} onGenerated={setContent} />
         )}
@@ -301,7 +301,7 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
       </div>
 
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-neutral-700">Featured image</label>
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Featured image</label>
         <FeaturedImagePicker
           value={featuredImageId}
           previewUrl={featuredImageUrl}
@@ -311,7 +311,7 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
 
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-neutral-700">Excerpt</label>
+          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Excerpt</label>
           <ExcerptGenerator title={title} content={content} onGenerated={setExcerpt} />
         </div>
         <textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={3} className={inputClass} placeholder="Optional short summary" />
@@ -322,7 +322,7 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
         {allCategories.length > 0 && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-neutral-700">Categories</label>
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Categories</label>
               <CategorySuggester
                 title={title}
                 content={content}
@@ -331,12 +331,12 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
                 onSelected={setSelectedCategories}
               />
             </div>
-            <div className="rounded-md border border-neutral-200 divide-y divide-neutral-100 max-h-48 overflow-y-auto">
+            <div className="rounded-md border border-neutral-200 dark:border-neutral-700 divide-y divide-neutral-100 dark:divide-neutral-700/50 max-h-48 overflow-y-auto">
               {allCategories.map((cat) => (
-                <label key={cat.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-neutral-50 cursor-pointer">
+                <label key={cat.id} className="flex items-center gap-2.5 px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 cursor-pointer">
                   <input type="checkbox" checked={selectedCategories.includes(cat.id)} onChange={() => toggleCategory(cat.id)}
                     className="h-4 w-4 rounded border-neutral-300" />
-                  <span className="text-sm text-neutral-700">{cat.name}</span>
+                  <span className="text-sm text-neutral-700 dark:text-neutral-300">{cat.name}</span>
                 </label>
               ))}
             </div>
@@ -347,7 +347,7 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
         {allTags.length > 0 && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-neutral-700">Tags</label>
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Tags</label>
               <TagSuggester
                 title={title}
                 content={content}
@@ -356,13 +356,13 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
                 onSelected={setSelectedTags}
               />
             </div>
-            <div className="rounded-md border border-neutral-200 max-h-48 overflow-y-auto p-2 flex flex-wrap gap-1.5">
+            <div className="rounded-md border border-neutral-200 dark:border-neutral-700 max-h-48 overflow-y-auto p-2 flex flex-wrap gap-1.5">
               {allTags.map((tag) => {
                 const selected = selectedTags.includes(tag.id);
                 return (
                   <button key={tag.id} type="button" onClick={() => toggleTag(tag.id)}
                     className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      selected ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                      selected ? "bg-neutral-900 text-white" : "bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600"
                     }`}>
                     {tag.name}
                   </button>
@@ -374,7 +374,7 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
       </div>
 
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-neutral-700">Status</label>
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Status</label>
         <select value={status} onChange={(e) => setStatus(e.target.value)}
           className="rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500">
           <option value="draft">Draft</option>
@@ -384,11 +384,11 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
         </select>
       </div>
 
-      <details className="rounded-md border border-neutral-200 p-4">
-        <summary className="cursor-pointer text-sm font-medium text-neutral-700">SEO</summary>
+      <details className="rounded-md border border-neutral-200 dark:border-neutral-700 p-4">
+        <summary className="cursor-pointer text-sm font-medium text-neutral-700 dark:text-neutral-300">SEO</summary>
         <div className="mt-4 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-neutral-500">Auto-generate meta title and description</span>
+            <span className="text-sm text-neutral-500 dark:text-neutral-400">Auto-generate meta title and description</span>
             <SeoOptimizer
               title={title}
               content={content}
@@ -398,11 +398,11 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
             />
           </div>
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Meta title</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Meta title</label>
             <input type="text" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} className={inputClass} />
           </div>
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Meta description</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Meta description</label>
             <textarea value={metaDescription} onChange={(e) => setMetaDescription(e.target.value)} rows={2} className={inputClass} />
           </div>
         </div>
@@ -422,10 +422,10 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
         ) : <span />}
         <div className="flex gap-3">
           <button type="button" onClick={() => router.back()}
-            className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">Cancel</button>
+            className="rounded-md border border-neutral-300 dark:border-neutral-600 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">Cancel</button>
           {isEditing && (
             <button type="button" onClick={handlePreview} disabled={previewing}
-              className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors">
+              className="rounded-md border border-neutral-300 dark:border-neutral-600 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 disabled:opacity-50 transition-colors">
               {previewing ? "Opening…" : "Preview"}
             </button>
           )}
@@ -434,7 +434,7 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
               type="button"
               disabled={submittingReview}
               onClick={handleSubmitForReview}
-              className="rounded-md border border-neutral-400 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+              className="rounded-md border border-neutral-400 dark:border-neutral-600 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 disabled:opacity-50 transition-colors"
             >
               {submittingReview ? "Submitting…" : "Submit for review"}
             </button>

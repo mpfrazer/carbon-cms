@@ -127,12 +127,12 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
       {/* Avatar */}
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 mb-4">Avatar</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-4">Avatar</h2>
         <div className="flex items-center gap-4">
           {avatarUrl ? (
             <img src={avatarUrl} alt="Avatar" className="h-16 w-16 rounded-full object-cover" />
           ) : (
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-200 text-xl font-semibold text-neutral-600 select-none">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-700 text-xl font-semibold text-neutral-600 dark:text-neutral-300 select-none">
               {user.name.charAt(0).toUpperCase()}
             </span>
           )}
@@ -141,7 +141,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
               type="button"
               onClick={() => avatarInputRef.current?.click()}
               disabled={avatarUploading}
-              className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors"
+              className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-transparent dark:bg-neutral-700 px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-600 disabled:opacity-50 transition-colors"
             >
               {avatarUploading ? "Uploading…" : "Change photo"}
             </button>
@@ -151,11 +151,11 @@ export function ProfileForm({ user }: ProfileFormProps) {
         </div>
       </section>
 
-      <hr className="border-neutral-200" />
+      <hr className="border-neutral-200 dark:border-neutral-700" />
 
       {/* Profile */}
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 mb-4">Profile</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-4">Profile</h2>
         <form onSubmit={handleProfileSubmit} className="space-y-4">
           {profileError && (
             <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{profileError}</div>
@@ -165,17 +165,17 @@ export function ProfileForm({ user }: ProfileFormProps) {
           )}
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Name</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Name</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className={inputClass} />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Email</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Email</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputClass} />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Bio</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Bio</label>
             <textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} className={inputClass}
               placeholder="A short bio shown on your posts" />
           </div>
@@ -187,11 +187,11 @@ export function ProfileForm({ user }: ProfileFormProps) {
         </form>
       </section>
 
-      <hr className="border-neutral-200" />
+      <hr className="border-neutral-200 dark:border-neutral-700" />
 
       {/* Password */}
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 mb-4">Change Password</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-4">Change Password</h2>
         <form onSubmit={handlePasswordSubmit} className="space-y-4">
           {passwordError && (
             <div className="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{passwordError}</div>
@@ -201,13 +201,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
           )}
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">New password</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">New password</label>
             <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
               required minLength={8} autoComplete="new-password" className={inputClass} placeholder="Minimum 8 characters" />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700">Confirm new password</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Confirm new password</label>
             <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
               required autoComplete="new-password" className={inputClass} />
           </div>

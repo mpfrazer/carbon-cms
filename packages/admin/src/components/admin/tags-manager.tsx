@@ -57,8 +57,8 @@ export function TagsManager({ initial }: { initial: Tag[] }) {
   return (
     <div className="p-6 space-y-6">
       {/* Add form */}
-      <div className="rounded-lg border border-neutral-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-neutral-700 mb-4">Add Tag</h2>
+      <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+        <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Add Tag</h2>
         {error && <div className="mb-3 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>}
         <form onSubmit={handleAdd} className="flex flex-wrap items-end gap-3">
           <div className="space-y-1">
@@ -78,25 +78,25 @@ export function TagsManager({ initial }: { initial: Tag[] }) {
       </div>
 
       {/* Tag cloud + table */}
-      <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden">
+      <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 overflow-hidden">
         {tags.length === 0 ? (
           <div className="py-12 text-center text-sm text-neutral-400">No tags yet.</div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-neutral-200 bg-neutral-50">
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Name</th>
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Slug</th>
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Added</th>
+              <tr className="border-b border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/50">
+                <th className="px-4 py-3 text-left font-medium text-neutral-600 dark:text-neutral-400">Name</th>
+                <th className="px-4 py-3 text-left font-medium text-neutral-600 dark:text-neutral-400">Slug</th>
+                <th className="px-4 py-3 text-left font-medium text-neutral-600 dark:text-neutral-400">Added</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-700/50">
               {tags.map((tag) => (
-                <tr key={tag.id} className="hover:bg-neutral-50">
-                  <td className="px-4 py-3 font-medium text-neutral-900">{tag.name}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-neutral-500">{tag.slug}</td>
-                  <td className="px-4 py-3 text-neutral-500">{new Date(tag.createdAt).toLocaleDateString()}</td>
+                <tr key={tag.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-700/50">
+                  <td className="px-4 py-3 font-medium text-neutral-900 dark:text-neutral-100">{tag.name}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-neutral-500 dark:text-neutral-400">{tag.slug}</td>
+                  <td className="px-4 py-3 text-neutral-500 dark:text-neutral-400">{new Date(tag.createdAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-right">
                     <button onClick={() => handleDelete(tag.id, tag.name)} className="p-1 text-neutral-400 hover:text-red-500 transition-colors">
                       <Trash2 className="h-4 w-4" />

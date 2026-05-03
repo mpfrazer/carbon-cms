@@ -82,9 +82,9 @@ function ImagePickerModal({ onInsert, onClose }: { onInsert: (url: string, alt: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="relative flex h-[70vh] w-[720px] max-w-[95vw] flex-col rounded-lg bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
-          <h2 className="text-sm font-semibold text-neutral-800">Insert image</h2>
+      <div className="relative flex h-[70vh] w-[720px] max-w-[95vw] flex-col rounded-lg bg-white dark:bg-neutral-800 shadow-xl">
+        <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700 px-4 py-3">
+          <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Insert image</h2>
           <div className="flex items-center gap-2">
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
             <button
@@ -96,7 +96,7 @@ function ImagePickerModal({ onInsert, onClose }: { onInsert: (url: string, alt: 
               <Upload className="h-3 w-3" />
               {uploading ? "Uploading…" : "Upload new"}
             </button>
-            <button type="button" onClick={onClose} className="rounded p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors">
+            <button type="button" onClick={onClose} className="rounded p-1 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -117,7 +117,7 @@ function ImagePickerModal({ onInsert, onClose }: { onInsert: (url: string, alt: 
                   key={item.id}
                   type="button"
                   onClick={() => onInsert(item.url, item.altText ?? item.originalFilename)}
-                  className="group relative aspect-square overflow-hidden rounded-md border border-neutral-200 bg-neutral-100 hover:border-neutral-900 transition-colors"
+                  className="group relative aspect-square overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-700 hover:border-neutral-900 dark:hover:border-neutral-400 transition-colors"
                   title={item.originalFilename}
                 >
                   <img src={item.url} alt={item.altText ?? item.originalFilename} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
@@ -222,9 +222,9 @@ export function RichEditor({ value, onChange, placeholder = "Write your content 
   }
 
   const btn = (active: boolean) =>
-    `rounded p-1.5 transition-colors ${active ? "bg-neutral-200 text-neutral-900" : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"}`;
+    `rounded p-1.5 transition-colors ${active ? "bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100" : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100"}`;
 
-  const sep = <div className="w-px h-5 bg-neutral-200 mx-0.5" />;
+  const sep = <div className="w-px h-5 bg-neutral-200 dark:bg-neutral-600 mx-0.5" />;
 
   const hasSelection = !editor.state.selection.empty;
 
@@ -232,9 +232,9 @@ export function RichEditor({ value, onChange, placeholder = "Write your content 
     <>
       {imagePickerOpen && <ImagePickerModal onInsert={insertImage} onClose={() => setImagePickerOpen(false)} />}
 
-      <div className="rounded-md border border-neutral-300 focus-within:border-neutral-500 focus-within:ring-1 focus-within:ring-neutral-500">
+      <div className="rounded-md border border-neutral-300 dark:border-neutral-600 focus-within:border-neutral-500 focus-within:ring-1 focus-within:ring-neutral-500">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-0.5 border-b border-neutral-200 px-2 py-1.5">
+        <div className="flex flex-wrap items-center gap-0.5 border-b border-neutral-200 dark:border-neutral-700 px-2 py-1.5">
           <button type="button" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} className={btn(false)} title="Undo"><Undo2 className="h-4 w-4" /></button>
           <button type="button" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} className={btn(false)} title="Redo"><Redo2 className="h-4 w-4" /></button>
           {sep}
@@ -289,13 +289,13 @@ export function RichEditor({ value, onChange, placeholder = "Write your content 
             </button>
 
             {aiOpen && (
-              <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-md border border-neutral-200 bg-white shadow-lg">
+              <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg">
                 {IMPROVE_ACTIONS.map((action) => (
                   <button
                     key={action.key}
                     type="button"
                     onClick={() => runImprove(action.key)}
-                    className="w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-violet-50 hover:text-violet-900 first:rounded-t-md last:rounded-b-md transition-colors"
+                    className="w-full px-3 py-2 text-left text-sm text-neutral-700 dark:text-neutral-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 hover:text-violet-900 dark:hover:text-violet-300 first:rounded-t-md last:rounded-b-md transition-colors"
                   >
                     {action.label}
                   </button>
@@ -306,7 +306,7 @@ export function RichEditor({ value, onChange, placeholder = "Write your content 
         </div>
 
         {aiError && (
-          <div className="border-b border-red-100 bg-red-50 px-3 py-1.5 text-xs text-red-600">
+          <div className="border-b border-red-100 dark:border-red-900 bg-red-50 dark:bg-red-900/20 px-3 py-1.5 text-xs text-red-600 dark:text-red-400">
             {aiError}
           </div>
         )}
