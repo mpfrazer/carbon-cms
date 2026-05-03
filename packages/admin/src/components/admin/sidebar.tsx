@@ -23,6 +23,7 @@ import {
   Menu,
   Moon,
   Sun,
+  BookOpen,
 } from "lucide-react";
 import { useTheme } from "@/components/admin/theme-provider";
 
@@ -47,6 +48,7 @@ const navItems: NavItem[] = [
   { href: "/admin/themes", label: "Themes", icon: Palette },
   { href: "/admin/api-keys", label: "API Keys", icon: KeyRound },
   { href: "/admin/webhooks", label: "Webhooks", icon: Webhook },
+  { href: "/admin/docs", label: "Docs", icon: BookOpen },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/profile", label: "My Profile", icon: UserCircle },
 ];
