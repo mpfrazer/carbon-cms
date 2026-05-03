@@ -98,22 +98,22 @@ export function MediaGrid() {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {items.map((item) => (
-            <div key={item.id} className="group relative rounded-lg border border-neutral-200 bg-white overflow-hidden">
+            <div key={item.id} className="group relative rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 overflow-hidden">
               {item.mimeType.startsWith("image/") ? (
-                <div className="aspect-square bg-neutral-100 overflow-hidden">
+                <div className="aspect-square bg-neutral-100 dark:bg-neutral-700 overflow-hidden">
                   <img src={item.url} alt={item.altText ?? item.originalFilename} loading="lazy" className="h-full w-full object-cover" />
                 </div>
               ) : (
-                <div className="flex aspect-square items-center justify-center bg-neutral-100 text-xs text-neutral-500 font-mono uppercase p-2">
+                <div className="flex aspect-square items-center justify-center bg-neutral-100 dark:bg-neutral-700 text-xs text-neutral-500 dark:text-neutral-400 font-mono uppercase p-2">
                   {item.mimeType.split("/")[1]}
                 </div>
               )}
               <div className="p-2">
-                <p className="truncate text-xs text-neutral-700">{item.originalFilename}</p>
+                <p className="truncate text-xs text-neutral-700 dark:text-neutral-300">{item.originalFilename}</p>
                 <p className="text-xs text-neutral-400">{formatSize(item.size)}</p>
               </div>
               <button onClick={() => handleDelete(item.id)}
-                className="absolute right-2 top-2 hidden rounded bg-white/90 p-1 shadow group-hover:flex hover:bg-red-50 transition-colors">
+                className="absolute right-2 top-2 hidden rounded bg-white/90 dark:bg-neutral-700/90 p-1 shadow group-hover:flex hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
                 <Trash2 className="h-3.5 w-3.5 text-red-500" />
               </button>
             </div>

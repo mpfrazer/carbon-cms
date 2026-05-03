@@ -52,7 +52,7 @@ function SortableNavItem({
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : 1 };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 shadow-sm">
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-2.5 shadow-sm">
       <button type="button" {...listeners} {...attributes} className="cursor-grab touch-none text-neutral-300 hover:text-neutral-500 transition-colors shrink-0">
         <GripVertical className="h-4 w-4" />
       </button>
@@ -80,7 +80,7 @@ function SortableNavItem({
 // Drag overlay tile (shown while dragging)
 function DragTile({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-2.5 shadow-lg opacity-90">
+    <div className="flex items-center gap-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2.5 shadow-lg opacity-90">
       <GripVertical className="h-4 w-4 text-neutral-400" />
       <span className="text-sm text-neutral-800">{label}</span>
     </div>
@@ -94,7 +94,7 @@ function PoolTile({ page, onAdd }: { page: PoolPage; onAdd: () => void }) {
     <button
       type="button"
       onClick={onAdd}
-      className="flex w-full items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-left text-sm text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50 transition-colors group"
+      className="flex w-full items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-2.5 text-left text-sm text-neutral-700 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors group"
     >
       <span className="truncate">{page.title}</span>
       <Plus className="h-3.5 w-3.5 text-neutral-300 group-hover:text-neutral-600 transition-colors shrink-0 ml-2" />
@@ -109,7 +109,7 @@ function NavDropZone({ children, isEmpty }: { children: React.ReactNode; isEmpty
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[120px] space-y-2 rounded-lg transition-colors ${isOver ? "bg-neutral-100" : ""} ${isEmpty ? "flex items-center justify-center" : ""}`}
+      className={`min-h-[120px] space-y-2 rounded-lg transition-colors ${isOver ? "bg-neutral-100 dark:bg-neutral-700/50" : ""} ${isEmpty ? "flex items-center justify-center" : ""}`}
     >
       {isEmpty ? (
         <p className="text-sm text-neutral-400 pointer-events-none">
@@ -125,7 +125,7 @@ function NavDropZone({ children, isEmpty }: { children: React.ReactNode; isEmpty
 function PoolDropZone({ children }: { children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: "pool-drop" });
   return (
-    <div ref={setNodeRef} className={`space-y-2 rounded-lg transition-colors ${isOver ? "bg-neutral-100 p-1" : ""}`}>
+    <div ref={setNodeRef} className={`space-y-2 rounded-lg transition-colors ${isOver ? "bg-neutral-100 dark:bg-neutral-700/50 p-1" : ""}`}>
       {children}
     </div>
   );
@@ -145,12 +145,12 @@ function AddLinkForm({ onAdd, onCancel }: { onAdd: (label: string, url: string) 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 space-y-2">
+    <form onSubmit={handleSubmit} className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 p-3 space-y-2">
       <input autoFocus type="text" placeholder="Label" value={label} onChange={(e) => setLabel(e.target.value)} className={inputClass} />
       <input type="url" placeholder="URL (https://… or /path)" value={url} onChange={(e) => setUrl(e.target.value)} className={inputClass} required />
       <div className="flex gap-2">
         <button type="submit" className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-700 transition-colors">Add link</button>
-        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-white transition-colors">Cancel</button>
+        <button type="button" onClick={onCancel} className="rounded-md border border-neutral-200 dark:border-neutral-600 px-3 py-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-white dark:hover:bg-neutral-700 transition-colors">Cancel</button>
       </div>
     </form>
   );
@@ -320,10 +320,10 @@ export function NavEditor({ initialNavItems, allPages }: NavEditorProps) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Left: available pages pool */}
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-neutral-700">Available pages</h2>
+          <h2 className="mb-3 text-sm font-semibold text-neutral-700 dark:text-neutral-300">Available pages</h2>
           <PoolDropZone>
             {poolPages.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-neutral-200 py-8 text-center text-sm text-neutral-400">
+              <p className="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-700 py-8 text-center text-sm text-neutral-400">
                 All published pages are in the nav.
               </p>
             ) : (
@@ -351,7 +351,7 @@ export function NavEditor({ initialNavItems, allPages }: NavEditorProps) {
 
         {/* Right: current nav */}
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-neutral-700">
+          <h2 className="mb-3 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
             Navigation menu
             <span className="ml-2 text-xs font-normal text-neutral-400">drag to reorder</span>
           </h2>

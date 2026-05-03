@@ -13,7 +13,7 @@ export function AiButton({ onClick, loading, label = "Generate", className = "" 
       type="button"
       onClick={onClick}
       disabled={loading}
-      className={`inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 transition-colors ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 px-3 py-1.5 text-xs font-medium text-neutral-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-600 disabled:opacity-50 transition-colors ${className}`}
     >
       {loading ? (
         <svg className="h-3.5 w-3.5 animate-spin text-neutral-500" fill="none" viewBox="0 0 24 24">
