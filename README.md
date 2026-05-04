@@ -8,7 +8,19 @@ A lightweight, open-source CMS built as a modern alternative to WordPress and Dr
 curl -fsSL https://raw.githubusercontent.com/mpfrazer/carbon-cms/main/scripts/install.sh | bash
 ```
 
-Requires a Linux server and a domain name. The script installs Docker if needed, generates all secrets, configures HTTPS via Caddy, and starts all services. See [deployment docs](docs/architecture/deployment-modes.md) for full details.
+Requires a Linux server and a domain name. The script installs Docker if needed, generates all secrets, configures HTTPS via Caddy, and starts all services.
+
+**After the script finishes:**
+
+1. Point two DNS A records at your server's IP address (the script prints them):
+   ```
+   A  yourdomain.com        →  <server IP>
+   A  admin.yourdomain.com  →  <server IP>
+   ```
+2. Once DNS has propagated, go to `https://admin.yourdomain.com/setup` and create your admin account.
+3. Your site is live at `https://yourdomain.com`.
+
+HTTPS certificates are issued automatically by Caddy once DNS resolves. See [deployment docs](docs/architecture/deployment-modes.md) for full details.
 
 ## Packages
 
