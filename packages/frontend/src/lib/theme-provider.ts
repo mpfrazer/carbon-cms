@@ -4,14 +4,6 @@ import type { PageBlock } from "@/lib/blocks";
 import type { SearchMode, SearchInputMode } from "@/lib/site-settings";
 import { loadCustomThemeComponents } from "@/lib/custom-theme-loader";
 
-// TODO: Write theme-building documentation covering:
-//   - The ThemeComponents interface and required exports per theme
-//   - How themes consume SiteLayout props (navPages, searchMode, searchInputMode, simplified, showBlogLink, etc.)
-//   - Theme directory structure (layout, blog-index, blog-post, page, search, not-found, theme.config.json)
-//   - How to use CSS variables (--carbon-accent, --carbon-font-body, etc.) from the appearance settings
-//   - Custom themes: compiled at runtime via esbuild, placed in CUSTOM_THEMES_DIR
-//   - The fallback chain: active theme → default theme
-
 export interface SearchResult {
   type: "post" | "page";
   id: string;
