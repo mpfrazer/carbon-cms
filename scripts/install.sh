@@ -220,7 +220,7 @@ print_success() {
   echo -e "  Your site:   ${CYAN}https://${CARBON_DOMAIN}${NC}"
   echo -e "  Admin panel: ${CYAN}https://admin.${CARBON_DOMAIN}${NC}"
   echo ""
-  echo -e "  ${BOLD}Next step:${NC} Visit the admin panel to finish setup."
+  echo -e "  ${BOLD}Next step:${NC} Go to ${CYAN}https://admin.${CARBON_DOMAIN}/setup${NC} to create your admin account."
   echo ""
   echo -e "${YELLOW}${BOLD}  DNS records required${NC} (point both to this server):"
   echo ""

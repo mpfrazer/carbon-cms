@@ -3,7 +3,7 @@ import { eq, count } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { users, pages } from "@/lib/db/schema";
+import { users, pages, posts } from "@/lib/db/schema";
 import { ok, created, badRequest, serverError } from "@/lib/api/response";
 
 async function adminExists(): Promise<boolean> {
@@ -53,6 +53,24 @@ const HOME_BLOCKS = JSON.stringify([
   },
 ]);
 
+const SAMPLE_POST_CONTENT = `<p>Welcome to Carbon. This is a sample post — you can edit or delete it any time from your admin dashboard.</p>
+
+<h2>Your admin dashboard</h2>
+<p>Everything in Carbon is managed from the admin panel. From there you can create posts and pages, manage your media library, configure your theme, and control who has access to your site.</p>
+
+<h2>Creating and publishing content</h2>
+<p>Posts live at <strong>/blog</strong>. Create a new one from the Posts section in the sidebar, write using the rich-text editor, and set the status to <strong>Published</strong> when you're ready to go live.</p>
+<p>Pages — like the home page you already have — are managed separately under Pages. They support the same editor and a drag-and-drop block builder for more structured layouts like feature grids, hero sections, and call-to-action blocks.</p>
+
+<h2>Themes and appearance</h2>
+<p>Carbon ships with two built-in themes: Default and Minimal. Switch between them instantly from Themes → Activate. Under the Appearance tab you can set your accent colour, pick fonts, upload a logo, and customise the footer — all without touching any code.</p>
+
+<h2>Media</h2>
+<p>Upload images and files from the Media section. Your library is available in every post, page, and block editor — click the image icon in the toolbar to insert directly from it.</p>
+
+<h2>What's next</h2>
+<p>Edit this post, create a new one, or open the home page and customise its block layout. Everything you need is in the admin sidebar.</p>`;
+
 // Returns whether first-run setup is still needed
 export async function GET() {
   try {
@@ -100,6 +118,19 @@ export async function POST(req: NextRequest) {
       metaTitle: null,
       metaDescription: null,
       menuOrder: 0,
+    }).onConflictDoNothing();
+
+    const now = new Date();
+    await db.insert(posts).values({
+      title: "Getting Started with Carbon",
+      slug: "getting-started",
+      content: SAMPLE_POST_CONTENT,
+      excerpt: "A quick tour of your new Carbon CMS — the admin dashboard, creating posts and pages, themes, and media.",
+      status: "published",
+      authorId: user.id,
+      publishedAt: now,
+      metaTitle: null,
+      metaDescription: null,
     }).onConflictDoNothing();
 
     return created(user);
