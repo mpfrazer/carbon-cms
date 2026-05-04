@@ -10,6 +10,7 @@ export default function SetupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -26,6 +27,12 @@ export default function SetupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
     setLoading(true);
 
     const res = await fetch("/api/v1/setup", {
@@ -80,6 +87,11 @@ export default function SetupPage() {
             <label className="block text-sm font-medium text-neutral-700">Password</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
               required minLength={8} autoComplete="new-password" className={inputClass} placeholder="Min. 8 characters" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-neutral-700">Confirm password</label>
+            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+              required autoComplete="new-password" className={inputClass} placeholder="Repeat your password" />
           </div>
           <button type="submit" disabled={loading}
             className="w-full rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors">
