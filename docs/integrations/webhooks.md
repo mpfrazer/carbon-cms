@@ -38,6 +38,9 @@ Each event sends the affected record as `data`, except for `*.deleted` events wh
 | `post.published` | A post transitions to `published` (on create, update, or approval) | post record |
 | `post.updated` | An existing post is edited | post record |
 | `post.deleted` | A post is deleted | `{ id }` |
+| `post.submitted_review` | A draft post is submitted for editorial review | post record |
+| `post.approved` | A post in review is approved (also fires `post.published`) | post record |
+| `post.rejected` | A post in review is rejected back to the author | post record |
 | `page.created` | A new page is created | page record |
 | `page.published` | A page transitions to `published` | page record |
 | `page.updated` | An existing page is edited | page record |
@@ -48,8 +51,6 @@ Each event sends the affected record as `data`, except for `*.deleted` events wh
 | `media.deleted` | A media item is deleted | `{ id }` |
 
 Record shapes match the corresponding `/api/v1` resource (e.g. a `post` payload contains `id`, `title`, `slug`, `content`, `status`, `authorId`, `publishedAt`, etc. — see the schema in `packages/api/src/lib/db/schema.ts`).
-
-> **Note on editorial workflow events.** The codebase also dispatches `post.submitted_review`, `post.approved`, and `post.rejected` when a post moves through review. These events fire internally but are **not currently subscribable** — they're missing from the event allowlist used by the registration endpoint. Track this in [the known gaps section](#known-gaps).
 
 ---
 
@@ -176,6 +177,5 @@ Signed with the same secret and headers as a real event. Useful for verifying co
 These are limitations of the current implementation, listed here so integrators aren't surprised:
 
 - **No retries on failure.** A flaky endpoint will lose events. Plan for this.
-- **Three editorial events fire but cannot be subscribed to.** `post.submitted_review`, `post.approved`, and `post.rejected` are dispatched by the review workflow but missing from the registration allowlist.
 - **Programmatic management is admin-only.** The `/api/v1/webhooks` endpoints accept only the internal admin proxy auth, not API keys. To register webhooks from an external tool today, you must use the admin UI. API-key access for webhook management is a planned enhancement.
 - **No event filtering.** A subscription is "all events of type X" — you cannot, for example, subscribe only to `post.published` events for a specific category.

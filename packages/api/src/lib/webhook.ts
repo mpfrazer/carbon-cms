@@ -3,19 +3,15 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { webhooks, webhookDeliveries } from "@/lib/db/schema";
 
-export type WebhookEvent =
-  | "post.created" | "post.published" | "post.updated" | "post.deleted"
-  | "post.submitted_review" | "post.approved" | "post.rejected"
-  | "page.created" | "page.published" | "page.updated" | "page.deleted"
-  | "comment.created" | "comment.approved"
-  | "media.uploaded" | "media.deleted";
-
-export const ALL_WEBHOOK_EVENTS: WebhookEvent[] = [
+export const ALL_WEBHOOK_EVENTS = [
   "post.created", "post.published", "post.updated", "post.deleted",
+  "post.submitted_review", "post.approved", "post.rejected",
   "page.created", "page.published", "page.updated", "page.deleted",
   "comment.created", "comment.approved",
   "media.uploaded", "media.deleted",
-];
+] as const;
+
+export type WebhookEvent = (typeof ALL_WEBHOOK_EVENTS)[number];
 
 export function generateWebhookSecret(): string {
   return randomBytes(32).toString("base64url");

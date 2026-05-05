@@ -16,7 +16,7 @@ function isAdmin(req: NextRequest): boolean {
 const createSchema = z.object({
   name: z.string().min(1).max(200),
   url: z.string().url(),
-  events: z.array(z.enum(ALL_WEBHOOK_EVENTS as [string, ...string[]])).min(1),
+  events: z.array(z.enum(ALL_WEBHOOK_EVENTS)).min(1),
 });
 
 export async function GET(req: NextRequest) {
