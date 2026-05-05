@@ -34,6 +34,35 @@ describe("ALL_WEBHOOK_EVENTS", () => {
   });
 });
 
+// Mirror of the admin-side ALL_EVENTS list in
+// packages/admin/src/components/admin/webhooks-manager.tsx. If the two drift
+// (API gains a new event, admin doesn't surface it — or vice versa) this test
+// fails. Catches the bug class that previously hid the editorial events from
+// the admin UI even after they were registrable in the API.
+const ADMIN_EVENT_VALUES = [
+  "post.created", "post.published", "post.updated", "post.deleted",
+  "post.submitted_review", "post.approved", "post.rejected",
+  "page.created", "page.published", "page.updated", "page.deleted",
+  "comment.created", "comment.approved",
+  "media.uploaded", "media.deleted",
+];
+
+describe("admin webhook event vocabulary", () => {
+  it("offers every event the API accepts", () => {
+    for (const event of ALL_WEBHOOK_EVENTS) {
+      expect(ADMIN_EVENT_VALUES, `admin is missing event "${event}" — users cannot subscribe via the UI`)
+        .toContain(event);
+    }
+  });
+
+  it("does not offer events the API would reject", () => {
+    for (const event of ADMIN_EVENT_VALUES) {
+      expect(ALL_WEBHOOK_EVENTS, `admin offers unknown event "${event}" — registration would fail with a validation error`)
+        .toContain(event);
+    }
+  });
+});
+
 describe("generateWebhookSecret", () => {
   it("returns a base64url string of sufficient entropy", () => {
     const secret = generateWebhookSecret();
