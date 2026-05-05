@@ -28,7 +28,7 @@ A webhook can be toggled inactive without deleting it. Inactive webhooks receive
 
 ### Programmatic management with API keys
 
-Webhooks can also be registered, edited, and revoked from outside the admin UI by calling the `/api/v1/webhooks` endpoints with an API key. The required scopes are:
+Webhooks can also be registered, edited, and revoked from outside the admin UI by calling the `/api/v1/webhooks` endpoints with an [API key](./api-keys.md). The required scopes are:
 
 | Operation | Scope |
 |-----------|-------|
