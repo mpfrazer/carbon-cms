@@ -15,6 +15,7 @@ function isAdmin(req: NextRequest): boolean {
 
 const createSchema = z.object({
   name: z.string().min(1).max(200),
+  role: z.enum(["admin", "editor", "author", "subscriber"]),
 });
 
 export async function GET(req: NextRequest) {
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
         id: apiKeys.id,
         name: apiKeys.name,
         keyPrefix: apiKeys.keyPrefix,
+        role: apiKeys.role,
         lastUsedAt: apiKeys.lastUsedAt,
         revokedAt: apiKeys.revokedAt,
         createdAt: apiKeys.createdAt,
@@ -53,8 +55,14 @@ export async function POST(req: NextRequest) {
 
     const [row] = await db
       .insert(apiKeys)
-      .values({ name: parsed.data.name, keyHash, keyPrefix, createdBy: userId ?? undefined })
-      .returning({ id: apiKeys.id, name: apiKeys.name, keyPrefix: apiKeys.keyPrefix, createdAt: apiKeys.createdAt });
+      .values({ name: parsed.data.name, role: parsed.data.role, keyHash, keyPrefix, createdBy: userId ?? undefined })
+      .returning({
+        id: apiKeys.id,
+        name: apiKeys.name,
+        keyPrefix: apiKeys.keyPrefix,
+        role: apiKeys.role,
+        createdAt: apiKeys.createdAt,
+      });
 
     return created({ ...row, key });
   } catch (e) {

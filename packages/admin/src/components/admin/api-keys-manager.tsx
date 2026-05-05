@@ -3,13 +3,23 @@
 import { useEffect, useState } from "react";
 import { Copy, Check, Trash2 } from "lucide-react";
 
+type ApiKeyRole = "admin" | "editor" | "author" | "subscriber";
+
 interface ApiKey {
   id: string;
   name: string;
   keyPrefix: string;
+  role: ApiKeyRole;
   lastUsedAt: string | null;
   createdAt: string;
 }
+
+const ROLE_OPTIONS: { value: ApiKeyRole; label: string; description: string }[] = [
+  { value: "subscriber", label: "Subscriber", description: "Read-only access to public content" },
+  { value: "author", label: "Author", description: "Manage own posts and pages" },
+  { value: "editor", label: "Editor", description: "Manage all content and moderate comments" },
+  { value: "admin", label: "Admin", description: "Full access, including settings and other API keys" },
+];
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -36,6 +46,7 @@ export function ApiKeysManager() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
+  const [role, setRole] = useState<ApiKeyRole>("subscriber");
   const [creating, setCreating] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +78,7 @@ export function ApiKeysManager() {
     const res = await fetch("/api/v1/api-keys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim() }),
+      body: JSON.stringify({ name: name.trim(), role }),
     });
     const json = await res.json();
 
@@ -76,6 +87,7 @@ export function ApiKeysManager() {
     } else {
       setNewKey(json.data.key);
       setName("");
+      setRole("subscriber");
       loadKeys();
     }
     setCreating(false);
@@ -99,22 +111,37 @@ export function ApiKeysManager() {
           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Give the key a name that identifies its consumer (e.g. &ldquo;Personal brand site&rdquo;). The key is shown only once — copy it before leaving.</p>
         </div>
 
-        <form onSubmit={handleCreate} className="flex gap-3">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Key name"
-            required
-            className={inputClass + " flex-1"}
-          />
-          <button
-            type="submit"
-            disabled={creating || !name.trim()}
-            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors"
-          >
-            {creating ? "Creating…" : "Create"}
-          </button>
+        <form onSubmit={handleCreate} className="space-y-3">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Key name"
+              required
+              className={inputClass + " flex-1"}
+            />
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as ApiKeyRole)}
+              className={inputClass}
+              aria-label="Role"
+            >
+              {ROLE_OPTIONS.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              disabled={creating || !name.trim()}
+              className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50 transition-colors"
+            >
+              {creating ? "Creating…" : "Create"}
+            </button>
+          </div>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            {ROLE_OPTIONS.find((r) => r.value === role)?.description}
+          </p>
         </form>
 
         {error && (
@@ -145,7 +172,12 @@ export function ApiKeysManager() {
             {keys.map((k) => (
               <div key={k.id} className="flex items-center justify-between px-4 py-3">
                 <div className="space-y-0.5">
-                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{k.name}</p>
+                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                    {k.name}
+                    <span className="ml-2 inline-block rounded bg-neutral-100 dark:bg-neutral-700 px-1.5 py-0.5 text-xs font-normal text-neutral-600 dark:text-neutral-300">
+                      {k.role}
+                    </span>
+                  </p>
                   <p className="font-mono text-xs text-neutral-400">{k.keyPrefix}••••••••••••••••••••••••••••••••••</p>
                   <p className="text-xs text-neutral-400">
                     Created {new Date(k.createdAt).toLocaleDateString()}

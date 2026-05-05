@@ -21,11 +21,15 @@ export function extractApiKeyToken(authorizationHeader: string | null | undefine
   return authorizationHeader.slice(7);
 }
 
-export async function validateApiKey(key: string): Promise<{ id: string; name: string } | null> {
+export type ApiKeyRole = "admin" | "editor" | "author" | "subscriber";
+
+export async function validateApiKey(
+  key: string,
+): Promise<{ id: string; name: string; role: ApiKeyRole } | null> {
   if (!key.startsWith("csk_")) return null;
   const keyHash = createHash("sha256").update(key).digest("hex");
   const [found] = await db
-    .select({ id: apiKeys.id, name: apiKeys.name })
+    .select({ id: apiKeys.id, name: apiKeys.name, role: apiKeys.role })
     .from(apiKeys)
     .where(and(eq(apiKeys.keyHash, keyHash), isNull(apiKeys.revokedAt)))
     .limit(1);
