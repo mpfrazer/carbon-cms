@@ -3,6 +3,10 @@
     {
       "path": "/api/v1/cron/publish-scheduled",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/v1/cron/retry-webhooks",
+      "schedule": "* * * * *"
     }
   ]
 }

@@ -151,11 +151,12 @@ Use a constant-time comparison (`timingSafeEqual` / `hmac.compare_digest`) — a
 
 ## Delivery semantics
 
-- **One attempt per event.** Carbon currently does not retry failed deliveries. If your endpoint returns a non-2xx status, times out, or is unreachable, the event is logged as `failed` and dropped.
-- **10-second timeout.** If your handler doesn't respond within 10s, the request is aborted.
-- **At-most-once.** Combined with no retries, treat events as best-effort notifications, not a durable queue. For workflows that must not miss events, fall back to polling `/api/v1` on a schedule and use webhooks as a low-latency hint.
-- **Order is not guaranteed.** Multiple events may fire concurrently (e.g. `post.updated` and `post.published` for the same post on a publish action). Make handlers idempotent.
+- **Up to 4 attempts per event with exponential backoff.** A failed delivery is retried after 30 seconds, then 5 minutes, then 30 minutes. After the 4th failure the delivery is marked `failed` permanently and dropped. Retries are processed by a 1-minute cron, so the actual retry time may be up to a minute later than the schedule.
+- **A failure is any non-2xx status, network error, or timeout.** The 10-second request timeout aborts handlers that don't respond in time.
+- **At-least-once.** A retry can result in your handler receiving the same event more than once if a prior attempt succeeded but the response was lost in transit. **Make handlers idempotent** — typically by tracking the `(event, data.id)` pair you've already processed.
+- **Order is not guaranteed.** Multiple events may fire concurrently (e.g. `post.updated` and `post.published` for the same post on a publish action), and a retried event can arrive after a later one. Don't rely on event ordering to reconstruct state.
 - **Async dispatch.** Webhook delivery runs in the background after the API request completes, so a slow or failing endpoint will not slow down or fail the originating CMS operation.
+- **Retries skip inactive webhooks.** If you toggle a webhook inactive while a retry is pending, the pending retry is dropped.
 
 ---
 
@@ -164,12 +165,13 @@ Use a constant-time comparison (`timingSafeEqual` / `hmac.compare_digest`) — a
 For each webhook, the admin UI shows recent delivery attempts with:
 
 - The event name
-- HTTP response status (or empty if the request failed before getting a response)
+- HTTP response status of the most recent attempt (or empty if the request failed before getting a response)
 - `delivered` or `failed`
-- Timestamp of the attempt
+- Number of attempts (1 for first-try success; higher values mean the delivery was retried)
+- Timestamp of the most recent attempt
 - The full payload that was sent
 
-This is useful for debugging integrations — if your handler isn't being hit, check here first to see whether Carbon attempted the delivery and what response it got.
+This is useful for debugging integrations — if your handler isn't being hit, check here first to see whether Carbon attempted the delivery and what response it got. A row with `failed` and `attempts: 4` means Carbon exhausted its retry budget; the event is gone.
 
 ---
 
@@ -193,5 +195,4 @@ Signed with the same secret and headers as a real event. Useful for verifying co
 
 These are limitations of the current implementation, listed here so integrators aren't surprised:
 
-- **No retries on failure.** A flaky endpoint will lose events. Plan for this.
 - **No event filtering.** A subscription is "all events of type X" — you cannot, for example, subscribe only to `post.published` events for a specific category.
