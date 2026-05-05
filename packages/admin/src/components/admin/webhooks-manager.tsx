@@ -91,6 +91,9 @@ function DeliveryLog({ webhookId }: { webhookId: string }) {
           }`}>
             {d.status === "delivered" ? `${d.responseStatus} OK` : `Failed${d.responseStatus ? ` (${d.responseStatus})` : ""}`}
           </span>
+          {d.attempts > 1 && (
+            <span className="text-neutral-500">{d.attempts} attempts</span>
+          )}
           <span className="text-neutral-400">{new Date(d.createdAt).toLocaleString()}</span>
         </div>
       ))}

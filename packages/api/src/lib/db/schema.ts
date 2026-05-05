@@ -233,6 +233,7 @@ export const webhookDeliveries = pgTable("webhook_deliveries", {
   responseStatus: integer("response_status"),
   attempts: integer("attempts").notNull().default(1),
   lastAttemptAt: timestamp("last_attempt_at").notNull(),
+  nextRetryAt: timestamp("next_retry_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

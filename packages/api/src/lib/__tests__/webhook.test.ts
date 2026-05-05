@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { ALL_WEBHOOK_EVENTS, generateWebhookSecret } from "../webhook";
+import {
+  ALL_WEBHOOK_EVENTS,
+  MAX_DELIVERY_ATTEMPTS,
+  generateWebhookSecret,
+  nextRetryDelaySeconds,
+} from "../webhook";
 
 describe("ALL_WEBHOOK_EVENTS", () => {
   it("includes the editorial workflow events that the review routes dispatch", () => {
@@ -38,5 +43,49 @@ describe("generateWebhookSecret", () => {
 
   it("produces a different value on each call", () => {
     expect(generateWebhookSecret()).not.toBe(generateWebhookSecret());
+  });
+});
+
+describe("nextRetryDelaySeconds", () => {
+  it("schedules retry 30s after the first failed attempt", () => {
+    expect(nextRetryDelaySeconds(1)).toBe(30);
+  });
+
+  it("schedules retry 5 minutes after the second failed attempt", () => {
+    expect(nextRetryDelaySeconds(2)).toBe(300);
+  });
+
+  it("schedules retry 30 minutes after the third failed attempt", () => {
+    expect(nextRetryDelaySeconds(3)).toBe(1800);
+  });
+
+  it("returns null after the attempt budget is exhausted", () => {
+    expect(nextRetryDelaySeconds(MAX_DELIVERY_ATTEMPTS)).toBeNull();
+    expect(nextRetryDelaySeconds(MAX_DELIVERY_ATTEMPTS + 1)).toBeNull();
+  });
+
+  it("returns null for invalid attempt counts", () => {
+    expect(nextRetryDelaySeconds(0)).toBeNull();
+    expect(nextRetryDelaySeconds(-1)).toBeNull();
+  });
+
+  it("uses strictly increasing backoff", () => {
+    let prev = 0;
+    for (let attempts = 1; attempts < MAX_DELIVERY_ATTEMPTS; attempts++) {
+      const delay = nextRetryDelaySeconds(attempts);
+      expect(delay).not.toBeNull();
+      expect(delay!).toBeGreaterThan(prev);
+      prev = delay!;
+    }
+  });
+
+  it("permits exactly MAX_DELIVERY_ATTEMPTS - 1 retries (so MAX_DELIVERY_ATTEMPTS total attempts)", () => {
+    let attempts = 1;
+    let retries = 0;
+    while (nextRetryDelaySeconds(attempts) !== null) {
+      retries++;
+      attempts++;
+    }
+    expect(retries).toBe(MAX_DELIVERY_ATTEMPTS - 1);
   });
 });
