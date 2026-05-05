@@ -5,13 +5,7 @@ import { db } from "@/lib/db";
 import { webhooks } from "@/lib/db/schema";
 import { ok, badRequest, notFound, noContent, serverError } from "@/lib/api/response";
 import { ALL_WEBHOOK_EVENTS } from "@/lib/webhook";
-
-function isAdmin(req: NextRequest): boolean {
-  return (
-    req.headers.get("authorization") === `Bearer ${process.env.AUTH_SECRET}` &&
-    req.headers.get("x-user-role") === "admin"
-  );
-}
+import { authorize } from "@/lib/authz";
 
 const updateSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -23,7 +17,8 @@ const updateSchema = z.object({
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: Params) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await authorize(req, "webhooks:read");
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   try {
     const { id } = await params;
@@ -49,7 +44,8 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 export async function PUT(req: NextRequest, { params }: Params) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await authorize(req, "webhooks:write");
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   try {
     const { id } = await params;
@@ -80,7 +76,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await authorize(req, "webhooks:write");
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   try {
     const { id } = await params;

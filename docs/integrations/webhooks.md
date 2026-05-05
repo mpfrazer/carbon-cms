@@ -26,6 +26,23 @@ When you save, Carbon generates a **shared secret** and shows it once. Copy it i
 
 A webhook can be toggled inactive without deleting it. Inactive webhooks receive no events.
 
+### Programmatic management with API keys
+
+Webhooks can also be registered, edited, and revoked from outside the admin UI by calling the `/api/v1/webhooks` endpoints with an API key. The required scopes are:
+
+| Operation | Scope |
+|-----------|-------|
+| List webhooks, view delivery history (`GET`) | `webhooks:read` |
+| Create, update, delete, and send test deliveries (`POST` / `PUT` / `DELETE`) | `webhooks:write` |
+
+Pick the **Webhook integrator** preset in the admin's API-keys page to get both scopes in one click. Pass the key as a bearer token:
+
+```
+Authorization: Bearer csk_<your-key>
+```
+
+A request with a valid API key but missing the required scope returns `403 Missing required scope: webhooks:write` (or `webhooks:read`).
+
 ---
 
 ## Event catalog
@@ -177,5 +194,4 @@ Signed with the same secret and headers as a real event. Useful for verifying co
 These are limitations of the current implementation, listed here so integrators aren't surprised:
 
 - **No retries on failure.** A flaky endpoint will lose events. Plan for this.
-- **Programmatic management is admin-only.** The `/api/v1/webhooks` endpoints accept only the internal admin proxy auth, not API keys. To register webhooks from an external tool today, you must use the admin UI. API-key access for webhook management is a planned enhancement.
 - **No event filtering.** A subscription is "all events of type X" — you cannot, for example, subscribe only to `post.published` events for a specific category.
