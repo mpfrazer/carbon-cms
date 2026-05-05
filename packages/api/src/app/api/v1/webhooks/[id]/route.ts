@@ -16,7 +16,7 @@ function isAdmin(req: NextRequest): boolean {
 const updateSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   url: z.string().url().optional(),
-  events: z.array(z.enum(ALL_WEBHOOK_EVENTS as [string, ...string[]])).min(1).optional(),
+  events: z.array(z.enum(ALL_WEBHOOK_EVENTS)).min(1).optional(),
   active: z.boolean().optional(),
 });
 
