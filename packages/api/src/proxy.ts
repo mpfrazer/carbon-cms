@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { parseCorsOrigins, getCorsHeaders } from "@/lib/cors";
+import { extractApiKeyToken, validateApiKey } from "@/lib/api-key";
 
 const WINDOW_MS = 60_000;
 const LIMIT_GENERAL = 120;
@@ -41,7 +42,7 @@ function getIp(req: NextRequest): string {
   );
 }
 
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (!pathname.startsWith("/api/v1") && !pathname.startsWith("/uploads")) {
     return NextResponse.next();
@@ -75,12 +76,37 @@ export function proxy(req: NextRequest) {
     return res;
   }
 
+  // Validate API key tokens before doing anything else with them. An invalid
+  // token must not get the API-key rate-limit bucket and must not pass the
+  // authorization gate further down. Validation failures are billed against
+  // the IP rate-limit bucket so they slow down brute-force guessing.
+  const apiKeyToken = extractApiKeyToken(bearer);
+  let validatedKeyId: string | null = null;
+  if (apiKeyToken) {
+    const validated = await validateApiKey(apiKeyToken);
+    if (!validated) {
+      const ip = getIp(req);
+      const result = checkRateLimit(`ip:${ip}:general`, LIMIT_GENERAL, WINDOW_MS);
+      const headers: Record<string, string> = {
+        "X-RateLimit-Limit": String(result.limit),
+        "X-RateLimit-Remaining": String(result.remaining),
+        "X-RateLimit-Reset": String(result.resetAt),
+        ...corsHeaders,
+      };
+      return NextResponse.json(
+        { error: "Invalid API key" },
+        { status: 401, headers },
+      );
+    }
+    validatedKeyId = validated.id;
+  }
+
   // Rate limiting
   let rlKey: string;
   let limit: number;
 
-  if (bearer.startsWith("Bearer csk_")) {
-    rlKey = `apikey:${bearer.slice(7, 19)}`;
+  if (validatedKeyId) {
+    rlKey = `apikey:${validatedKeyId}`;
     limit = LIMIT_API_KEY;
   } else {
     const ip = getIp(req);
@@ -109,9 +135,8 @@ export function proxy(req: NextRequest) {
   const isPublicAny = PUBLIC_ANY_PATHS.includes(pathname);
   const isPublicGet =
     req.method === "GET" && PUBLIC_GET_PREFIXES.some((p) => pathname.startsWith(p));
-  const isApiKey = bearer.startsWith("Bearer csk_");
 
-  if (!isPublicAny && !isPublicGet && !isApiKey) {
+  if (!isPublicAny && !isPublicGet && !validatedKeyId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers: rlHeaders });
   }
 

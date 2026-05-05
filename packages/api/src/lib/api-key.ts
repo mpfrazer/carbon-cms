@@ -10,6 +10,17 @@ export function generateApiKey(): { key: string; keyPrefix: string; keyHash: str
   return { key, keyPrefix, keyHash };
 }
 
+/**
+ * Returns the API key token (the part after "Bearer ") if the header is a
+ * well-formed API key bearer, otherwise null. Pure prefix check — does not
+ * verify the token against the database.
+ */
+export function extractApiKeyToken(authorizationHeader: string | null | undefined): string | null {
+  if (!authorizationHeader) return null;
+  if (!authorizationHeader.startsWith("Bearer csk_")) return null;
+  return authorizationHeader.slice(7);
+}
+
 export async function validateApiKey(key: string): Promise<{ id: string; name: string } | null> {
   if (!key.startsWith("csk_")) return null;
   const keyHash = createHash("sha256").update(key).digest("hex");
