@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { apiKeys } from "@/lib/db/schema";
 import { ok, created, badRequest, serverError } from "@/lib/api/response";
-import { generateApiKey } from "@/lib/api-key";
+import { generateApiKey, ALL_API_KEY_SCOPES } from "@/lib/api-key";
 
 function isAdmin(req: NextRequest): boolean {
   return (
@@ -15,6 +15,7 @@ function isAdmin(req: NextRequest): boolean {
 
 const createSchema = z.object({
   name: z.string().min(1).max(200),
+  scopes: z.array(z.enum(ALL_API_KEY_SCOPES)).min(1),
 });
 
 export async function GET(req: NextRequest) {
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
         id: apiKeys.id,
         name: apiKeys.name,
         keyPrefix: apiKeys.keyPrefix,
+        scopes: apiKeys.scopes,
         lastUsedAt: apiKeys.lastUsedAt,
         revokedAt: apiKeys.revokedAt,
         createdAt: apiKeys.createdAt,
@@ -53,8 +55,14 @@ export async function POST(req: NextRequest) {
 
     const [row] = await db
       .insert(apiKeys)
-      .values({ name: parsed.data.name, keyHash, keyPrefix, createdBy: userId ?? undefined })
-      .returning({ id: apiKeys.id, name: apiKeys.name, keyPrefix: apiKeys.keyPrefix, createdAt: apiKeys.createdAt });
+      .values({ name: parsed.data.name, scopes: parsed.data.scopes, keyHash, keyPrefix, createdBy: userId ?? undefined })
+      .returning({
+        id: apiKeys.id,
+        name: apiKeys.name,
+        keyPrefix: apiKeys.keyPrefix,
+        scopes: apiKeys.scopes,
+        createdAt: apiKeys.createdAt,
+      });
 
     return created({ ...row, key });
   } catch (e) {
