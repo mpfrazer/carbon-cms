@@ -5,13 +5,7 @@ import { db } from "@/lib/db";
 import { webhooks } from "@/lib/db/schema";
 import { ok, created, badRequest, serverError } from "@/lib/api/response";
 import { generateWebhookSecret, ALL_WEBHOOK_EVENTS } from "@/lib/webhook";
-
-function isAdmin(req: NextRequest): boolean {
-  return (
-    req.headers.get("authorization") === `Bearer ${process.env.AUTH_SECRET}` &&
-    req.headers.get("x-user-role") === "admin"
-  );
-}
+import { authorize } from "@/lib/authz";
 
 const createSchema = z.object({
   name: z.string().min(1).max(200),
@@ -20,7 +14,8 @@ const createSchema = z.object({
 });
 
 export async function GET(req: NextRequest) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await authorize(req, "webhooks:read");
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   try {
     const rows = await db
@@ -43,7 +38,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await authorize(req, "webhooks:write");
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   try {
     const body = await req.json();

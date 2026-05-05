@@ -3,18 +3,13 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { webhooks, webhookDeliveries } from "@/lib/db/schema";
 import { ok, notFound, serverError } from "@/lib/api/response";
-
-function isAdmin(req: NextRequest): boolean {
-  return (
-    req.headers.get("authorization") === `Bearer ${process.env.AUTH_SECRET}` &&
-    req.headers.get("x-user-role") === "admin"
-  );
-}
+import { authorize } from "@/lib/authz";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, { params }: Params) {
-  if (!isAdmin(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await authorize(req, "webhooks:read");
+  if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
   try {
     const { id } = await params;
