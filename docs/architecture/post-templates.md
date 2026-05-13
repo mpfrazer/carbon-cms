@@ -92,14 +92,12 @@ export interface PostTemplate<S extends z.ZodTypeAny = z.ZodTypeAny> {
   // against this on insert/update.
   schema: S;
 
-  // Where the rendered template panel sits relative to the post body.
-  // Admin can override per-post if `placementOverride` is true.
-  defaultPlacement: "top" | "bottom" | "replace";
-  placementOverride?: boolean;
-
   // Frontend render component. Receives the parsed structured data
-  // and the surrounding post. Theme can override by exporting its
-  // own template render for the same kind (see "Theme Overrides").
+  // and the surrounding post, and is responsible for rendering the
+  // entire post body area — including post.content where applicable.
+  // Layout choices (e.g. whether a structured panel sits above or
+  // below the body) live inside the template's render or in its
+  // structuredData schema, not in the registry.
   Render: React.FC<{ post: Post; data: z.infer<S> }>;
 
   // Optional admin editor. If omitted, the admin auto-generates a
@@ -119,9 +117,9 @@ export interface PostTemplate<S extends z.ZodTypeAny = z.ZodTypeAny> {
 
 Each consumer imports only what it needs:
 
-- **API** imports `kind`, `schema`, `placementOverride` (for validation)
-- **Admin** imports `kind`, `label`, `description`, `schema`, `AdminEditor`, `placementOverride`
-- **Frontend** imports `kind`, `Render`, `defaultPlacement`, `jsonLd`, `printStyles`
+- **API** imports `kind`, `schema` (for validation)
+- **Admin** imports `kind`, `label`, `description`, `schema`, `AdminEditor`
+- **Frontend** imports `kind`, `Render`, `jsonLd`, `printStyles`
 
 In Solo mode this is a single TypeScript module per template. In decoupled mode the splits matter (see "Schema Propagation").
 
@@ -136,8 +134,8 @@ Two registration sources:
 Live in `packages/api/src/templates/` (and corresponding admin / frontend folders). Always available across all themes. Ship with Carbon; new built-in templates require a Carbon release.
 
 V1 set:
-- `article` — no extra fields. The default. Preserves current post behavior end-to-end.
-- `recipe` — full structured fields, custom AdminEditor, JSON-LD `Recipe`, print stylesheet.
+- `article` — no structured fields. The default for existing and new posts. Its `Render` is the existing post-body component (renders `post.content`); the migration to "everything is a template" is therefore a refactor of the render layer, not a behavior change for users.
+- `recipe` — full structured fields including a `panelPlacement: "top" | "bottom"` choice for where the recipe panel sits relative to the body. Custom AdminEditor, JSON-LD `Recipe`, print stylesheet.
 
 ### Theme-contributed
 
@@ -152,6 +150,12 @@ export const templates = [
 ```
 
 Theme-contributed templates have the same shape as built-in templates but are scoped to the theme's lifecycle.
+
+A new built-in **Library** theme ships in PR C as the first real consumer of this mechanism. It contributes a `book-review` template (rating, author, book metadata, optional excerpt) and provides a layout suited to a book-review blog. This serves three purposes:
+
+1. Exercises the theme-contribution flow in CI — round-tripping a real schema and render through the registration and validation paths
+2. Demonstrates the contract for theme authors — a working example to copy from
+3. Gives non-engineer adopters running a book-review blog a starting point
 
 ### Trust model
 
@@ -222,17 +226,22 @@ Form submit triggers client-side Zod validation (when the AdminEditor is loaded 
 
 ## Frontend Rendering
 
-Themes render templates via a single component:
+Themes render the entire post body area through a single dispatcher:
 
 ```tsx
-<TemplateRenderer post={post} placement="top" />
-<PostBody post={post} />
-<TemplateRenderer post={post} placement="bottom" />
+<TemplateRenderer post={post} />
 ```
 
-`TemplateRenderer` looks up the template by `post.template`, checks its `defaultPlacement` (and the post's optional override), and renders the template's `Render` component if the placement matches. Nothing renders for placements that don't apply.
+`TemplateRenderer` looks up the template by `post.template` and renders the template's `Render` component, passing the parsed `structuredData`. The template's `Render` is responsible for the entire body area — including `post.content` where applicable. There is no separate `<PostBody>` component; the `article` template *is* the post-body renderer.
 
-`defaultPlacement: "replace"` means the structured panel *is* the post body — used for templates where the body field isn't meaningful (e.g., a pure-data "event listing" template). The `<PostBody>` component checks for this and skips the body render.
+This collapses what would otherwise be a custom-vs-default render path into one flow: every post is rendered by exactly one template's `Render`. Templates that mix structured panels with regular body content (recipe, book-review) handle the layout internally — including any "configurable placement" choice, which lives in the template's structured data:
+
+```ts
+// recipe template schema (excerpt)
+panelPlacement: z.enum(["top", "bottom"]).default("top"),
+```
+
+The recipe `Render` reads `data.panelPlacement` and arranges the panel and `post.content` accordingly. Templates that don't have a layout choice simply don't include one in their schema.
 
 ### JSON-LD
 
@@ -278,12 +287,12 @@ Atomic PRs in dependency order:
 
 - Schema migration: `template`, `structuredData` columns + index on `template`
 - Template registry (in-process Map populated at boot)
-- Built-in `article` template (no extra fields, preserves current behavior)
-- Validation in `POST /api/v1/posts` and `PUT /api/v1/posts/[id]` against the resolved template's schema
-- Admin: template picker on the post editor, auto-generated form for templates without a custom `AdminEditor`
-- Frontend: `<TemplateRenderer>` component, `defaultPlacement` honored
+- Built-in `article` template — its `Render` is the existing post-body component, lifted into the template module. No structured fields, no JSON-LD. Behavior for existing posts is unchanged; the change is structural.
+- Validation in `POST /api/v1/posts` and `PUT /api/v1/posts/[id]` against the resolved template's schema (no-op for `article` since the schema is empty)
+- Admin: template picker on the post editor (only `article` available at this point), auto-generated form for templates without a custom `AdminEditor`
+- Frontend: `<TemplateRenderer post={post} />` as the single dispatcher; existing `<PostBody>` callers in themes migrate to `<TemplateRenderer>`
 - `<TemplateJsonLd>` component (no-op for `article`)
-- Tests: schema validation matrix; template registry invariants; auto-form generation for representative schema shapes
+- Tests: schema validation matrix; template registry invariants; auto-form generation for representative schema shapes; existing post-render snapshots preserved through the refactor
 
 ### PR B — Recipe Template
 
@@ -291,7 +300,7 @@ Atomic PRs in dependency order:
 - Default theme + minimal theme each get a recipe render component
 - Tests: schema validation against valid/invalid recipe payloads; JSON-LD output shape against schema.org Recipe spec
 
-### PR C — Theme-Contributed Templates
+### PR C — Theme-Contributed Templates + Library Theme
 
 - `template_schemas` table for persisted theme manifests
 - `POST /api/v1/templates/register` endpoint (called by frontend on theme activation)
@@ -300,7 +309,8 @@ Atomic PRs in dependency order:
 - Admin: template picker shows theme-contributed kinds; theme-switch confirmation surfaces impacted-post counts
 - Frontend: fallback rendering for unknown kinds; admin banner on impacted posts
 - Schema-conflict handling (active theme wins)
-- Tests: schema-propagation round-trip; theme-deactivation preserves data; switching themes flips renderable kinds correctly
+- New built-in **Library** theme that contributes the `book-review` template — schema, render, optional `jsonLd` for schema.org `Book` / `Review`, no custom AdminEditor (auto-gen is sufficient for v1)
+- Tests: schema-propagation round-trip via Library theme activation; theme-deactivation preserves data; switching themes flips renderable kinds correctly; book-review posts created under Library remain valid after deactivation
 
 ### PR D — Custom AdminEditor for Theme-Contributed Templates
 
@@ -313,12 +323,16 @@ PRs A and B together unlock recipe sites. PRs C and D unlock the third-party tem
 
 ---
 
+## Resolved Decisions
+
+1. **Theme-contribution proof in PR C** — ship a built-in **Library** theme that contributes a `book-review` template. Real working example, exercises the round-trip in CI, gives book-review-blog adopters a starting point. (Better than a synthetic test fixture.)
+2. **`article` template render** — move post-body rendering fully inside the template system. Every post is rendered by exactly one template's `Render`. The `article` template's `Render` is the existing post-body component, lifted into the template module. Single render flow, no special-cased default path. Bigger refactor in PR A but a simpler steady state.
+3. **JSON-LD opt-in vs always-on** — always-on when a template provides a `jsonLd` hook. The opt-out edge cases (rare to nonexistent in practice) can be addressed by a per-post `seoSuppress` boolean later, not by complicating the template contract now.
+4. **Preview / test mode** — UX nice-to-have, not a substrate requirement. The recipe editor in PR B may include an inline preview pane; book-review (PR C) probably doesn't need one. Generic preview is its own feature, deferred.
+
 ## Open Questions
 
-1. **What's the smallest possible theme-contributed-template shape that still proves the substrate works in PR C?** Option: ship a trivial `book-review` template in a built-in test theme just to exercise the round-trip. Or wait for a real third-party use case.
-2. **Should the `article` template's render component be the existing post body render, or should we move post body rendering inside the template system entirely?** The latter is more consistent (everything is a template) but is a bigger refactor of the frontend.
-3. **Should JSON-LD be opt-in per-page or always-on when a template provides it?** Always-on is simpler. Opt-in respects "I want to render this post without rich snippets" edge cases (probably none in practice).
-4. **Do we need a "test mode" for templates** — a way to preview how a template renders without saving it? Likely yes for the recipe editor (preview pane in the admin), but it's a UX nice-to-have, not a substrate requirement.
+(None blocking implementation at this point. Anything that surfaces during PR A development gets logged here for future reference.)
 
 ---
 
