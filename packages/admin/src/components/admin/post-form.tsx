@@ -12,6 +12,9 @@ import { CategorySuggester } from "@/components/admin/ai/category-suggester";
 import { TitleSuggester } from "@/components/admin/ai/title-suggester";
 import { OutlineGenerator } from "@/components/admin/ai/outline-generator";
 import { RevisionPanel } from "@/components/admin/revision-panel";
+import { TemplatePicker } from "@/components/admin/template-picker";
+import { AutoForm } from "@/components/admin/auto-form";
+import { getTemplate } from "@/templates";
 
 interface Taxonomy { id: string; name: string; }
 
@@ -75,6 +78,8 @@ interface PostFormProps {
     content: string;
     excerpt?: string | null;
     status: string;
+    template?: string;
+    structuredData?: Record<string, unknown>;
     reviewNote?: string | null;
     featuredImageId?: string | null;
     featuredImageUrl?: string | null;
@@ -98,6 +103,8 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
   const [content, setContent] = useState(post?.content ?? "");
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [status, setStatus] = useState(post?.status ?? "draft");
+  const [template, setTemplate] = useState(post?.template ?? "article");
+  const [structuredData, setStructuredData] = useState<Record<string, unknown>>(post?.structuredData ?? {});
   const [featuredImageId, setFeaturedImageId] = useState<string | null>(post?.featuredImageId ?? null);
   const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(post?.featuredImageUrl ?? null);
   const [metaTitle, setMetaTitle] = useState(post?.metaTitle ?? "");
@@ -182,6 +189,8 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
       title, slug, content,
       excerpt: excerpt || null,
       status,
+      template,
+      structuredData,
       featuredImageId: featuredImageId ?? null,
       metaTitle: metaTitle || null,
       metaDescription: metaDescription || null,
@@ -291,6 +300,35 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
         <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Slug</label>
         <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} required className={inputClass + " font-mono"} />
       </div>
+
+      <div className="space-y-1.5">
+        <TemplatePicker
+          value={template}
+          onChange={(next) => { setTemplate(next); setStructuredData({}); }}
+          confirmOnChange={Object.keys(structuredData).length > 0}
+        />
+      </div>
+
+      {(() => {
+        const tpl = getTemplate(template);
+        if (!tpl) return null;
+        if (tpl.AdminEditor) {
+          const Editor = tpl.AdminEditor;
+          return (
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Template fields</label>
+              <Editor value={structuredData} onChange={setStructuredData} />
+            </div>
+          );
+        }
+        if (Object.keys(tpl.schema.shape).length === 0) return null;
+        return (
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Template fields</label>
+            <AutoForm schema={tpl.schema} value={structuredData} onChange={setStructuredData} />
+          </div>
+        );
+      })()}
 
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Content</label>

@@ -7,6 +7,8 @@ import {
   uuid,
   primaryKey,
   boolean,
+  jsonb,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -99,6 +101,8 @@ export const posts = pgTable("posts", {
   content: text("content").notNull().default(""),
   excerpt: text("excerpt"),
   status: postStatusEnum("status").notNull().default("draft"),
+  template: text("template").notNull().default("article"),
+  structuredData: jsonb("structured_data").notNull().default({}),
   authorId: uuid("author_id")
     .notNull()
     .references(() => users.id, { onDelete: "restrict" }),
@@ -112,7 +116,7 @@ export const posts = pgTable("posts", {
   reviewNote: text("review_note"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (t) => [index("posts_template_idx").on(t.template)]);
 
 // --- Pages ---
 

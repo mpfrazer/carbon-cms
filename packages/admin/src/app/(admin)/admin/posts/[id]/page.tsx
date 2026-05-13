@@ -10,6 +10,8 @@ interface Post {
   id: string; title: string; slug: string; content: string; status: string;
   excerpt?: string | null; metaTitle?: string | null; metaDescription?: string | null;
   reviewNote?: string | null;
+  template?: string;
+  structuredData?: Record<string, unknown>;
   categories: Category[]; tags: Tag[];
   featuredImage?: { id: string; url: string; altText: string | null } | null;
 }
@@ -45,6 +47,8 @@ export default async function EditPostPage({ params }: { params: Promise<{ id: s
           metaTitle: post.metaTitle,
           metaDescription: post.metaDescription,
           reviewNote: post.reviewNote,
+          template: post.template ?? "article",
+          structuredData: post.structuredData ?? {},
           categories: post.categories,
           tags: post.tags,
           featuredImageId: post.featuredImage?.id ?? null,

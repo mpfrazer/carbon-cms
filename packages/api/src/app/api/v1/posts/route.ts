@@ -15,6 +15,7 @@ import {
 import { slugify } from "@/lib/utils";
 import { dispatchWebhooks } from "@/lib/webhook";
 import { saveRevision } from "@/lib/revisions";
+import { validateStructuredData } from "@/lib/templates";
 
 const createPostSchema = z.object({
   title: z.string().min(1).max(500),
@@ -22,6 +23,8 @@ const createPostSchema = z.object({
   content: z.string().default(""),
   excerpt: z.string().nullish(),
   status: z.enum(["draft", "published", "scheduled", "archived"]).default("draft"),
+  template: z.string().default("article"),
+  structuredData: z.record(z.string(), z.unknown()).default({}),
   featuredImageId: z.string().uuid().nullish(),
   publishedAt: z.string().datetime().nullish(),
   scheduledAt: z.string().datetime().nullish(),
@@ -86,7 +89,10 @@ export async function POST(req: NextRequest) {
     const parsed = createPostSchema.safeParse(body);
     if (!parsed.success) return badRequest("Validation failed", parsed.error.flatten());
 
-    const { title, slug: rawSlug, categoryIds, tagIds, publishedAt, scheduledAt, ...rest } = parsed.data;
+    const validation = validateStructuredData(parsed.data.template, parsed.data.structuredData);
+    if (!validation.ok) return badRequest(validation.error, validation.details);
+
+    const { title, slug: rawSlug, categoryIds, tagIds, publishedAt, scheduledAt, structuredData: _sd, ...rest } = parsed.data;
     const slug = rawSlug ?? slugify(title);
 
     const existing = await db.select({ id: posts.id }).from(posts).where(eq(posts.slug, slug)).limit(1);
@@ -96,6 +102,7 @@ export async function POST(req: NextRequest) {
       .insert(posts)
       .values({
         title, slug, authorId, ...rest,
+        structuredData: validation.data as Record<string, unknown>,
         publishedAt: publishedAt ? new Date(publishedAt) : null,
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
       })
@@ -113,6 +120,7 @@ export async function POST(req: NextRequest) {
       status: post.status, featuredImageId: post.featuredImageId,
       publishedAt: post.publishedAt, scheduledAt: post.scheduledAt,
       metaTitle: post.metaTitle, metaDescription: post.metaDescription,
+      template: post.template, structuredData: post.structuredData,
     }, authorId);
     dispatchWebhooks("post.created", post);
     if (post.status === "published") dispatchWebhooks("post.published", post);

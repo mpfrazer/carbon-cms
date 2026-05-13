@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { CommentsSection } from "@/components/comments-section";
 import type { Comment } from "@/components/comments-section";
+import { TemplateRenderer } from "@/components/template-renderer";
+import type { TemplatePost } from "@/templates";
 import { estimateReadTime } from "@/lib/read-time";
 
 interface BlogPostProps {
@@ -15,6 +17,10 @@ interface BlogPostProps {
   categories: { id: string; name: string; slug: string }[];
   tags: { id: string; name: string; slug: string }[];
   postId: string;
+  postSlug: string;
+  postTemplate: string;
+  postStructuredData: Record<string, unknown>;
+  postUpdatedAt: Date;
   comments: Comment[];
   allowComments: boolean;
   requireLoginToComment: boolean;
@@ -25,7 +31,19 @@ function formatDate(date: Date) {
   return new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
-export function BlogPost({ title, content, publishedAt, createdAt, authorName, authorAvatarUrl, featuredImageUrl, featuredImageAlt, categories, tags, postId, comments, allowComments, requireLoginToComment, currentUser }: BlogPostProps) {
+export function BlogPost({ title, content, publishedAt, createdAt, authorName, authorAvatarUrl, featuredImageUrl, featuredImageAlt, categories, tags, postId, postSlug, postTemplate, postStructuredData, postUpdatedAt, comments, allowComments, requireLoginToComment, currentUser }: BlogPostProps) {
+  const templatePost: TemplatePost = {
+    id: postId,
+    title,
+    slug: postSlug,
+    content,
+    publishedAt: publishedAt ? publishedAt.toISOString() : null,
+    createdAt: createdAt.toISOString(),
+    updatedAt: postUpdatedAt.toISOString(),
+    template: postTemplate,
+    structuredData: postStructuredData,
+  };
+
   return (
     <div>
       {featuredImageUrl && (
@@ -71,10 +89,7 @@ export function BlogPost({ title, content, publishedAt, createdAt, authorName, a
           </div>
         </header>
 
-        <div
-          className="prose prose-neutral max-w-none prose-lg prose-headings:font-semibold prose-a:text-neutral-900 prose-a:underline prose-a:underline-offset-2"
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
+        <TemplateRenderer post={templatePost} />
 
         {tags.length > 0 && (
           <footer className="mt-12 pt-8 border-t border-neutral-100 flex flex-wrap gap-2">

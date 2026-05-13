@@ -13,6 +13,7 @@ interface Post {
   excerpt: string | null; metaTitle: string | null; metaDescription: string | null;
   publishedAt: string | null; createdAt: string; updatedAt: string;
   authorId: string; categories: Category[]; tags: Tag[];
+  template: string; structuredData: Record<string, unknown>;
   featuredImage?: { id: string; url: string; altText: string | null } | null;
 }
 interface Author { name: string; avatarUrl: string | null; }
@@ -101,6 +102,10 @@ export default async function BlogPostPage({ params }: Props) {
         categories={post.categories}
         tags={post.tags}
         postId={post.id}
+        postSlug={post.slug}
+        postTemplate={post.template ?? "article"}
+        postStructuredData={post.structuredData ?? {}}
+        postUpdatedAt={new Date(post.updatedAt)}
         comments={postComments}
         allowComments={settings.allowComments}
         requireLoginToComment={settings.requireLoginToComment}
