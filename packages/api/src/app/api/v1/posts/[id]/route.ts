@@ -7,6 +7,7 @@ import { ok, badRequest, notFound, conflict, noContent, serverError } from "@/li
 import { slugify } from "@/lib/utils";
 import { dispatchWebhooks } from "@/lib/webhook";
 import { saveRevision } from "@/lib/revisions";
+import { validateStructuredData } from "@/lib/templates";
 
 const updatePostSchema = z.object({
   title: z.string().min(1).max(500).optional(),
@@ -14,6 +15,8 @@ const updatePostSchema = z.object({
   content: z.string().optional(),
   excerpt: z.string().optional().nullable(),
   status: z.enum(["draft", "published", "scheduled", "archived", "in_review"]).optional(),
+  template: z.string().optional(),
+  structuredData: z.record(z.string(), z.unknown()).optional(),
   featuredImageId: z.string().uuid().optional().nullable(),
   publishedAt: z.string().datetime().optional().nullable(),
   scheduledAt: z.string().datetime().optional().nullable(),
@@ -65,7 +68,19 @@ export async function PUT(req: NextRequest, { params }: Params) {
     const [existing] = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
     if (!existing) return notFound("Post not found");
 
-    const { title, slug: rawSlug, categoryIds, tagIds, publishedAt, scheduledAt, ...rest } = parsed.data;
+    // If template OR structuredData is being updated, re-validate against the
+    // resulting template's schema. Use the new template if provided, otherwise
+    // the existing one. Default to the existing structuredData if not provided.
+    const effectiveTemplate = parsed.data.template ?? existing.template;
+    let nextStructuredData: Record<string, unknown> | undefined;
+    if (parsed.data.structuredData !== undefined || parsed.data.template !== undefined) {
+      const dataToValidate = parsed.data.structuredData ?? existing.structuredData ?? {};
+      const validation = validateStructuredData(effectiveTemplate, dataToValidate);
+      if (!validation.ok) return badRequest(validation.error, validation.details);
+      nextStructuredData = validation.data as Record<string, unknown>;
+    }
+
+    const { title, slug: rawSlug, categoryIds, tagIds, publishedAt, scheduledAt, structuredData: _sd, ...rest } = parsed.data;
     let slug = rawSlug;
     if (title && !slug) slug = slugify(title);
 
@@ -78,6 +93,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
       .update(posts)
       .set({
         ...(title ? { title } : {}), ...(slug ? { slug } : {}), ...rest,
+        ...(nextStructuredData !== undefined ? { structuredData: nextStructuredData } : {}),
         ...(publishedAt !== undefined ? { publishedAt: publishedAt ? new Date(publishedAt) : null } : {}),
         ...(scheduledAt !== undefined ? { scheduledAt: scheduledAt ? new Date(scheduledAt) : null } : {}),
         updatedAt: new Date(),
@@ -104,6 +120,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
       status: updated.status, featuredImageId: updated.featuredImageId,
       publishedAt: updated.publishedAt, scheduledAt: updated.scheduledAt,
       metaTitle: updated.metaTitle, metaDescription: updated.metaDescription,
+      template: updated.template, structuredData: updated.structuredData,
     }, req.headers.get("x-user-id"));
     dispatchWebhooks("post.updated", updated);
     if (updated.status === "published" && existing.status !== "published") {
