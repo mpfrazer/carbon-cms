@@ -24,18 +24,24 @@ export interface FrontendTemplate {
 
 /**
  * The minimal post shape templates can rely on. Themes pass the full post
- * object through; templates pull what they need.
+ * object through; templates pull what they need. Author and featured image
+ * are optional for templates that don't need them but populated by the
+ * standard blog page route, so any template that does need them (e.g.
+ * recipe's JSON-LD) can rely on them being present in practice.
  */
 export interface TemplatePost {
   id: string;
   title: string;
   slug: string;
   content: string;
+  excerpt: string | null;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
   template: string;
   structuredData: Record<string, unknown>;
+  author?: { name: string; avatarUrl?: string | null } | null;
+  featuredImage?: { url: string; altText?: string | null } | null;
 }
 
 export interface TemplateRenderProps {

@@ -5,6 +5,9 @@ import { apiGet, serverApiGet } from "@/lib/api/client";
 import { auth } from "@/lib/auth";
 import type { Metadata } from "next";
 import type { Comment } from "@/components/comments-section";
+import { TemplateJsonLd } from "@/components/template-jsonld";
+import { TemplatePrintStyles } from "@/components/template-print-styles";
+import type { TemplatePost } from "@/templates";
 
 interface Category { id: string; name: string; slug: string }
 interface Tag { id: string; name: string; slug: string }
@@ -87,12 +90,30 @@ export default async function BlogPostPage({ params }: Props) {
     mainEntityOfPage: { "@type": "WebPage", "@id": `${base}/blog/${slug}` },
   };
 
+  const templatePost: TemplatePost = {
+    id: post.id,
+    title: post.title,
+    slug: post.slug,
+    content: post.content,
+    excerpt: post.excerpt,
+    publishedAt: post.publishedAt,
+    createdAt: post.createdAt,
+    updatedAt: post.updatedAt,
+    template: post.template ?? "article",
+    structuredData: post.structuredData ?? {},
+    author: author ? { name: author.name, avatarUrl: author.avatarUrl } : null,
+    featuredImage: post.featuredImage ? { url: post.featuredImage.url, altText: post.featuredImage.altText } : null,
+  };
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <TemplateJsonLd post={templatePost} />
+      <TemplatePrintStyles post={templatePost} />
       <BlogPost
         title={post.title}
         content={post.content}
+        excerpt={post.excerpt}
         publishedAt={post.publishedAt ? new Date(post.publishedAt) : null}
         createdAt={new Date(post.createdAt)}
         authorName={author?.name ?? null}
