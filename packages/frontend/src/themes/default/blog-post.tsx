@@ -8,6 +8,7 @@ import { estimateReadTime } from "@/lib/read-time";
 interface BlogPostProps {
   title: string;
   content: string;
+  excerpt: string | null;
   publishedAt: Date | null;
   createdAt: Date;
   authorName: string | null;
@@ -31,17 +32,20 @@ function formatDate(date: Date) {
   return new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
-export function BlogPost({ title, content, publishedAt, createdAt, authorName, authorAvatarUrl, featuredImageUrl, featuredImageAlt, categories, tags, postId, postSlug, postTemplate, postStructuredData, postUpdatedAt, comments, allowComments, requireLoginToComment, currentUser }: BlogPostProps) {
+export function BlogPost({ title, content, excerpt, publishedAt, createdAt, authorName, authorAvatarUrl, featuredImageUrl, featuredImageAlt, categories, tags, postId, postSlug, postTemplate, postStructuredData, postUpdatedAt, comments, allowComments, requireLoginToComment, currentUser }: BlogPostProps) {
   const templatePost: TemplatePost = {
     id: postId,
     title,
     slug: postSlug,
     content,
+    excerpt,
     publishedAt: publishedAt ? publishedAt.toISOString() : null,
     createdAt: createdAt.toISOString(),
     updatedAt: postUpdatedAt.toISOString(),
     template: postTemplate,
     structuredData: postStructuredData,
+    author: authorName ? { name: authorName, avatarUrl: authorAvatarUrl ?? null } : null,
+    featuredImage: featuredImageUrl ? { url: featuredImageUrl, altText: featuredImageAlt ?? null } : null,
   };
 
   return (
