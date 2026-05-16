@@ -75,7 +75,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     let nextStructuredData: Record<string, unknown> | undefined;
     if (parsed.data.structuredData !== undefined || parsed.data.template !== undefined) {
       const dataToValidate = parsed.data.structuredData ?? existing.structuredData ?? {};
-      const validation = validateStructuredData(effectiveTemplate, dataToValidate);
+      const validation = await validateStructuredData(effectiveTemplate, dataToValidate);
       if (!validation.ok) return badRequest(validation.error, validation.details);
       nextStructuredData = validation.data as Record<string, unknown>;
     }

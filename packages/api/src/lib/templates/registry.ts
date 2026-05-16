@@ -35,11 +35,11 @@ export function listTemplateKinds(): string[] {
 }
 
 /**
- * Validates a structured-data payload against the named template's schema.
- * Returns the parsed (and possibly stripped/normalized) data on success,
- * or a structured error result on failure.
+ * Synchronous validator for built-in templates only. Use the async
+ * validateStructuredData for write paths that need to consider
+ * theme-contributed templates as well.
  */
-export function validateStructuredData(
+export function validateStructuredDataBuiltinOnly(
   kind: string,
   data: unknown,
 ):

@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     const parsed = createPostSchema.safeParse(body);
     if (!parsed.success) return badRequest("Validation failed", parsed.error.flatten());
 
-    const validation = validateStructuredData(parsed.data.template, parsed.data.structuredData);
+    const validation = await validateStructuredData(parsed.data.template, parsed.data.structuredData);
     if (!validation.ok) return badRequest(validation.error, validation.details);
 
     const { title, slug: rawSlug, categoryIds, tagIds, publishedAt, scheduledAt, structuredData: _sd, ...rest } = parsed.data;
