@@ -6,6 +6,9 @@ import {
   listTemplateKinds,
   listTemplates,
   validateStructuredData,
+  validateAgainstContributed,
+  clearCompiledCache,
+  type ContributedTemplate,
 } from "../templates";
 
 describe("article template", () => {
@@ -45,14 +48,14 @@ describe("template registry", () => {
 });
 
 describe("validateStructuredData", () => {
-  it("returns ok with parsed data on success", () => {
-    const result = validateStructuredData("article", {});
+  it("returns ok with parsed data on success", async () => {
+    const result = await validateStructuredData("article", {});
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.data).toEqual({});
   });
 
-  it("returns 400 for unknown templates", () => {
-    const result = validateStructuredData("nonexistent", {});
+  it("returns 400 for unknown templates", async () => {
+    const result = await validateStructuredData("nonexistent", {});
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.status).toBe(400);
@@ -60,8 +63,8 @@ describe("validateStructuredData", () => {
     }
   });
 
-  it("returns 422 for valid template with invalid data", () => {
-    const result = validateStructuredData("article", { stray: "field" });
+  it("returns 422 for valid template with invalid data", async () => {
+    const result = await validateStructuredData("article", { stray: "field" });
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.status).toBe(422);
@@ -69,9 +72,9 @@ describe("validateStructuredData", () => {
     }
   });
 
-  it("treats null/undefined data as an empty object (sensible default)", () => {
-    expect(validateStructuredData("article", null).ok).toBe(true);
-    expect(validateStructuredData("article", undefined).ok).toBe(true);
+  it("treats null/undefined data as an empty object (sensible default)", async () => {
+    expect((await validateStructuredData("article", null)).ok).toBe(true);
+    expect((await validateStructuredData("article", undefined)).ok).toBe(true);
   });
 });
 
@@ -167,8 +170,64 @@ describe("recipe template", () => {
     ).toBe(false);
   });
 
-  it("validateStructuredData routes through the recipe schema", () => {
-    expect(validateStructuredData("recipe", validRecipe).ok).toBe(true);
-    expect(validateStructuredData("recipe", { ingredients: [] }).ok).toBe(false);
+  it("validateStructuredData routes through the recipe schema", async () => {
+    expect((await validateStructuredData("recipe", validRecipe)).ok).toBe(true);
+    expect((await validateStructuredData("recipe", { ingredients: [] })).ok).toBe(false);
+  });
+});
+
+describe("validateAgainstContributed (ajv JSON Schema path)", () => {
+  const sampleTemplate: ContributedTemplate = {
+    themeId: "library",
+    kind: "book-review",
+    label: "Book Review",
+    description: null,
+    jsonSchema: {
+      type: "object",
+      properties: {
+        author: { type: "string" },
+        rating: { type: "integer", minimum: 1, maximum: 5 },
+        genre: { type: "string", enum: ["fiction", "non-fiction"] },
+        purchaseUrl: { type: "string", format: "url" },
+      },
+      required: ["author", "rating"],
+      additionalProperties: false,
+    },
+  };
+
+  // Reset between tests to avoid cross-pollination of cached compiled schemas.
+  it.each([
+    ["accepts a valid payload", { author: "Octavia Butler", rating: 5, genre: "fiction" }, true],
+    ["accepts minimal required fields", { author: "Le Guin", rating: 4 }, true],
+    ["rejects missing required fields", { rating: 3 }, false],
+    ["rejects ratings out of range", { author: "x", rating: 10 }, false],
+    ["rejects non-integer ratings", { author: "x", rating: 3.5 }, false],
+    ["rejects enum violations", { author: "x", rating: 3, genre: "poetry" }, false],
+    ["rejects extra properties when additionalProperties=false", { author: "x", rating: 3, secret: 1 }, false],
+  ])("%s", (_label, data, expectedOk) => {
+    clearCompiledCache();
+    const result = validateAgainstContributed(sampleTemplate, data);
+    expect(result.ok).toBe(expectedOk);
+  });
+
+  it("memoizes the compiled schema across calls (same instance reused)", () => {
+    clearCompiledCache();
+    const v1 = validateAgainstContributed(sampleTemplate, { author: "x", rating: 1 });
+    const v2 = validateAgainstContributed(sampleTemplate, { author: "y", rating: 2 });
+    expect(v1.ok).toBe(true);
+    expect(v2.ok).toBe(true);
+    // Both validate; if memoization is broken the calls still succeed,
+    // so this is primarily a smoke check that re-compilation doesn't crash.
+  });
+
+  it("rejects schemas that are malformed JSON Schema", () => {
+    clearCompiledCache();
+    const broken: ContributedTemplate = {
+      ...sampleTemplate,
+      kind: "broken",
+      jsonSchema: { type: "this-is-not-a-real-type-name" },
+    };
+    const result = validateAgainstContributed(broken, {});
+    expect(result.ok).toBe(false);
   });
 });

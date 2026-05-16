@@ -9,6 +9,7 @@ import {
   boolean,
   jsonb,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -240,6 +241,20 @@ export const webhookDeliveries = pgTable("webhook_deliveries", {
   nextRetryAt: timestamp("next_retry_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// --- Theme-contributed templates ---
+
+export const templateSchemas = pgTable("template_schemas", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  themeId: text("theme_id").notNull(),
+  kind: text("kind").notNull(),
+  label: text("label").notNull(),
+  description: text("description"),
+  jsonSchema: jsonb("json_schema").notNull(),
+  registeredAt: timestamp("registered_at").notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("template_schemas_theme_kind_idx").on(t.themeId, t.kind),
+]);
 
 // --- Revisions ---
 
