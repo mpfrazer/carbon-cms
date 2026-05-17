@@ -184,15 +184,25 @@ function descriptorFor(
 }
 
 /**
+ * Walks a JSON Schema object and produces field descriptors. The Zod-based
+ * entry point (fieldsFromSchema) is a thin wrapper around this — themes
+ * whose schemas reach the admin only as JSON Schema (theme-contributed
+ * templates) call this directly.
+ */
+export function fieldsFromJsonSchema(json: Record<string, unknown>): FieldDescriptor[] {
+  const node = json as JsonSchemaNode;
+  if (!node.properties) return [];
+  const requiredKeys = new Set(node.required ?? []);
+  return Object.entries(node.properties).map(([key, child]) =>
+    descriptorFor(key, child as JsonSchemaNode, requiredKeys.has(key)),
+  );
+}
+
+/**
  * Convert a Zod object schema into an array of field descriptors. Goes via
  * `z.toJSONSchema` so the introspection works against a stable, well-defined
  * shape rather than Zod's internal types.
  */
 export function fieldsFromSchema(schema: z.ZodObject<z.ZodRawShape>): FieldDescriptor[] {
-  const json = z.toJSONSchema(schema) as JsonSchemaNode;
-  if (!json.properties) return [];
-  const requiredKeys = new Set(json.required ?? []);
-  return Object.entries(json.properties).map(([key, node]) =>
-    descriptorFor(key, node as JsonSchemaNode, requiredKeys.has(key)),
-  );
+  return fieldsFromJsonSchema(z.toJSONSchema(schema) as Record<string, unknown>);
 }

@@ -18,3 +18,21 @@ export async function serverApiGet(path: string): Promise<unknown> {
   if (!res.ok) throw new Error(`API error ${res.status} for ${path}`);
   return res.json();
 }
+
+export async function serverApiPost(path: string, body: unknown): Promise<unknown> {
+  const url = `${API_URL}${path}`;
+  const res = await fetch(url, {
+    cache: "no-store",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.AUTH_SECRET}`,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`API error ${res.status} for ${path}: ${text}`);
+  }
+  return res.json();
+}

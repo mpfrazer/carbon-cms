@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import type { z } from "zod";
 import {
   fieldsFromSchema,
+  fieldsFromJsonSchema,
   type FieldDescriptor,
   type ArrayField,
   type ObjectField,
@@ -22,7 +23,25 @@ interface AutoFormProps {
  * custom AdminEditor instead — see RecipeEditor for an example.
  */
 export function AutoForm({ schema, value, onChange }: AutoFormProps) {
-  const fields = fieldsFromSchema(schema);
+  return <FieldsForm fields={fieldsFromSchema(schema)} value={value} onChange={onChange} />;
+}
+
+interface JsonSchemaAutoFormProps {
+  jsonSchema: Record<string, unknown>;
+  value: Record<string, unknown>;
+  onChange: (next: Record<string, unknown>) => void;
+}
+
+/**
+ * Same auto-form rendering as AutoForm, but driven by a raw JSON Schema
+ * rather than a Zod schema. Used for theme-contributed templates whose
+ * schema only reaches the admin as JSON (fetched from /api/v1/templates).
+ */
+export function JsonSchemaAutoForm({ jsonSchema, value, onChange }: JsonSchemaAutoFormProps) {
+  return <FieldsForm fields={fieldsFromJsonSchema(jsonSchema)} value={value} onChange={onChange} />;
+}
+
+function FieldsForm({ fields, value, onChange }: { fields: FieldDescriptor[]; value: Record<string, unknown>; onChange: (next: Record<string, unknown>) => void }) {
   if (fields.length === 0) return null;
   return (
     <div className="space-y-3 rounded-md border border-neutral-200 dark:border-neutral-700 p-4">

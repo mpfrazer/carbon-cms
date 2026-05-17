@@ -7,7 +7,7 @@ export const THEME_CACHE_DIR = path.join(CUSTOM_THEMES_DIR, ".cache");
 
 export const THEME_FILES = ["layout", "blog-index", "blog-post", "page", "search", "not-found"] as const;
 
-export const BUILT_IN_THEMES = ["default", "minimal"] as const;
+export const BUILT_IN_THEMES = ["default", "minimal", "library"] as const;
 export type BuiltInTheme = typeof BUILT_IN_THEMES[number];
 
 export function isBuiltIn(slug: string): boolean {
