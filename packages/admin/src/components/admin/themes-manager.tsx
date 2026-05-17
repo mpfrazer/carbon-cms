@@ -612,6 +612,39 @@ export function ThemesManager({ themes: initial, initialAppearance }: { themes: 
     setActivating(slug);
     setBuildStatus("idle");
     setMessage(null);
+
+    // Surface post-render impact before committing. The /impact endpoint
+    // returns kinds (and counts) of posts whose template the target theme
+    // doesn't provide — those posts will render with the fallback (body
+    // only, no structured panel). Data is preserved either way.
+    try {
+      const impactRes = await fetch(`/api/v1/templates/impact?theme=${encodeURIComponent(slug)}`);
+      if (impactRes.ok) {
+        const impactJson = await impactRes.json();
+        const totalImpactedPosts: number = impactJson.data?.totalImpactedPosts ?? 0;
+        const impactedKinds: { kind: string; count: number }[] = impactJson.data?.impactedKinds ?? [];
+        if (totalImpactedPosts > 0) {
+          const breakdown = impactedKinds
+            .map((k) => `  • ${k.kind}: ${k.count} post${k.count === 1 ? "" : "s"}`)
+            .join("\n");
+          const confirmed = confirm(
+            `Activating "${slug}" will hide the structured panel on ${totalImpactedPosts} post${totalImpactedPosts === 1 ? "" : "s"} ` +
+              `whose template the new theme does not provide:\n\n${breakdown}\n\n` +
+              `The posts and their data are preserved — switching back will restore rendering. ` +
+              `Note: a theme's contributed templates only become known after first activation, so some kinds listed here may actually be provided once the theme runs.\n\n` +
+              `Continue?`,
+          );
+          if (!confirmed) {
+            setActivating(null);
+            return;
+          }
+        }
+      }
+    } catch {
+      // Non-fatal: if the impact endpoint fails, proceed with activation
+      // rather than blocking. The per-post banner (post-form) is a backstop.
+    }
+
     const res = await fetch("/api/v1/themes", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
