@@ -1,0 +1,12 @@
+{
+  "name": "Library",
+  "version": "1.0.0",
+  "author": "Carbon CMS",
+  "description": "A reading-focused theme for book reviews and reading logs. Contributes the book-review post template.",
+  "capabilities": {
+    "blog": true,
+    "search": { "header": true, "page": true },
+    "pageBuilder": true,
+    "comments": true
+  }
+}
