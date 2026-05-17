@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImageIcon, X, Clock, CheckCircle, XCircle } from "lucide-react";
 import { RichEditor } from "@/components/admin/rich-editor";
@@ -13,8 +13,17 @@ import { TitleSuggester } from "@/components/admin/ai/title-suggester";
 import { OutlineGenerator } from "@/components/admin/ai/outline-generator";
 import { RevisionPanel } from "@/components/admin/revision-panel";
 import { TemplatePicker } from "@/components/admin/template-picker";
-import { AutoForm } from "@/components/admin/auto-form";
+import { AutoForm, JsonSchemaAutoForm } from "@/components/admin/auto-form";
 import { getTemplate } from "@/templates";
+
+interface ApiTemplateEntry {
+  kind: string;
+  label: string;
+  description: string | null;
+  source: "builtin" | "theme";
+  jsonSchema?: Record<string, unknown>;
+  themeId?: string;
+}
 
 interface Taxonomy { id: string; name: string; }
 
@@ -105,6 +114,16 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
   const [status, setStatus] = useState(post?.status ?? "draft");
   const [template, setTemplate] = useState(post?.template ?? "article");
   const [structuredData, setStructuredData] = useState<Record<string, unknown>>(post?.structuredData ?? {});
+  const [apiTemplates, setApiTemplates] = useState<ApiTemplateEntry[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/v1/templates")
+      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((json) => { if (!cancelled) setApiTemplates(json.data ?? []); })
+      .catch(() => { /* leave empty — picker will show built-ins only */ });
+    return () => { cancelled = true; };
+  }, []);
   const [featuredImageId, setFeaturedImageId] = useState<string | null>(post?.featuredImageId ?? null);
   const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(post?.featuredImageUrl ?? null);
   const [metaTitle, setMetaTitle] = useState(post?.metaTitle ?? "");
@@ -305,29 +324,63 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
         <TemplatePicker
           value={template}
           onChange={(next) => { setTemplate(next); setStructuredData({}); }}
+          additionalTemplates={apiTemplates.filter((t): t is ApiTemplateEntry & { source: "theme" } => t.source === "theme")}
           confirmOnChange={Object.keys(structuredData).length > 0}
         />
       </div>
 
       {(() => {
-        const tpl = getTemplate(template);
-        if (!tpl) return null;
-        if (tpl.AdminEditor) {
-          const Editor = tpl.AdminEditor;
+        // Built-in path: local registry has the template (with its Zod schema
+        // and optional AdminEditor). Used for article, recipe, anything
+        // shipped with Carbon.
+        const localTpl = getTemplate(template);
+        if (localTpl) {
+          if (localTpl.AdminEditor) {
+            const Editor = localTpl.AdminEditor;
+            return (
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Template fields</label>
+                <Editor value={structuredData} onChange={setStructuredData} />
+              </div>
+            );
+          }
+          if (Object.keys(localTpl.schema.shape).length === 0) return null;
           return (
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Template fields</label>
-              <Editor value={structuredData} onChange={setStructuredData} />
+              <AutoForm schema={localTpl.schema} value={structuredData} onChange={setStructuredData} />
             </div>
           );
         }
-        if (Object.keys(tpl.schema.shape).length === 0) return null;
-        return (
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Template fields</label>
-            <AutoForm schema={tpl.schema} value={structuredData} onChange={setStructuredData} />
-          </div>
-        );
+
+        // Theme-contributed path: API returned a JSON Schema for this kind.
+        // PR D adds support for custom AdminEditors here; for now auto-form
+        // against the JSON Schema is the only option.
+        const contributed = apiTemplates.find((t) => t.kind === template && t.source === "theme");
+        if (contributed && contributed.jsonSchema) {
+          return (
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Template fields</label>
+              <JsonSchemaAutoForm jsonSchema={contributed.jsonSchema} value={structuredData} onChange={setStructuredData} />
+            </div>
+          );
+        }
+
+        // Active theme doesn't provide this template kind — likely a post
+        // created under a different theme. Surface a banner so the user
+        // understands what's happening; data is preserved but not editable
+        // until the providing theme is reactivated.
+        if (template !== "article") {
+          return (
+            <div className="rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-3 py-3 text-sm text-amber-800 dark:text-amber-300">
+              <p className="font-medium">Template &ldquo;{template}&rdquo; is not provided by the active theme.</p>
+              <p className="mt-1 text-xs">
+                Structured fields are hidden until you activate a theme that provides this template. The post&rsquo;s data is preserved and will render correctly once available.
+              </p>
+            </div>
+          );
+        }
+        return null;
       })()}
 
       <div className="space-y-1.5">
