@@ -14,7 +14,9 @@ import { OutlineGenerator } from "@/components/admin/ai/outline-generator";
 import { RevisionPanel } from "@/components/admin/revision-panel";
 import { TemplatePicker } from "@/components/admin/template-picker";
 import { AutoForm, JsonSchemaAutoForm } from "@/components/admin/auto-form";
-import { getTemplate } from "@/templates";
+import { getTemplate, type AdminEditorProps } from "@/templates";
+import { getThemeAdminEditors } from "@/lib/theme-admin-editors";
+import type { ComponentType } from "react";
 
 interface ApiTemplateEntry {
   kind: string;
@@ -24,6 +26,8 @@ interface ApiTemplateEntry {
   jsonSchema?: Record<string, unknown>;
   themeId?: string;
 }
+
+type ThemeEditorMap = Record<string, ComponentType<AdminEditorProps>>;
 
 interface Taxonomy { id: string; name: string; }
 
@@ -115,6 +119,7 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
   const [template, setTemplate] = useState(post?.template ?? "article");
   const [structuredData, setStructuredData] = useState<Record<string, unknown>>(post?.structuredData ?? {});
   const [apiTemplates, setApiTemplates] = useState<ApiTemplateEntry[]>([]);
+  const [themeEditors, setThemeEditors] = useState<Record<string, ThemeEditorMap>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -124,6 +129,27 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
       .catch(() => { /* leave empty — picker will show built-ins only */ });
     return () => { cancelled = true; };
   }, []);
+
+  // Load admin-side editors for every theme that has contributed templates.
+  // Each theme's editor map is cached process-wide by getThemeAdminEditors,
+  // so reloading the form is cheap.
+  useEffect(() => {
+    let cancelled = false;
+    const themeIds = Array.from(new Set(
+      apiTemplates
+        .filter((t) => t.source === "theme" && t.themeId)
+        .map((t) => t.themeId as string),
+    ));
+    if (themeIds.length === 0) return;
+    Promise.all(themeIds.map(async (id) => [id, await getThemeAdminEditors(id)] as const))
+      .then((entries) => {
+        if (cancelled) return;
+        const next: Record<string, ThemeEditorMap> = {};
+        for (const [id, map] of entries) next[id] = map;
+        setThemeEditors(next);
+      });
+    return () => { cancelled = true; };
+  }, [apiTemplates]);
   const [featuredImageId, setFeaturedImageId] = useState<string | null>(post?.featuredImageId ?? null);
   const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(post?.featuredImageUrl ?? null);
   const [metaTitle, setMetaTitle] = useState(post?.metaTitle ?? "");
@@ -354,16 +380,30 @@ export function PostForm({ post, allCategories, allTags, userRole = "author" }: 
         }
 
         // Theme-contributed path: API returned a JSON Schema for this kind.
-        // PR D adds support for custom AdminEditors here; for now auto-form
-        // against the JSON Schema is the only option.
+        // Prefer a theme-shipped AdminEditor when available (Library ships
+        // BookReviewEditor); fall back to auto-form against the JSON Schema.
         const contributed = apiTemplates.find((t) => t.kind === template && t.source === "theme");
-        if (contributed && contributed.jsonSchema) {
-          return (
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Template fields</label>
-              <JsonSchemaAutoForm jsonSchema={contributed.jsonSchema} value={structuredData} onChange={setStructuredData} />
-            </div>
-          );
+        if (contributed) {
+          const themeEditor = contributed.themeId
+            ? themeEditors[contributed.themeId]?.[contributed.kind]
+            : undefined;
+          if (themeEditor) {
+            const Editor = themeEditor;
+            return (
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Template fields</label>
+                <Editor value={structuredData} onChange={setStructuredData} />
+              </div>
+            );
+          }
+          if (contributed.jsonSchema) {
+            return (
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Template fields</label>
+                <JsonSchemaAutoForm jsonSchema={contributed.jsonSchema} value={structuredData} onChange={setStructuredData} />
+              </div>
+            );
+          }
         }
 
         // Active theme doesn't provide this template kind — likely a post

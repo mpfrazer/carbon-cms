@@ -161,6 +161,16 @@ A new built-in **Library** theme ships in PR C as the first real consumer of thi
 
 Both built-in and theme-contributed templates run in the same process as Carbon. This matches the existing trust model for themes (already trusted code). No sandboxing for v1 — admin-installed themes are trusted. This is the same compromise WordPress makes and is appropriate for the "non-engineer self-hosted install" target.
 
+### Admin editors (PR D delivery shape)
+
+Theme-contributed templates can ship a custom React `AdminEditor` for richer authoring UX than the auto-form provides. The admin loads these dynamically per theme:
+
+- Each theme that wants admin editors places them under `packages/admin/src/themes/<slug>/` with an `admin-editors.ts` that exports `adminEditors: Record<kind, ComponentType>` — same **dual-directory pattern** as `theme.config.json` (frontend has the render code; admin has the editor code).
+- `getThemeAdminEditors(themeId)` in `packages/admin/src/lib/theme-admin-editors.ts` does the dynamic import, with a process-wide cache and silent fallback for themes without a matching folder.
+- Templates that don't ship an `AdminEditor` fall back to `JsonSchemaAutoForm` against the persisted JSON Schema (existing PR C2b behavior).
+
+These editors run in the admin process and have full React/DOM access — same trust as the rest of the theme. Custom (non-built-in) themes that want admin editors require a future packaging mechanism not in Phase 2 scope; built-in themes (Library) are unblocked today via the dual-directory pattern.
+
 ---
 
 ## Schema Propagation (Decoupled Mode)
