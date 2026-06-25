@@ -1,40 +1,93 @@
+// Carbon CMS — seed an initial admin user (and a default Home page).
+//
+// This is the CLI / scripted equivalent of the web-based /admin/setup
+// first-run flow. Use whichever fits your install. The web flow is the
+// documented default in SETUP.md.
+//
+// Usage:
+//   ADMIN_EMAIL=you@example.com \
+//   ADMIN_NAME="Your Name" \
+//   ADMIN_PASSWORD=at-least-eight-chars \
+//     node scripts/seed-admin.mjs
+//
+// All three env vars are required. The script reads DATABASE_URL from .env
+// at the repo root (or from process.env if already set), connects to
+// Postgres, and inserts the admin user. ON CONFLICT (email) DO NOTHING —
+// safe to re-run; existing users are not modified.
+//
+// After seeding, log in at the admin URL printed at the end and change the
+// password if you want a different value than the one you supplied here.
+
 import postgres from "postgres";
 import bcrypt from "bcryptjs";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "node:fs";
 
-// Read .env manually
-const env = Object.fromEntries(
-  readFileSync(".env", "utf8")
-    .split("\n")
-    .filter((l) => l.includes("="))
-    .map((l) => {
-      const [k, ...v] = l.split("=");
-      return [k.trim(), v.join("=").trim().replace(/^"|"$/g, "")];
-    })
-);
+// --- Read DATABASE_URL ---
+// Prefer process.env (set by the shell, by docker compose, etc.); fall back
+// to .env at the repo root for the dev workflow that SETUP.md documents.
+function loadEnv() {
+  const env = { ...process.env };
+  if (existsSync(".env")) {
+    for (const line of readFileSync(".env", "utf8").split("\n")) {
+      const eq = line.indexOf("=");
+      if (eq <= 0) continue;
+      const key = line.slice(0, eq).trim();
+      const value = line.slice(eq + 1).trim().replace(/^"|"$/g, "");
+      if (!env[key]) env[key] = value;
+    }
+  }
+  return env;
+}
 
+const env = loadEnv();
+
+// --- Validate inputs ---
+const errors = [];
+if (!env.DATABASE_URL) errors.push("DATABASE_URL is not set (check your .env)");
+const adminEmail = env.ADMIN_EMAIL;
+const adminName = env.ADMIN_NAME;
+const adminPassword = env.ADMIN_PASSWORD;
+if (!adminEmail) errors.push("ADMIN_EMAIL is not set");
+if (!adminName) errors.push("ADMIN_NAME is not set");
+if (!adminPassword) errors.push("ADMIN_PASSWORD is not set");
+if (adminPassword && adminPassword.length < 8) {
+  errors.push("ADMIN_PASSWORD must be at least 8 characters");
+}
+if (adminEmail && !adminEmail.includes("@")) {
+  errors.push("ADMIN_EMAIL doesn't look like an email address");
+}
+
+if (errors.length > 0) {
+  console.error("seed-admin: cannot continue:");
+  for (const e of errors) console.error("  • " + e);
+  console.error("\nExample:");
+  console.error('  ADMIN_EMAIL=you@example.com ADMIN_NAME="Your Name" ADMIN_PASSWORD=secret123 node scripts/seed-admin.mjs');
+  console.error("\nOr use the web first-run flow at /admin/setup instead.");
+  process.exit(1);
+}
+
+// --- Seed the admin user ---
 const sql = postgres(env.DATABASE_URL);
-
-const passwordHash = await bcrypt.hash("changeme123", 12);
+const passwordHash = await bcrypt.hash(adminPassword, 12);
 
 const rows = await sql`
   INSERT INTO users (id, email, name, password_hash, role, created_at, updated_at)
-  VALUES (gen_random_uuid(), 'mpfrazer@gmail.com', 'M Frazer', ${passwordHash}, 'admin', now(), now())
+  VALUES (gen_random_uuid(), ${adminEmail}, ${adminName}, ${passwordHash}, 'admin', now(), now())
   ON CONFLICT (email) DO NOTHING
   RETURNING id, email, name, role
 `;
 
+const adminUrl = env.CARBON_ADMIN_URL ?? "http://localhost:3002";
+
 if (rows.length > 0) {
   console.log("Admin user created:", rows[0]);
-  console.log("\nLogin at: http://localhost:3000/admin/login");
-  console.log("Email:    mpfrazer@gmail.com");
-  console.log("Password: changeme123");
-  console.log("\nChange your password after first login.");
+  console.log(`\nLog in at: ${adminUrl}/admin/login`);
+  console.log(`Email:     ${adminEmail}`);
 } else {
-  console.log("User mpfrazer@gmail.com already exists — no changes made.");
+  console.log(`User ${adminEmail} already exists — no changes made.`);
 }
 
-// Seed default Home page (requires an author — use first admin user found)
+// --- Seed a default Home page (only if there's an admin to attribute it to) ---
 const [author] = await sql`SELECT id FROM users WHERE role = 'admin' LIMIT 1`;
 
 if (author) {
