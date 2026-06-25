@@ -44,16 +44,20 @@ This creates (or updates) all tables in your database.
 
 ## Step 4 — Create your first admin user
 
-Run this one-off script to seed an admin account:
+**Recommended:** start the dev server (Step 5 below) and open `/admin/setup` in your browser. The web-based first-run flow walks you through admin creation interactively.
+
+**Scripted alternative** — for headless installs or repeatable provisioning:
 
 ```bash
-npx tsx scripts/seed-admin.ts
+ADMIN_EMAIL=you@example.com \
+ADMIN_NAME="Your Name" \
+ADMIN_PASSWORD=at-least-eight-chars \
+  node scripts/seed-admin.mjs
 ```
 
-> **Note:** `scripts/seed-admin.ts` is not yet created — we'll build it next session,
-> or you can seed manually via Drizzle Studio (see below).
+All three env vars are required (no fallback defaults — the script refuses to seed weak/known credentials). It also seeds a default Home page attributed to the admin. Safe to re-run: existing users are not modified.
 
-### Alternative: Use Drizzle Studio to insert a user
+### Manual alternative: Use Drizzle Studio to insert a user
 
 ```bash
 npm run db:studio
@@ -76,7 +80,15 @@ node -e "const b=require('bcryptjs');b.hash('your-password',12).then(h=>console.
 npm run dev
 ```
 
-Open [http://localhost:3000/admin](http://localhost:3000/admin) — you'll be redirected to the login page.
+This runs all three workspace packages concurrently:
+
+| Service | URL |
+|---|---|
+| API | http://localhost:3001 |
+| Admin | http://localhost:3002 |
+| Frontend | http://localhost:3003 |
+
+Open [http://localhost:3002/admin/setup](http://localhost:3002/admin/setup) for the first-run admin creation flow (or `/admin/login` if you already seeded an admin via Step 4).
 
 ---
 

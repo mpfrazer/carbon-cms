@@ -33,6 +33,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Allow example files — these document required variables and are safe
+# to commit because they contain placeholders, not real secrets.
+!.env.example
+!.env.docker.example
 
 # vercel
 .vercel

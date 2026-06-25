@@ -93,6 +93,10 @@ services:
       dockerfile: packages/frontend/Dockerfile
     environment:
       CARBON_API_URL: http://api:${API_PORT}
+      # Frontend uses Auth.js to read the logged-in user's session on the
+      # public site (for comment authoring, etc.). Without AUTH_SECRET it
+      # can't verify session cookies issued by the admin / api.
+      AUTH_SECRET: ${AUTH_SECRET}
       NEXTAUTH_URL: https://${CARBON_DOMAIN}
       NODE_ENV: production
       PORT: ${FRONTEND_PORT}
