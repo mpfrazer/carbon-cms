@@ -28,19 +28,29 @@ COPY --from=builder --chown=nextjs:nodejs /app/packages/api/.next/static ./packa
 COPY --from=builder --chown=nextjs:nodejs /app/packages/api/src/themes ./packages/api/src/themes
 
 # Migration tooling — schema source + drizzle config + a fresh drizzle-kit
-# install scoped to packages/api. Lets operators apply schema from outside
-# the image with:
+# install in /opt/migrate. Lets operators apply schema from outside the
+# image with:
 #   docker compose run --rm api node packages/api/scripts/migrate.mjs
-# This preserves the schema-first push workflow (no committed migration
-# files yet) while giving Docker self-hosters a real path that doesn't
-# require the dev repo. Adds ~50MB to the image; acceptable cost for the
-# single-image install model.
+#
+# Installed in /opt/migrate (NOT /app/packages/api) because the api
+# package.json declares `esbuild: ^0.28.0` as a runtime dep, while
+# drizzle-kit pulls @esbuild-kit/core-utils which strictly wants
+# `esbuild: ^0.18.20`. Sharing a directory triggers a post-install
+# version validation conflict (Error: Expected "0.18.20" but got
+# "0.28.0"). Isolating the install sidesteps the resolution.
+#
+# drizzle-orm is installed alongside drizzle-kit so the latter can
+# resolve schema imports from its own node_modules tree rather than
+# walking up to the standalone's hoisted copy (where peer-dep
+# resolution can be unpredictable).
 COPY --from=builder --chown=nextjs:nodejs /app/packages/api/drizzle.config.ts ./packages/api/drizzle.config.ts
 COPY --from=builder --chown=nextjs:nodejs /app/packages/api/src/lib/db ./packages/api/src/lib/db
-COPY --from=builder --chown=nextjs:nodejs /app/packages/api/package.json ./packages/api/package.json
 COPY --from=builder --chown=nextjs:nodejs /app/packages/api/scripts ./packages/api/scripts
-RUN cd /app/packages/api && npm install --omit=optional --no-save drizzle-kit \
-    && chown -R nextjs:nodejs /app/packages/api/node_modules
+RUN mkdir -p /opt/migrate \
+    && cd /opt/migrate \
+    && npm init -y >/dev/null \
+    && npm install --omit=optional --no-save drizzle-kit drizzle-orm postgres \
+    && chown -R nextjs:nodejs /opt/migrate
 
 USER nextjs
 ENV PORT=3001
