@@ -39,8 +39,8 @@ services:
   api:
     image: ghcr.io/mpfrazer/carbon-cms-api:${CARBON_VERSION:-latest}
     build:
-      context: ./packages/api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: packages/api/Dockerfile
     environment:
       DATABASE_URL: postgresql://carbon:${POSTGRES_PASSWORD}@db:5432/carbon
       AUTH_SECRET: ${AUTH_SECRET}
@@ -68,8 +68,8 @@ services:
   admin:
     image: ghcr.io/mpfrazer/carbon-cms-admin:${CARBON_VERSION:-latest}
     build:
-      context: ./packages/admin
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: packages/admin/Dockerfile
     environment:
       CARBON_API_URL: http://api:${API_PORT}
       AUTH_SECRET: ${AUTH_SECRET}
@@ -85,8 +85,8 @@ services:
   frontend:
     image: ghcr.io/mpfrazer/carbon-cms-frontend:${CARBON_VERSION:-latest}
     build:
-      context: ./packages/frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: packages/frontend/Dockerfile
     environment:
       CARBON_API_URL: http://api:${API_PORT}
       NEXTAUTH_URL: https://${CARBON_DOMAIN}
