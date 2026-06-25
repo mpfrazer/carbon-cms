@@ -1,0 +1,121 @@
+# Carbon CMS — local / development Docker compose
+#
+# Use this for:
+#   - Running Carbon locally on http://localhost (no TLS, no domain)
+#   - Theme development against a real Carbon stack
+#   - Trying out the published images before a real deployment
+#
+# Do NOT use this for production. AUTH_SECRET and POSTGRES_PASSWORD below
+# are placeholders embedded in version control — anything running with
+# these credentials is publicly known to be insecure. The production
+# compose (docker-compose.yml) sources both from .env.
+#
+# First run:
+#   docker compose -f docker-compose.dev.yml up -d db
+#   docker compose -f docker-compose.dev.yml run --rm api node packages/api/scripts/migrate.mjs
+#   docker compose -f docker-compose.dev.yml up -d
+#   open http://localhost:3002/admin/setup
+#
+# Subsequent runs:
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Tear down (keeps the database volume):
+#   docker compose -f docker-compose.dev.yml down
+#
+# Tear down and wipe data:
+#   docker compose -f docker-compose.dev.yml down -v
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: carbon
+      POSTGRES_USER: carbon
+      POSTGRES_PASSWORD: dev-only-not-a-real-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carbon"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ghcr.io/mpfrazer/carbon-cms-api:${CARBON_VERSION:-latest}
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://carbon:dev-only-not-a-real-password@db:5432/carbon
+      AUTH_SECRET: dev-only-not-a-real-secret-replace-for-production
+      # Auth.js needs a NEXTAUTH_URL it can trust as the canonical origin.
+      # For localhost dev, the API's own URL works.
+      NEXTAUTH_URL: http://localhost:3001
+      STORAGE_DRIVER: local
+      MEDIA_DIR: /srv/media
+      CARBON_PUBLIC_URL: http://localhost:3003
+      # Allow admin (3002) and frontend (3003) to call the API across origins.
+      CARBON_ALLOWED_ORIGINS: http://localhost:3002,http://localhost:3003
+      NODE_ENV: production
+      PORT: 3001
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3001:3001"
+    volumes:
+      - media:/srv/media
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  admin:
+    image: ghcr.io/mpfrazer/carbon-cms-admin:${CARBON_VERSION:-latest}
+    build:
+      context: .
+      dockerfile: packages/admin/Dockerfile
+    environment:
+      # Admin talks to the API over the docker network using the service name.
+      CARBON_API_URL: http://api:3001
+      AUTH_SECRET: dev-only-not-a-real-secret-replace-for-production
+      NEXTAUTH_URL: http://localhost:3002
+      NODE_ENV: production
+      PORT: 3002
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+
+  frontend:
+    image: ghcr.io/mpfrazer/carbon-cms-frontend:${CARBON_VERSION:-latest}
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile
+    environment:
+      CARBON_API_URL: http://api:3001
+      AUTH_SECRET: dev-only-not-a-real-secret-replace-for-production
+      NEXTAUTH_URL: http://localhost:3003
+      NODE_ENV: production
+      PORT: 3003
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  media:

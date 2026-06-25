@@ -80,22 +80,35 @@ Open [http://localhost:3000/admin](http://localhost:3000/admin) — you'll be re
 
 ---
 
-## Docker installs — apply the schema before first start
+## Docker installs
 
-If you're running Carbon via the published Docker images (`docker compose up`), the runner doesn't have a host shell to invoke `npm` against. Apply the schema by running the bundled migration script via `docker compose run`:
+Carbon ships two compose files:
+
+| File | For |
+|---|---|
+| `docker-compose.yml` | Production: Caddy in front, Let's Encrypt TLS, requires a real domain and `.env` with `AUTH_SECRET` / `POSTGRES_PASSWORD` set |
+| `docker-compose.dev.yml` | Local / theme development: no Caddy, no TLS, ports published on `localhost:3001`/`3002`/`3003`, all credentials are hardcoded dev-only placeholders |
+
+### Local dev (no domain, no TLS)
 
 ```bash
-# 1. Bring up the database first
+docker compose -f docker-compose.dev.yml up -d db
+docker compose -f docker-compose.dev.yml run --rm api node packages/api/scripts/migrate.mjs
+docker compose -f docker-compose.dev.yml up -d
+
+# then open the admin first-run flow:
+open http://localhost:3002/admin/setup
+```
+
+### Production
+
+```bash
 docker compose up -d db
-
-# 2. Apply the schema (runs drizzle-kit push inside the api image)
 docker compose run --rm api node packages/api/scripts/migrate.mjs
-
-# 3. Start the rest of the stack
 docker compose up -d
 ```
 
-The migration script reads `DATABASE_URL` from the same env Compose injects into the api service, so no extra configuration is needed. Idempotent — safe to re-run after a code update that adds new schema fields.
+The migration script reads `DATABASE_URL` from the same env Compose injects into the api service. Idempotent — safe to re-run after a code update that adds new schema fields.
 
 ---
 
