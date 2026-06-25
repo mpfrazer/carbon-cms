@@ -21,12 +21,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/packages/api/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/packages/api/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/packages/api/src/themes ./src/themes
+# Next.js standalone in an npm-workspaces monorepo preserves the workspace
+# layout, so server.js lives at /app/packages/api/server.js and its sibling
+# .next/static is served from there too. Copy assets into that path, not /app.
+COPY --from=builder --chown=nextjs:nodejs /app/packages/api/.next/static ./packages/api/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/packages/api/src/themes ./packages/api/src/themes
 
 USER nextjs
 ENV PORT=3001
 ENV HOSTNAME=0.0.0.0
+# Built-in theme directory lives inside the package; pin explicitly so the
+# default `process.cwd()`-based resolution doesn't have to assume layout.
+ENV THEMES_DIR=/app/packages/api/src/themes
 EXPOSE 3001
 
-CMD ["node", "server.js"]
+CMD ["node", "packages/api/server.js"]

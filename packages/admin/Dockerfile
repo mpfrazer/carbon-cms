@@ -18,11 +18,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/packages/admin/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/packages/admin/.next/static ./.next/static
+# Next.js standalone in an npm-workspaces monorepo preserves the workspace
+# layout, so server.js lives at /app/packages/admin/server.js and its sibling
+# .next/static is served from there too.
+COPY --from=builder --chown=nextjs:nodejs /app/packages/admin/.next/static ./packages/admin/.next/static
 
 USER nextjs
 ENV PORT=3002
 ENV HOSTNAME=0.0.0.0
 EXPOSE 3002
 
-CMD ["node", "server.js"]
+CMD ["node", "packages/admin/server.js"]

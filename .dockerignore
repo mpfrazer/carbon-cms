@@ -1,0 +1,42 @@
+# Excluded from the Docker build context for all three packages' Dockerfiles
+# (which now use the repo root as context — see I3 in the upstream-fixes doc).
+# Per-package .dockerignore files are inert once the context is the repo root,
+# so this is the canonical exclusion list.
+
+# Build artifacts and dependencies — rebuilt inside the image
+node_modules
+**/node_modules
+.next
+**/.next
+**/*.tsbuildinfo
+
+# Local environment files — never bake secrets into images
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Git and editor state
+.git
+.gitignore
+.github
+.vscode
+.idea
+.cursor
+
+# Tests and ephemeral output
+coverage
+**/coverage
+.cache
+**/.cache
+custom-themes/.cache
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Repo-local docs that aren't needed in the image (saves a few MB of context)
+# Architecture / draft docs are still copied for the admin docs build pipeline
+# via the build script — this just trims the initial COPY ./ scope.
+*.log
+npm-debug.log*
