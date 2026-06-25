@@ -8,6 +8,12 @@ const credentialsSchema = z.object({
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Auth.js v5 sets trustHost=false under NODE_ENV=production unless told
+  // otherwise. Carbon always sits behind a reverse proxy / ingress and is
+  // meant to be self-hosted on arbitrary hostnames, so trusting the host
+  // is appropriate. Without this every session lookup throws UntrustedHost
+  // and admin login is broken in production.
+  trustHost: true,
   providers: [
     Credentials({
       credentials: {
