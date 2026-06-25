@@ -27,6 +27,21 @@ COPY --from=builder --chown=nextjs:nodejs /app/packages/api/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/packages/api/.next/static ./packages/api/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/packages/api/src/themes ./packages/api/src/themes
 
+# Migration tooling — schema source + drizzle config + a fresh drizzle-kit
+# install scoped to packages/api. Lets operators apply schema from outside
+# the image with:
+#   docker compose run --rm api node packages/api/scripts/migrate.mjs
+# This preserves the schema-first push workflow (no committed migration
+# files yet) while giving Docker self-hosters a real path that doesn't
+# require the dev repo. Adds ~50MB to the image; acceptable cost for the
+# single-image install model.
+COPY --from=builder --chown=nextjs:nodejs /app/packages/api/drizzle.config.ts ./packages/api/drizzle.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/packages/api/src/lib/db ./packages/api/src/lib/db
+COPY --from=builder --chown=nextjs:nodejs /app/packages/api/package.json ./packages/api/package.json
+COPY --from=builder --chown=nextjs:nodejs /app/packages/api/scripts ./packages/api/scripts
+RUN cd /app/packages/api && npm install --omit=optional --no-save drizzle-kit \
+    && chown -R nextjs:nodejs /app/packages/api/node_modules
+
 USER nextjs
 ENV PORT=3001
 ENV HOSTNAME=0.0.0.0
