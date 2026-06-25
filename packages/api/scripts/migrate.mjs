@@ -25,7 +25,9 @@ import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const apiPkg = path.resolve(here, "..");                    // /app/packages/api
-const drizzleBin = path.join(apiPkg, "node_modules", ".bin", "drizzle-kit");
+// drizzle-kit lives in /opt/migrate (isolated from the api package.json's
+// esbuild dep to avoid a post-install version conflict — see Dockerfile).
+const drizzleBin = "/opt/migrate/node_modules/.bin/drizzle-kit";
 
 if (!existsSync(drizzleBin)) {
   console.error(
