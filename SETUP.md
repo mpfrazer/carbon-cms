@@ -28,15 +28,19 @@ To generate `AUTH_SECRET` quickly:
 openssl rand -base64 32
 ```
 
-## Step 3 — Run database migrations
+## Step 3 — Apply the database schema
+
+Carbon uses [Drizzle ORM](https://orm.drizzle.team/) with a **schema-first push workflow** — there are no committed migration files; the schema in `packages/api/src/lib/db/schema.ts` is the source of truth and `drizzle-kit push` applies it directly.
 
 ```bash
-npm run db:migrate
+npm run db:push -w packages/api
 ```
 
-This creates all tables in your Neon database.
+This creates (or updates) all tables in your database.
 
 > If you see an error about `DATABASE_URL`, double-check your `.env` file.
+>
+> If `drizzle-kit` prompts you about destructive changes, review carefully before confirming — `push` is designed for greenfield databases and dev iteration, not production schema migrations on populated data.
 
 ## Step 4 — Create your first admin user
 
@@ -76,12 +80,31 @@ Open [http://localhost:3000/admin](http://localhost:3000/admin) — you'll be re
 
 ---
 
+## Docker installs — apply the schema before first start
+
+If you're running Carbon via the published Docker images (`docker compose up`), the runner doesn't have a host shell to invoke `npm` against. Apply the schema by running the bundled migration script via `docker compose run`:
+
+```bash
+# 1. Bring up the database first
+docker compose up -d db
+
+# 2. Apply the schema (runs drizzle-kit push inside the api image)
+docker compose run --rm api node packages/api/scripts/migrate.mjs
+
+# 3. Start the rest of the stack
+docker compose up -d
+```
+
+The migration script reads `DATABASE_URL` from the same env Compose injects into the api service, so no extra configuration is needed. Idempotent — safe to re-run after a code update that adds new schema fields.
+
+---
+
 ## Switching databases later
 
 To move from Neon to any other Postgres provider (Supabase, Railway, self-hosted, etc.):
 
 1. Update `DATABASE_URL` in `.env`
-2. Run `npm run db:migrate` against the new database
+2. Run `npm run db:push -w packages/api` against the new database
 3. Done — no code changes required
 
 The standard `postgres.js` driver is used throughout, with no Neon-specific dependencies.
@@ -93,10 +116,9 @@ The standard `postgres.js` driver is used throughout, with no Neon-specific depe
 | Command | What it does |
 |---------|-------------|
 | `npm run dev` | Start dev server |
-| `npm run db:generate` | Generate new migration files after schema changes |
-| `npm run db:migrate` | Apply pending migrations to the database |
-| `npm run db:studio` | Open Drizzle Studio (visual DB browser) |
-| `npm run db:push` | Push schema changes directly (dev only, skips migration files) |
+| `npm run db:push -w packages/api` | Apply the schema in `packages/api/src/lib/db/schema.ts` to the database (canonical command) |
+| `npm run db:studio -w packages/api` | Open Drizzle Studio (visual DB browser) |
+| `npm run db:generate -w packages/api` | Generate a migration file (rarely needed — Carbon does not commit migration files) |
 | `npm run build` | Production build |
 
 ## API reference
