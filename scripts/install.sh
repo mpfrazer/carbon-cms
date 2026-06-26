@@ -13,13 +13,56 @@ header()  { echo -e "\n${BOLD}$*${NC}"; }
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# ─── Mode + arg parsing ────────────────────────────────────────────────────
+MODE="prod"
+
+print_help() {
+  cat <<EOF
+Carbon CMS installer
+
+Usage:
+  ./scripts/install.sh             # production install (requires domain + DNS)
+  ./scripts/install.sh --local     # local dev install (localhost, no domain, no TLS)
+  ./scripts/install.sh --help
+
+Modes:
+  prod  (default) Brings up the full stack with Caddy + Let's Encrypt TLS at
+                  your domain. Asks for CARBON_DOMAIN and CADDY_EMAIL,
+                  generates secrets, applies the database schema, starts
+                  every service. Linux only (systemd + Docker assumptions).
+
+  local           Brings up docker-compose.dev.yml on localhost. No Caddy,
+                  no TLS, no domain needed. Hardcoded dev-only credentials;
+                  NOT for production. Works on Linux and macOS with Docker
+                  Desktop or equivalent.
+EOF
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    --local|--dev) MODE="local" ;;
+    -h|--help)     print_help; exit 0 ;;
+    *)             die "Unknown argument: $arg (use --help to see options)" ;;
+  esac
+done
+
 # ─── OS check ───────────────────────────────────────────────────────────────
-check_os() {
+check_os_prod() {
   header "Checking environment"
   if [[ "$(uname -s)" != "Linux" ]]; then
-    die "This installer supports Linux only. For macOS or Windows see the docs."
+    die "Production install supports Linux only (systemd / Docker assumptions). For local development on macOS, rerun with --local."
   fi
   success "Linux detected"
+}
+
+check_os_local() {
+  header "Checking environment"
+  local os
+  os="$(uname -s)"
+  case "$os" in
+    Linux|Darwin) success "$os detected" ;;
+    *)            warn "$os is not officially supported but Docker may still work — continuing." ;;
+  esac
 }
 
 # ─── Docker ─────────────────────────────────────────────────────────────────
@@ -38,6 +81,9 @@ install_docker() {
 check_docker() {
   header "Checking Docker"
   if ! command -v docker &>/dev/null; then
+    if [[ "$MODE" == "local" ]]; then
+      die "Docker not found. Install Docker Desktop (https://docker.com/products/docker-desktop) and rerun."
+    fi
     warn "Docker not found — installing automatically…"
     install_docker
   fi
@@ -47,6 +93,9 @@ check_docker() {
   fi
 
   if ! docker info &>/dev/null; then
+    if [[ "$MODE" == "local" ]]; then
+      die "Docker daemon is not running. Start Docker Desktop (or the docker service) and rerun."
+    fi
     die "Docker daemon is not running. Start it with: sudo systemctl start docker"
   fi
 
@@ -71,7 +120,15 @@ server_ip() {
   curl -fsSL --max-time 3 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}'
 }
 
-# ─── Input collection ───────────────────────────────────────────────────────
+# Returns the compose file flag (or empty for the default file). Used to
+# parameterize every `docker compose` invocation by mode.
+compose_args() {
+  if [[ "$MODE" == "local" ]]; then
+    echo "-f docker-compose.dev.yml"
+  fi
+}
+
+# ─── Input collection (prod only) ──────────────────────────────────────────
 collect_input() {
   header "Configuration"
   echo ""
@@ -89,7 +146,7 @@ collect_input() {
   echo ""
 }
 
-# ─── .env generation ────────────────────────────────────────────────────────
+# ─── .env generation (prod only) ───────────────────────────────────────────
 generate_env() {
   header "Generating configuration"
 
@@ -143,7 +200,7 @@ EOF
   source "$env_file"
 }
 
-# ─── Caddyfile generation ────────────────────────────────────────────────────
+# ─── Caddyfile generation (prod only) ──────────────────────────────────────
 generate_caddyfile() {
   local caddyfile="$REPO_DIR/Caddyfile"
   local template="$REPO_DIR/Caddyfile.template"
@@ -162,29 +219,74 @@ generate_caddyfile() {
   success "Caddyfile written"
 }
 
-# ─── Start services ──────────────────────────────────────────────────────────
+# ─── Start services ────────────────────────────────────────────────────────
 start_services() {
   header "Starting Carbon CMS"
   cd "$REPO_DIR"
 
-  info "Pulling images (this may take a few minutes on first run)…"
-  # Pull pre-built images; fall back to building locally if they don't exist yet
-  if ! docker compose pull --quiet 2>/dev/null; then
-    warn "Pre-built images not found — building locally (this takes 10–15 minutes)…"
-    docker compose build --quiet
-  fi
+  local compose
+  read -r -a compose <<<"$(compose_args)"
 
-  docker compose up -d
+  info "Bringing up the database first…"
+  docker compose "${compose[@]}" up -d db
+
+  info "Pulling app images (this may take a few minutes on first run)…"
+  # Pull pre-built images; fall back to building locally if they don't exist yet.
+  if ! docker compose "${compose[@]}" pull --quiet api admin frontend 2>/dev/null; then
+    warn "Pre-built images not found — building locally (this takes 10–15 minutes)…"
+    docker compose "${compose[@]}" build --quiet api admin frontend
+  fi
+}
+
+# ─── Apply schema (both modes) ─────────────────────────────────────────────
+apply_schema() {
+  header "Applying database schema"
+  cd "$REPO_DIR"
+
+  local compose
+  read -r -a compose <<<"$(compose_args)"
+
+  # Wait for the db service to be healthy before running the migration.
+  info "Waiting for the database to be ready…"
+  local max_attempts=24 attempt=0
+  while [[ $attempt -lt $max_attempts ]]; do
+    local db_container db_health
+    db_container=$(docker compose "${compose[@]}" ps -q db 2>/dev/null | head -1)
+    [[ -n "$db_container" ]] || { sleep 2; attempt=$((attempt+1)); continue; }
+    db_health=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' \
+      "$db_container" 2>/dev/null || echo "unknown")
+    if [[ "$db_health" == "healthy" ]]; then break; fi
+    sleep 2
+    attempt=$((attempt+1))
+  done
+
+  info "Running drizzle-kit push…"
+  docker compose "${compose[@]}" run --rm api node packages/api/scripts/migrate.mjs
+  success "Schema applied"
+}
+
+# ─── Bring up app services ─────────────────────────────────────────────────
+start_app_services() {
+  header "Starting application services"
+  cd "$REPO_DIR"
+
+  local compose
+  read -r -a compose <<<"$(compose_args)"
+
+  docker compose "${compose[@]}" up -d
   success "Services started"
 }
 
-# ─── Health check ────────────────────────────────────────────────────────────
+# ─── Health check (prod only — local skips since ports are published) ──────
 wait_for_health() {
   header "Waiting for services to be ready"
   info "Polling API health (up to 2 minutes)…"
 
+  local compose
+  read -r -a compose <<<"$(compose_args)"
+
   local api_container
-  api_container=$(docker compose ps -q api 2>/dev/null | head -1)
+  api_container=$(docker compose "${compose[@]}" ps -q api 2>/dev/null | head -1)
   [[ -z "$api_container" ]] && die "Could not find the API container."
 
   local max_attempts=24 attempt=0
@@ -207,8 +309,8 @@ wait_for_health() {
   return 1
 }
 
-# ─── Success message ─────────────────────────────────────────────────────────
-print_success() {
+# ─── Success message (prod) ────────────────────────────────────────────────
+print_success_prod() {
   local ip
   ip=$(server_ip)
 
@@ -236,20 +338,54 @@ print_success() {
   echo ""
 }
 
-# ─── Main ────────────────────────────────────────────────────────────────────
+# ─── Success message (local) ───────────────────────────────────────────────
+print_success_local() {
+  echo ""
+  echo -e "${GREEN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo -e "${GREEN}${BOLD}  Carbon CMS is running (local mode)${NC}"
+  echo -e "${GREEN}${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+  echo ""
+  echo -e "  API:      ${CYAN}http://localhost:3001${NC}"
+  echo -e "  Admin:    ${CYAN}http://localhost:3002${NC}"
+  echo -e "  Frontend: ${CYAN}http://localhost:3003${NC}"
+  echo ""
+  echo -e "  ${BOLD}Next step:${NC} Open ${CYAN}http://localhost:3002/admin/setup${NC} to create your admin account."
+  echo ""
+  echo -e "${YELLOW}${BOLD}  Local-mode credentials are hardcoded${NC} in docker-compose.dev.yml."
+  echo -e "  Do not expose this stack to the public internet."
+  echo ""
+  echo -e "  Useful commands:"
+  echo -e "    View logs:    ${CYAN}docker compose -f docker-compose.dev.yml logs -f${NC}"
+  echo -e "    Stop:         ${CYAN}docker compose -f docker-compose.dev.yml down${NC}"
+  echo -e "    Wipe data:    ${CYAN}docker compose -f docker-compose.dev.yml down -v${NC}"
+  echo ""
+}
+
+# ─── Main ──────────────────────────────────────────────────────────────────
 main() {
   echo ""
-  echo -e "${BOLD}Carbon CMS Installer${NC}"
+  echo -e "${BOLD}Carbon CMS Installer${NC} ${CYAN}[mode: ${MODE}]${NC}"
   echo -e "────────────────────"
 
-  check_os
-  check_docker
-  collect_input
-  generate_env
-  generate_caddyfile
-  start_services
-  wait_for_health
-  print_success
+  if [[ "$MODE" == "local" ]]; then
+    check_os_local
+    check_docker
+    start_services
+    apply_schema
+    start_app_services
+    print_success_local
+  else
+    check_os_prod
+    check_docker
+    collect_input
+    generate_env
+    generate_caddyfile
+    start_services
+    apply_schema
+    start_app_services
+    wait_for_health
+    print_success_prod
+  fi
 }
 
 main
