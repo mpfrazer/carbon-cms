@@ -18,7 +18,7 @@
 //
 // The dev-side equivalent of this is `npm run db:push -w packages/api`.
 
-import { spawn } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -41,10 +41,28 @@ if (!process.env.DATABASE_URL) {
   process.exit(2);
 }
 
-const child = spawn(drizzleBin, ["push", "--config", "drizzle.config.ts"], {
+// spawnSync (not spawn + 'exit' event handler) so exit-status propagation
+// is straightforward: any drizzle-kit failure surfaces in result.status or
+// result.error and we exit non-zero. The previous spawn+handler approach
+// silently exited 0 in some cases where drizzle-kit had already mishandled
+// the error itself (see M2 in docs/carbon-cms-upstream-fixes.md).
+const result = spawnSync(drizzleBin, ["push", "--config", "drizzle.config.ts"], {
   cwd: apiPkg,
   stdio: "inherit",
   env: process.env,
 });
 
-child.on("exit", (code) => process.exit(code ?? 1));
+if (result.error) {
+  console.error("[migrate] failed to spawn drizzle-kit:", result.error.message);
+  process.exit(2);
+}
+if (result.signal) {
+  console.error(`[migrate] drizzle-kit terminated by signal: ${result.signal}`);
+  process.exit(1);
+}
+
+const code = result.status ?? 1;
+if (code !== 0) {
+  console.error(`[migrate] drizzle-kit exited with code ${code}`);
+}
+process.exit(code);
