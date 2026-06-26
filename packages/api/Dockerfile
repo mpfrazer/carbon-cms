@@ -50,7 +50,18 @@ RUN mkdir -p /opt/migrate \
     && cd /opt/migrate \
     && npm init -y >/dev/null \
     && npm install --omit=optional --no-save drizzle-kit drizzle-orm postgres \
-    && chown -R nextjs:nodejs /opt/migrate
+    && chown -R nextjs:nodejs /opt/migrate \
+    # When drizzle-kit (running from /opt/migrate) loads the schema at
+    # /app/packages/api/src/lib/db/schema.ts, its `import "drizzle-orm/pg-core"`
+    # is resolved by Node walking up from the schema file's location — which
+    # never reaches /opt/migrate's node_modules. Symlink drizzle-orm into a
+    # location that walk reaches. The symlink target is /opt/migrate's copy
+    # so both the migrate runtime and the schema's loader share the same
+    # version (no version-skew between drizzle-kit and the schema it reads).
+    && mkdir -p /app/packages/api/node_modules \
+    && ln -s /opt/migrate/node_modules/drizzle-orm /app/packages/api/node_modules/drizzle-orm \
+    && chown -h nextjs:nodejs /app/packages/api/node_modules \
+    && chown -h nextjs:nodejs /app/packages/api/node_modules/drizzle-orm
 
 USER nextjs
 ENV PORT=3001
