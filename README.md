@@ -49,4 +49,30 @@ npm run dev
 
 ## CI
 
-Every pull request to `main` runs lint, type check, and unit tests before merge. Merges to `main` publish Docker images to GHCR.
+Every pull request to `main` runs lint, type check, and unit tests before merge. Merges to `main` publish rolling Docker images to GHCR; semver tag pushes (`v*.*.*`) publish release images and create a GitHub Release with auto-generated notes.
+
+## Releases & Docker tags
+
+Carbon's Docker images are published to `ghcr.io/mpfrazer/carbon-cms-{api,admin,frontend}` with the following tags:
+
+| Tag | Source | Use it for |
+|---|---|---|
+| `:latest` | the most recent semver release tag | **Production self-hosters who want a stable image** |
+| `:v0.1.0` (and `:0.1.0`) | exact release version | Pinning to a specific release for reproducibility |
+| `:0.1` | floats to latest patch within minor | Pinning a minor version, getting patch fixes automatically |
+| `:main` | every push to `main` | Dev preview — may include unreleased / in-flight features |
+| `:sha-abc1234` | a specific commit | Reproducing a build at a known commit |
+
+> **Note (June 2026):** `:latest` previously tracked main HEAD. As of the release pipeline introduced in `v0.1.0`, `:latest` floats to the most recent stable release tag (Docker convention). If you want main-HEAD behavior, use `:main` instead.
+
+### Cutting a release
+
+Maintainers cut a release by tagging the current `main`:
+
+```bash
+git checkout main && git pull
+git tag v0.1.0 -m "v0.1.0"
+git push origin v0.1.0
+```
+
+CI builds the three images, pushes them with the new semver tags + `:latest`, and creates a GitHub Release with auto-generated notes from the merged PRs since the previous tag.
