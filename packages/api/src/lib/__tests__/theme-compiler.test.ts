@@ -23,16 +23,21 @@ afterAll(async () => {
   if (tmpCustomDir) await rm(tmpCustomDir, { recursive: true, force: true });
 });
 
-describe("theme-compiler — default base", () => {
+// Each portable base must (a) place all six THEME_FILES on disk when copied
+// and (b) esbuild-compile with zero unresolved imports. Add slugs here as
+// new bases are introduced.
+const PORTABLE_BASES = ["default", "minimal"] as const;
+
+describe.each(PORTABLE_BASES)("theme-compiler — %s base", (base) => {
   it("copies all six THEME_FILES and esbuild compiles them cleanly", async () => {
     const { copyTheme, compileTheme, THEME_FILES } = await import("../theme-compiler");
-    const slug = "default-copy-test";
+    const slug = `${base}-copy-test`;
 
-    await copyTheme("default", slug);
+    await copyTheme(base, slug);
 
     for (const file of THEME_FILES) {
       const s = await stat(path.join(tmpCustomDir, slug, `${file}.tsx`));
-      expect(s.isFile(), `${file}.tsx should exist after copyTheme`).toBe(true);
+      expect(s.isFile(), `${file}.tsx should exist after copyTheme("${base}")`).toBe(true);
     }
 
     const result = await compileTheme(slug);
