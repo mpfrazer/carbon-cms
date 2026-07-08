@@ -2,7 +2,7 @@
   "name": "Minimal",
   "version": "1.0.0",
   "author": "Carbon CMS",
-  "description": "Wide-layout theme with a dark header, card-based blog index, and full-bleed block pages.",
+  "description": "Bare, unstyled skeleton. Copy this as a starting point when building a theme from scratch.",
   "capabilities": {
     "blog": true,
     "search": { "header": true, "page": true },
