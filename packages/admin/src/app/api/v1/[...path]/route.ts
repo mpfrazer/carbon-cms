@@ -8,12 +8,25 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
   const { path } = await params;
   const url = `${API_URL}/api/v1/${path.join("/")}${req.nextUrl.search}`;
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${process.env.AUTH_SECRET}`,
-  };
+  // Only attach the admin-proxy service credential (Bearer AUTH_SECRET +
+  // X-User-Role: admin) when the incoming caller has an authenticated
+  // session. Attaching it unconditionally was a confused-deputy: the API
+  // side treats the pair as admin identity, so an unauth caller reaching
+  // the admin proxy would silently get admin-scoped access to every
+  // /api/v1/* route that trusts proxy-level auth (A1 in the upstream
+  // audit).
+  //
+  // For unauth callers, forward the request as-is — pass through the
+  // incoming Authorization header so API-key callers still work, and let
+  // the API's own edge proxy gate on its public-path / API-key rules.
+  const headers: Record<string, string> = {};
   if (session?.user?.id) {
+    headers["Authorization"] = `Bearer ${process.env.AUTH_SECRET}`;
     headers["X-User-Id"] = session.user.id;
     headers["X-User-Role"] = (session.user as { role?: string }).role ?? "author";
+  } else {
+    const incomingAuth = req.headers.get("authorization");
+    if (incomingAuth) headers["Authorization"] = incomingAuth;
   }
 
   const contentType = req.headers.get("content-type");

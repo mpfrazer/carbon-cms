@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { parseCorsOrigins, getCorsHeaders } from "@/lib/cors";
 import { extractApiKeyToken, validateApiKey } from "@/lib/api-key";
+import { hasAdminProxyAuth } from "@/lib/authz";
 
 const WINDOW_MS = 60_000;
 const LIMIT_GENERAL = 120;
@@ -69,8 +70,18 @@ export async function proxy(req: NextRequest) {
 
   const bearer = req.headers.get("authorization") ?? "";
 
-  // Internal admin/frontend proxy — skip rate limiting and auth
-  if (bearer === `Bearer ${process.env.AUTH_SECRET}`) {
+  // Internal admin/frontend proxy — skip rate limiting and auth.
+  //
+  // The Bearer alone used to be sufficient to short-circuit here, which
+  // paired with the admin/frontend proxies unconditionally attaching that
+  // Bearer produced a confused-deputy: unauth callers reaching a proxy
+  // would silently pass this gate (A1 in the upstream audit). Require
+  // the X-User-Role: admin header alongside the Bearer so the caller
+  // has to name itself as an admin identity, not just possess the secret.
+  // The proxies (packages/{admin,frontend}/src/app/api/v1/[...path]/route.ts)
+  // only attach that header when they have a session, so unauth traffic
+  // now falls through to the public-path / API-key gates below.
+  if (hasAdminProxyAuth(req.headers)) {
     const res = NextResponse.next();
     Object.entries(corsHeaders).forEach(([k, v]) => res.headers.set(k, v));
     return res;
