@@ -109,28 +109,54 @@ export async function copyTheme(baseSlug: string, newSlug: string): Promise<void
 
   await fs.mkdir(destDir, { recursive: true });
 
-  const entries = await fs.readdir(srcDir, { withFileTypes: true });
-  await Promise.all(
-    entries
-      .filter((e) => e.isFile() && !e.name.startsWith("."))
-      .map(async (e) => {
-        // Skip the built-in theme.config.json — generate a fresh one for the new theme
-        if (e.name === "theme.config.json") return;
-        await fs.copyFile(path.join(srcDir, e.name), path.join(destDir, e.name));
-      })
-  );
+  try {
+    const entries = await fs.readdir(srcDir, { withFileTypes: true });
+    await Promise.all(
+      entries
+        .filter((e) => e.isFile() && !e.name.startsWith("."))
+        .map(async (e) => {
+          // Skip the built-in theme.config.json — generate a fresh one for the new theme
+          if (e.name === "theme.config.json") return;
+          await fs.copyFile(path.join(srcDir, e.name), path.join(destDir, e.name));
+        })
+    );
 
-  // Read base config for capabilities, write a fresh config for the new theme
-  const baseConfig = await readThemeConfig(baseSlug);
-  const newConfig = {
-    name: newSlug,
-    version: "1.0.0",
-    capabilities: baseConfig.capabilities ?? {
-      blog: true,
-      search: { header: true, page: true },
-      pageBuilder: true,
-      comments: true,
-    },
-  };
-  await fs.writeFile(path.join(destDir, "theme.config.json"), JSON.stringify(newConfig, null, 2), "utf-8");
+    // Read base config for capabilities, write a fresh config for the new theme
+    const baseConfig = await readThemeConfig(baseSlug);
+    const newConfig = {
+      name: newSlug,
+      version: "1.0.0",
+      capabilities: baseConfig.capabilities ?? {
+        blog: true,
+        search: { header: true, page: true },
+        pageBuilder: true,
+        comments: true,
+      },
+    };
+    await fs.writeFile(path.join(destDir, "theme.config.json"), JSON.stringify(newConfig, null, 2), "utf-8");
+
+    // Guardrail: the copy must land every THEME_FILES entry as a .tsx module.
+    // Silently accepting an incomplete base has burned us before — the theme
+    // shows up as activatable in admin but the subsequent compile fails on
+    // missing entry points. Fail loud, name the missing files, and delete
+    // the half-created destination so the operator can retry cleanly.
+    const missing: string[] = [];
+    for (const f of THEME_FILES) {
+      const exists = await fs.stat(path.join(destDir, `${f}.tsx`)).then(() => true).catch(() => false);
+      if (!exists) missing.push(`${f}.tsx`);
+    }
+    if (missing.length > 0) {
+      await fs.rm(destDir, { recursive: true, force: true });
+      throw new Error(
+        `Base theme "${baseSlug}" is incomplete: missing ${missing.join(", ")}. ` +
+        `A theme must ship all six of ${THEME_FILES.map((f) => `${f}.tsx`).join(", ")} ` +
+        `and each may only import from react, react/jsx-runtime, react-dom, next/*, or lucide-react.`
+      );
+    }
+  } catch (e) {
+    // Any failure during copy leaves the caller with no partial state to
+    // reason about. rm is best-effort; ignore ENOENT.
+    await fs.rm(destDir, { recursive: true, force: true }).catch(() => {});
+    throw e;
+  }
 }
