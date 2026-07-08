@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { mkdtemp, rm, stat } from "fs/promises";
+import { mkdir, mkdtemp, rm, stat, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -45,4 +45,33 @@ describe.each(PORTABLE_BASES)("theme-compiler — %s base", (base) => {
     expect(result.errors ?? []).toEqual([]);
     expect(result.ok).toBe(true);
   }, 30_000);
+});
+
+describe("theme-compiler — copyTheme guardrail", () => {
+  it("rejects an incomplete base with an actionable error and cleans up", async () => {
+    const { copyTheme } = await import("../theme-compiler");
+
+    const baseSlug = "incomplete-base";
+    const baseDir = path.join(tmpCustomDir, baseSlug);
+    await mkdir(baseDir, { recursive: true });
+    // Populate 4 of the 6 required files — matches the pre-fix state of the
+    // old default base that shipped only layout / blog-index / blog-post / page.
+    for (const f of ["layout", "blog-index", "blog-post", "page"]) {
+      await writeFile(
+        path.join(baseDir, `${f}.tsx`),
+        `export function ${f.replace(/-/g, "_")}() { return null; }\n`,
+      );
+    }
+
+    const targetSlug = "guardrail-target";
+    await expect(copyTheme(baseSlug, targetSlug)).rejects.toThrow(
+      /missing search\.tsx, not-found\.tsx/,
+    );
+
+    // Half-created destination must be removed so the operator can retry.
+    const targetExists = await stat(path.join(tmpCustomDir, targetSlug))
+      .then(() => true)
+      .catch(() => false);
+    expect(targetExists).toBe(false);
+  });
 });
